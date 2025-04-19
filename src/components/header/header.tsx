@@ -11,14 +11,12 @@ export function Header() {
 
   // Get the current page name from the pathname
   const getPageName = (path: string) => {
-    if (path === "/") return "reported";
     const segments = path.split("/").filter(Boolean);
-    return segments[0] || "reported";
+    return segments[0] || "home";
   };
 
   const currentPage = getPageName(pathname);
   const formattedPageName = currentPage.charAt(0).toUpperCase() + currentPage.slice(1);
-
   return (
     <header className="h-14 px-4 flex items-center justify-between bg-background fixed top-0 right-0 left-16 z-20">
       <h1 className="text-xl font-medium tracking-wide text-foreground flex items-center gap-1">
