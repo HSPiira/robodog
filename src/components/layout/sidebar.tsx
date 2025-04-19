@@ -51,9 +51,9 @@ function SidebarItem({ icon, tooltip, href }: SidebarItemProps) {
 
 const navigation = [
   { name: "Dashboard", href: "/home", icon: Home },
-  { name: "Customers", href: "/customers", icon: Users },
-  { name: "Policies", href: "/policies", icon: FileText },
+  { name: "Clients", href: "/clients", icon: Users },
   { name: "Vehicles", href: "/vehicles", icon: Car },
+  { name: "Policies", href: "/policies", icon: FileText },
   { name: "Analytics", href: "/analytics", icon: BarChart },
 ];
 

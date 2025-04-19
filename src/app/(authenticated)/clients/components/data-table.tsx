@@ -48,6 +48,7 @@ export function DataTable<TData, TValue>({
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
+    const [selectedRow, setSelectedRow] = React.useState<TData | null>(null);
 
     const table = useReactTable({
         data,
@@ -80,41 +81,15 @@ export function DataTable<TData, TValue>({
                     className="w-[200px] h-8 rounded-full bg-muted px-4 text-xs"
                 />
                 {actionButton}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto rounded-full">
-                            Columns <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => {
-                                return (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                );
-                            })}
-                    </DropdownMenuContent>
-                </DropdownMenu>
             </div>
-            <div className="rounded-md">
+            <div className="rounded-md overflow-x-auto">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-primary/5">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id} className="text-xs py-0.5 h-6">
+                                        <TableHead key={header.id} className="text-xs py-2 h-8">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -133,11 +108,14 @@ export function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    className="border-0 cursor-pointer hover:bg-muted/50 text-xs h-5"
-                                    onClick={() => onRowClick?.(row.original as TData)}
+                                    className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-5 ${selectedRow === row.original ? "bg-muted" : ""}`}
+                                    onClick={() => {
+                                        setSelectedRow(row.original as TData);
+                                        onRowClick?.(row.original as TData);
+                                    }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-0.5 px-2">
+                                        <TableCell key={cell.id} className="py-0.5 px-4">
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()

@@ -10,6 +10,7 @@ interface CustomerDetailProps {
         name: string;
         email: string;
         phone: string;
+        type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
         status: "active" | "inactive";
         policies: number;
         joinedDate: string;
@@ -17,8 +18,12 @@ interface CustomerDetailProps {
 }
 
 export function CustomerDetail({ customer }: CustomerDetailProps) {
+    const formatCustomerType = (type: string) => {
+        return type.replace("_", " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    };
+
     return (
-        <Card className="w-[300px] p-4 space-y-4 shrink-0">
+        <Card className="h-full p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h3 className="font-medium">Customer Details</h3>
             </div>
@@ -63,11 +68,15 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
                                 <CircleDot className="h-3.5 w-3.5" />
                                 <span>Status: </span>
                                 <span className={`${customer.status === "active"
-                                        ? "text-green-500"
-                                        : "text-yellow-500"
+                                    ? "text-green-500"
+                                    : "text-yellow-500"
                                     }`}>
                                     {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
                                 </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                                <Briefcase className="h-3.5 w-3.5" />
+                                <span>Type: {formatCustomerType(customer.type)}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs">
                                 <Briefcase className="h-3.5 w-3.5" />

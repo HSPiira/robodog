@@ -1,0 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { columns } from "./components/columns";
+import { DataTable } from "./components/data-table";
+import { CustomerDetail } from "./components/customer-detail";
+import { CreateCustomerForm } from "./components/create-client-form";
+
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: "active" | "inactive";
+  policies: number;
+  joinedDate: string;
+}
+
+export default function CustomersPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await fetch("/api/customers");
+      if (!response.ok) {
+        throw new Error("Failed to fetch customers");
+      }
+      const data = await response.json();
+      setCustomers(data);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  return (
+    <div className="p-6 space-y-6">
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="flex gap-6 overflow-x-auto">
+          <div className="flex-1 min-w-0">
+            <DataTable
+              columns={columns}
+              data={customers}
+              searchKey="name"
+              actionButton={
+                <CreateCustomerForm onCustomerCreated={fetchCustomers} />
+              }
+              onRowClick={(customer) => setSelectedCustomer(customer)}
+            />
+          </div>
+          <div className="w-[300px] flex-shrink-0">
+            <CustomerDetail customer={selectedCustomer || undefined} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

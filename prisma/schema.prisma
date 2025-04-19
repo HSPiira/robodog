@@ -24,6 +24,13 @@ enum UsageType {
     GOVERNMENT
 }
 
+enum CustomerType {
+    INDIVIDUAL
+    BUSINESS
+    GOVERNMENT
+    NON_PROFIT
+}
+
 // Base Models
 model User {
     id             String    @id @default(uuid())
@@ -41,13 +48,14 @@ model User {
 }
 
 model Customer {
-    id        String    @id @default(cuid())
+    id        String       @id @default(cuid())
     name      String
-    email     String    @unique
+    email     String?      @unique
     phone     String?
-    isActive  Boolean   @default(true)
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    type      CustomerType @default(INDIVIDUAL)
+    isActive  Boolean      @default(true)
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
     policies  Policy[]
     Vehicle   Vehicle[]
 }

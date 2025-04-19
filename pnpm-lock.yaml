@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@hookform/resolvers':
-        specifier: ^3.9.1
+        specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.55.0(react@19.1.0))
       '@prisma/client':
         specifier: ^6.6.0
@@ -147,7 +147,7 @@ importers:
         specifier: ^19
         version: 19.1.0(react@19.1.0)
       react-hook-form:
-        specifier: ^7.54.1
+        specifier: ^7.55.0
         version: 7.55.0(react@19.1.0)
       react-resizable-panels:
         specifier: ^2.1.7
@@ -168,7 +168,7 @@ importers:
         specifier: ^0.9.6
         version: 0.9.9(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod:
-        specifier: ^3.24.1
+        specifier: ^3.24.3
         version: 3.24.3
     devDependencies:
       '@types/node':
