@@ -19,33 +19,43 @@ export const config = {
 }
 
 export function middleware(request: NextRequest) {
-    // Get the pathname of the request (e.g. /, /api/auth/login)
-    const path = request.nextUrl.pathname;
+    try {
+        // Get the pathname of the request (e.g. /, /api/auth/login)
+        const path = request.nextUrl.pathname;
 
-    // If it's an API route that doesn't require authentication
-    if (path.startsWith('/api/auth')) {
-        return NextResponse.next();
-    }
+        // If it's an API route that doesn't require authentication
+        if (path.startsWith('/api/auth')) {
+            return NextResponse.next();
+        }
 
-    // For other API routes, you might want to add authentication checks here
-    if (path.startsWith('/api/')) {
-        // Validate authentication token
+        // For other API routes, you might want to add authentication checks here
+        if (path.startsWith('/api/')) {
+            // Validate authentication token
+            const token = request.cookies.get('auth-token')?.value;
+            if (!token) {
+                console.warn(`Unauthorized API access attempt: ${path}`);
+                return NextResponse.json(
+                    { error: 'Authentication required' },
+                    { status: 401 }
+                );
+            }
+            return NextResponse.next();
+        }
+
+        // Protected non‑API pages
         const token = request.cookies.get('auth-token')?.value;
         if (!token) {
-            return NextResponse.json(
-                { error: 'Authentication required' },
-                { status: 401 }
-            );
+            console.warn(`Unauthorized page access attempt: ${path}`);
+            const loginUrl = new URL('/login', request.url);
+            return NextResponse.redirect(loginUrl);
         }
+
         return NextResponse.next();
+    } catch (error) {
+        console.error('Middleware error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
     }
-
-    // Protected non‑API pages
-    const token = request.cookies.get('auth-token')?.value;
-    if (!token) {
-        const loginUrl = new URL('/login', request.url);
-        return NextResponse.redirect(loginUrl);
-    }
-
-    return NextResponse.next();
 }
