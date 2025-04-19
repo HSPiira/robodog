@@ -27,9 +27,23 @@ export function middleware(request: NextRequest) {
 
     // For other API routes, you might want to add authentication checks here
     if (path.startsWith('/api/')) {
-        // You can add authentication checks here if needed
+        // Validate authentication token
+        const token = request.cookies.get('auth-token')?.value;
+        if (!token) {
+            return NextResponse.json(
+                { error: 'Authentication required' },
+                { status: 401 }
+            );
+        }
         return NextResponse.next();
     }
 
+    // Protected non‑API pages
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+        const loginUrl = new URL('/login', request.url);
+        return NextResponse.redirect(loginUrl);
+    }
+
     return NextResponse.next();
-} 
+}
