@@ -59,9 +59,21 @@ export class UserService {
     /**
      * Get a user by email
      */
-    static async getUserByEmail(email: string) {
+    /**
+     * Get a user by email - for general use (excludes password)
+     */
+    static async getUserByEmail(email: string, includePassword = false) {
         return prisma.user.findUnique({
             where: { email },
+            select: includePassword ? undefined : {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
+            },
         });
     }
 
