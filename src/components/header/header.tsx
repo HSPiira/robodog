@@ -4,12 +4,27 @@ import { Search, MessageSquare, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { usePathname } from "next/navigation";
 
 export function Header() {
+  const pathname = usePathname();
+
+  // Get the current page name from the pathname
+  const getPageName = (path: string) => {
+    if (path === "/") return "reported";
+    const segments = path.split("/").filter(Boolean);
+    return segments[0] || "reported";
+  };
+
+  const currentPage = getPageName(pathname);
+  const formattedPageName = currentPage.charAt(0).toUpperCase() + currentPage.slice(1);
+
   return (
     <header className="h-14 px-4 flex items-center justify-between bg-background fixed top-0 right-0 left-16 z-20">
-      <h1 className="text-xl font-medium tracking-wide text-foreground">
-        robodog
+      <h1 className="text-xl font-medium tracking-wide text-foreground flex items-center gap-1">
+        <span>robodog</span>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-sm font-normal">{formattedPageName}</span>
       </h1>
 
       <div className="flex items-center gap-2">

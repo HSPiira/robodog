@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - '@prisma/client'
+
+onlyBuiltDependencies:
+  - argon2
+  - bcrypt
