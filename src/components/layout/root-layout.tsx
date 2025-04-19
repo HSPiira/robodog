@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Header } from "@/components/header/header";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export function RootLayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -16,14 +17,16 @@ export function RootLayoutContent({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <div className="flex min-h-screen">
-            <Sidebar selectedTab={getSelectedTab(pathname)} />
-            <div className="flex-1 pl-16">
-                <Header />
-                <main className="flex-1 p-4 min-w-0 mt-14">
-                    {children}
-                </main>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <div className="flex min-h-screen">
+                <Sidebar selectedTab={getSelectedTab(pathname)} />
+                <div className="flex-1 pl-16">
+                    <Header />
+                    <main className="flex-1 p-4 min-w-0 mt-14">
+                        {children}
+                    </main>
+                </div>
             </div>
-        </div>
+        </ThemeProvider>
     );
 } 

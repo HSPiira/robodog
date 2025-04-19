@@ -11,6 +11,7 @@ import {
   File,
   Bell,
   Settings,
+  Sticker,
 } from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 
@@ -20,7 +21,7 @@ interface SidebarProps {
 
 export function Sidebar({ selectedTab }: SidebarProps) {
   return (
-    <div className="w-16 bg-white fixed left-0 top-0 bottom-0 flex flex-col items-center py-4 z-30">
+    <div className="w-16 bg-sidebar-background fixed left-0 top-0 bottom-0 flex flex-col items-center py-4 z-30">
       <Link href="/reported" className="flex items-center justify-center mb-6">
         <Image src="/robodog-logo.svg" alt="Robodog" width={32} height={32} />
       </Link>
@@ -32,10 +33,10 @@ export function Sidebar({ selectedTab }: SidebarProps) {
           href="/home"
         />
         <SidebarItem
-          icon={<Activity size={20} />}
-          tooltip="Activity"
-          active={selectedTab === "activity"}
-          href="/activity"
+          icon={<Sticker size={20} />}
+          tooltip="Sticker"
+          active={selectedTab === "sticker"}
+          href="/sticker"
         />
         <SidebarItem
           icon={<RefreshCw size={20} />}

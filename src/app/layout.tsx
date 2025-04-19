@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${montserrat.variable} font-sans bg-[#F5EBE1]`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${montserrat.variable} font-sans bg-background text-foreground`}>
         <RootLayoutContent>{children}</RootLayoutContent>
       </body>
     </html>
