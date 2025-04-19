@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// Enums
+enum PolicyStatus {
+    ACTIVE
+    EXPIRED
+    PENDING
+    CANCELLED
+}
+
+enum UsageType {
+    PRIVATE
+    COMMERCIAL
+    GOVERNMENT
+}
+
+// Base Models
+model User {
+    id             String    @id @default(uuid())
+    email          String    @unique
+    name           String
+    password       String
+    role           String
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+    isActive       Boolean   @default(true)
+    createdBy      String?
+    updatedBy      String?
+    deletedAt      DateTime?
+    issuedPolicies Policy[]  @relation("IssuedPolicies")
+}
+
+model Customer {
+    id        String    @id @default(uuid())
+    name      String
+    email     String?
+    phone     String?
+    address   String?
+    vehicles  Vehicle[]
+    policies  Policy[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    isActive  Boolean   @default(true)
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
+}
+
+model Vehicle {
+    id                String           @id @default(uuid())
+    registrationNo    String           @unique
+    make              String
+    model             String
+    year              Int
+    chassisNo         String           @unique
+    engineNo          String           @unique
+    bodyType          BodyType         @relation(fields: [bodyTypeId], references: [id])
+    bodyTypeId        String
+    vehicleCategory   VehicleCategory  @relation(fields: [categoryId], references: [id])
+    categoryId        String
+    customer          Customer         @relation(fields: [customerId], references: [id])
+    customerId        String
+    policies          Policy[]
+    stickers          Sticker[]
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime         @updatedAt
+    isActive          Boolean          @default(true)
+    createdBy         String?
+    updatedBy         String?
+    deletedAt         DateTime?
+    engineNumber      String
+    chassisNumber     String
+    cubicCapacity     Int?
+    seatingCapacity   Int?
+    grossWeight       Float?
+    vehicleType       VehicleType      @relation(fields: [vehicleTypeId], references: [id])
+    vehicleTypeId     String
+    VehicleBodyType   VehicleBodyType? @relation(fields: [vehicleBodyTypeId], references: [id])
+    vehicleBodyTypeId String?
+}
+
+model BodyType {
+    id        String    @id @default(uuid())
+    name      String    @unique
+    vehicles  Vehicle[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    isActive  Boolean   @default(true)
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
+}
+
+model VehicleType {
+    id        String    @id @default(uuid())
+    name      String
+    vehicles  Vehicle[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    createdBy String?
+    updatedBy String?
+    isActive  Boolean   @default(true)
+    deletedAt DateTime?
+}
+
+model VehicleBodyType {
+    id        String    @id @default(uuid())
+    name      String
+    vehicles  Vehicle[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    createdBy String?
+    updatedBy String?
+    isActive  Boolean   @default(true)
+    deletedAt DateTime?
+}
+
+model VehicleCategory {
+    id        String    @id @default(uuid())
+    name      String    @unique
+    vehicles  Vehicle[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    isActive  Boolean   @default(true)
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
+}
+
+// Insurance Related Models
+model Policy {
+    id               String       @id @default(uuid())
+    certificateNo    String       @unique
+    policyNo         String       @unique
+    customerId       String
+    vehicleId        String
+    usage            UsageType
+    status           PolicyStatus
+    issuingCompanyId String
+    issuingOfficerId String
+    issuedAt         DateTime
+    validFrom        DateTime
+    validTo          DateTime
+    branch           String
+    premium          Float
+    stampDuty        Float?
+    stickerFee       Float?
+    receiptNumber    String?
+    remarks          String?
+    createdAt        DateTime     @default(now())
+    updatedAt        DateTime     @updatedAt
+    createdBy        String?
+    updatedBy        String?
+    isActive         Boolean      @default(true)
+    deletedAt        DateTime?
+
+    customer       Customer        @relation(fields: [customerId], references: [id])
+    vehicle        Vehicle         @relation(fields: [vehicleId], references: [id])
+    issuingCompany IssuingCompany  @relation(fields: [issuingCompanyId], references: [id])
+    issuingOfficer User            @relation("IssuedPolicies", fields: [issuingOfficerId], references: [id])
+    stickers       Sticker[]
+    countries      PolicyCountry[]
+    ComesaCard     ComesaCard[]
+}
+
+model Sticker {
+    id         String    @id @default(uuid())
+    stickerNo  String    @unique
+    policyId   String    @unique
+    bureau     String?
+    fromComesa DateTime?
+    toComesa   DateTime?
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+    createdBy  String?
+    updatedBy  String?
+    isActive   Boolean   @default(true)
+    deletedAt  DateTime?
+
+    policy    Policy   @relation(fields: [policyId], references: [id])
+    Vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+    vehicleId String?
+}
+
+// COMESA Related Models
+model ComesaCard {
+    id         String       @id @default(uuid())
+    cardNumber String       @unique
+    policy     Policy       @relation(fields: [policyId], references: [id])
+    policyId   String
+    items      ComesaItem[]
+    createdAt  DateTime     @default(now())
+    updatedAt  DateTime     @updatedAt
+    isActive   Boolean      @default(true)
+    createdBy  String?
+    updatedBy  String?
+    deletedAt  DateTime?
+}
+
+model ComesaItem {
+    id           String     @id @default(uuid())
+    name         String
+    quantity     Int
+    value        Float
+    comesaCard   ComesaCard @relation(fields: [comesaCardId], references: [id])
+    comesaCardId String
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
+    isActive     Boolean    @default(true)
+    createdBy    String?
+    updatedBy    String?
+    deletedAt    DateTime?
+}
+
+// Country Related Models
+model Country {
+    id            String           @id @default(uuid())
+    name          String           @unique
+    code          String           @unique
+    clearedItems  CountryCleared[]
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @updatedAt
+    isActive      Boolean          @default(true)
+    createdBy     String?
+    updatedBy     String?
+    deletedAt     DateTime?
+    PolicyCountry PolicyCountry[]
+}
+
+model CountryCleared {
+    id        String    @id @default(uuid())
+    country   Country   @relation(fields: [countryId], references: [id])
+    countryId String
+    itemName  String
+    quantity  Int
+    value     Float
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    isActive  Boolean   @default(true)
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
+}
+
+model IssuingCompany {
+    id        String    @id @default(uuid())
+    name      String    @unique
+    code      String    @unique
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    isActive  Boolean   @default(true)
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
+    Policy    Policy[]
+}
+
+model PolicyCountry {
+    id        String   @id @default(uuid())
+    policyId  String
+    countryId String
+    cleared   Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    createdBy String?
+    updatedBy String?
+
+    policy  Policy  @relation(fields: [policyId], references: [id])
+    country Country @relation(fields: [countryId], references: [id])
+}
