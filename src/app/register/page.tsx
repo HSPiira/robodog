@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
-import Link from "next/link";
 import {
     Form,
     FormControl,
@@ -20,44 +19,50 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/context/auth-context";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ArrowLeft, LogIn } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 
-// Define the form schema
-const loginFormSchema = z.object({
+const registerFormSchema = z.object({
+    name: z.string().min(2, {
+        message: "Name must be at least 2 characters.",
+    }),
     email: z.string().email({
         message: "Please enter a valid email address.",
     }),
     password: z.string().min(6, {
         message: "Password must be at least 6 characters.",
     }),
+    confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
 
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const router = useRouter();
-    const { login } = useAuth();
+    const { register } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initialize form
-    const form = useForm<LoginFormValues>({
-        resolver: zodResolver(loginFormSchema),
+    const form = useForm<RegisterFormValues>({
+        resolver: zodResolver(registerFormSchema),
         defaultValues: {
+            name: "",
             email: "",
             password: "",
+            confirmPassword: "",
         },
     });
 
-    // Handle form submission
-    const onSubmit = async (data: LoginFormValues) => {
+    const onSubmit = async (data: RegisterFormValues) => {
         try {
             setIsSubmitting(true);
-            await login(data.email, data.password);
+            await register(data.name, data.email, data.password);
             router.push("/");
-            toast.success("Login successful");
+            toast.success("Registration successful");
         } catch (error) {
-            console.error("Login error:", error);
-            toast.error(error instanceof Error ? error.message : "Login failed");
+            console.error("Registration error:", error);
+            toast.error(error instanceof Error ? error.message : "Registration failed");
         } finally {
             setIsSubmitting(false);
         }
@@ -90,9 +95,9 @@ export default function LoginPage() {
                             </span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+                            <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
                             <p className="text-sm text-muted-foreground mt-2">
-                                Sign in to your account to continue
+                                Get started with your free account today
                             </p>
                         </div>
                     </div>
@@ -100,6 +105,23 @@ export default function LoginPage() {
                     <div className="bg-card p-8 rounded-xl shadow-lg border">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Full Name</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Enter your full name"
+                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 <FormField
                                     control={form.control}
                                     name="email"
@@ -126,7 +148,25 @@ export default function LoginPage() {
                                             <FormLabel>Password</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Enter your password"
+                                                    placeholder="Create a password"
+                                                    type="password"
+                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="confirmPassword"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Confirm Password</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Confirm your password"
                                                     type="password"
                                                     className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
@@ -143,11 +183,11 @@ export default function LoginPage() {
                                     size="lg"
                                 >
                                     {isSubmitting ? (
-                                        "Signing in..."
+                                        "Creating account..."
                                     ) : (
                                         <>
-                                            Sign in
-                                            <LogIn className="w-4 h-4 ml-2" />
+                                            Create account
+                                            <UserPlus className="w-4 h-4 ml-2" />
                                         </>
                                     )}
                                 </Button>
@@ -157,9 +197,9 @@ export default function LoginPage() {
 
                     <div className="text-center">
                         <p className="text-sm text-muted-foreground">
-                            Don't have an account?{" "}
-                            <Button variant="link" className="p-0" onClick={() => router.push("/register")}>
-                                Create one now
+                            Already have an account?{" "}
+                            <Button variant="link" className="p-0" onClick={() => router.push("/login")}>
+                                Sign in instead
                             </Button>
                         </p>
                     </div>

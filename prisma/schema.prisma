@@ -41,19 +41,15 @@ model User {
 }
 
 model Customer {
-    id        String    @id @default(uuid())
+    id        String    @id @default(cuid())
     name      String
-    email     String?
+    email     String    @unique
     phone     String?
-    address   String?
-    vehicles  Vehicle[]
-    policies  Policy[]
+    isActive  Boolean   @default(true)
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
-    isActive  Boolean   @default(true)
-    createdBy String?
-    updatedBy String?
-    deletedAt DateTime?
+    policies  Policy[]
+    Vehicle   Vehicle[]
 }
 
 model Vehicle {
@@ -139,7 +135,7 @@ model VehicleCategory {
 
 // Insurance Related Models
 model Policy {
-    id               String       @id @default(uuid())
+    id               String       @id @default(cuid())
     certificateNo    String       @unique
     policyNo         String       @unique
     customerId       String

@@ -3,62 +3,83 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/context/auth-context";
-import { ArrowRight, FileText, Car, Users, BarChart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  Shield,
+  Car,
+  Users,
+  BarChart,
+  ArrowRight,
+  LogIn,
+  ChevronRight,
+} from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  // Redirect to dashboard if already authenticated
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated) {
       router.push("/home");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, router]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Image
               src="/robodog-logo.png"
-              alt="robodog Logo"
+              alt="robodog"
               width={32}
               height={32}
               className="h-8 w-8"
+              priority
             />
-            <span className="text-2xl font-bold">robodog</span>
+            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+              robodog
+            </span>
           </div>
-          <div className="flex space-x-4">
-            <Button variant="ghost" onClick={() => router.push("/login")}>
-              Sign In
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/login")}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign in
             </Button>
-            <Button onClick={() => router.push("/login")}>Get Started</Button>
+            <Button size="sm" onClick={() => router.push("/register")}>
+              Get started
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-background to-muted">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Insurance Management Made Simple
+      <section className="pt-32 pb-24 px-4">
+        <div className="container mx-auto text-center">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+              Transform Your Business with robodog
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              robodog helps insurance companies streamline their operations,
-              manage policies, and track vehicles with ease.
+            <p className="text-xl text-muted-foreground">
+              Streamline your operations, enhance customer experience, and drive
+              growth with our comprehensive management platform.
             </p>
-            <div className="flex justify-center space-x-4">
-              <Button size="lg" onClick={() => router.push("/login")}>
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <Button size="lg" onClick={() => router.push("/register")}>
+                Get started
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
-              <Button size="lg" variant="outline">
-                Learn More
+              <Button variant="outline" size="lg">
+                Learn more
               </Button>
             </div>
           </div>
@@ -66,51 +87,52 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-primary" />
+      <section className="py-24 px-4 bg-muted/50">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Everything you need to manage your business
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-background p-6 rounded-xl shadow-lg border border-muted hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-blue-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Policy Management</h3>
+              <h3 className="text-lg font-semibold mb-2">Policy Management</h3>
               <p className="text-muted-foreground">
-                Create, track, and manage insurance policies with our intuitive
+                Efficiently manage policies with automated workflows and
+                real-time updates.
+              </p>
+            </div>
+            <div className="bg-background p-6 rounded-xl shadow-lg border border-muted hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
+                <Car className="w-6 h-6 text-purple-500" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Vehicle Tracking</h3>
+              <p className="text-muted-foreground">
+                Track and manage vehicle information with our intuitive
                 interface.
               </p>
             </div>
-            <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Car className="h-6 w-6 text-primary" />
+            <div className="bg-background p-6 rounded-xl shadow-lg border border-muted hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-orange-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Vehicle Tracking</h3>
-              <p className="text-muted-foreground">
-                Keep detailed records of all insured vehicles and their status.
-              </p>
-            </div>
-            <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2">
                 Customer Management
               </h3>
               <p className="text-muted-foreground">
-                Maintain comprehensive customer profiles and communication
-                history.
+                Maintain detailed customer profiles and interaction history.
               </p>
             </div>
-            <div className="p-6 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <BarChart className="h-6 w-6 text-primary" />
+            <div className="bg-background p-6 rounded-xl shadow-lg border border-muted hover:scale-105 transition-transform">
+              <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-4">
+                <BarChart className="w-6 h-6 text-green-500" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2">
                 Analytics & Reporting
               </h3>
               <p className="text-muted-foreground">
-                Generate insights with powerful analytics and customizable
-                reports.
+                Make data-driven decisions with comprehensive analytics tools.
               </p>
             </div>
           </div>
@@ -118,43 +140,28 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">
-            Ready to Transform Your Insurance Business?
-          </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of insurance companies that trust robodog to
-            streamline their operations.
-          </p>
-          <Button
-            size="lg"
-            variant="secondary"
-            onClick={() => router.push("/login")}
-          >
-            Get Started Today
-          </Button>
+      <section className="py-24 px-4">
+        <div className="container mx-auto text-center">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
+              Ready to transform your business?
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Join thousands of professionals who trust robodog to power their
+              business.
+            </p>
+            <Button size="lg" onClick={() => router.push("/register")}>
+              Get started today
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Image
-                src="/robodog-logo.png"
-                alt="robodog Logo"
-                width={24}
-                height={24}
-                className="h-6 w-6"
-              />
-              <span className="text-xl font-bold">robodog</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} robodog. All rights reserved.
-            </div>
-          </div>
+      <footer className="py-8 px-4 border-t">
+        <div className="container mx-auto text-center text-muted-foreground">
+          <span className="text-sm">© 2024 robodog. All rights reserved.</span>
         </div>
       </footer>
     </div>

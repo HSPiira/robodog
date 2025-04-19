@@ -15,6 +15,7 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -96,6 +97,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    // Register function
+    const register = async (name: string, email: string, password: string) => {
+        console.log('[Auth] Starting registration process for:', email);
+        try {
+            setLoading(true);
+            const baseUrl = window.location.origin;
+            const url = `${baseUrl}/api/auth/register`;
+            console.log('[Auth] Making request to:', url);
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            console.log('[Auth] Response status:', response.status);
+
+            const responseText = await response.text();
+            console.log('[Auth] Raw response:', responseText);
+
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('[Auth] Failed to parse response as JSON:', e);
+                throw new Error('Invalid response format');
+            }
+
+            if (!response.ok) {
+                console.error('[Auth] Response not OK:', data);
+                throw new Error(data.error || "Registration failed");
+            }
+
+            console.log('[Auth] Registration successful, user data:', { ...data.user, password: undefined });
+
+            // Store user data and log in
+            setUser(data.user);
+            localStorage.setItem("user", JSON.stringify(data.user));
+        } catch (error) {
+            console.error('[Auth] Registration error:', error);
+            console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Logout function
     const logout = () => {
         console.log('[Auth] Logging out user');
@@ -110,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 user,
                 loading,
                 login,
+                register,
                 logout,
                 isAuthenticated: !!user,
             }}
