@@ -7,8 +7,8 @@ import { VehicleDetail } from "./components/vehicle-detail";
 import { CreateVehicleForm } from "./components/create-vehicle-form";
 import { BulkVehicleUpload } from "./components/bulk-vehicle-upload";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
-import { ChevronRight, Home, User } from "lucide-react";
+import { FileUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Vehicle {
     id: string;
@@ -86,28 +86,13 @@ export default function VehiclesPage() {
         router.push(`/policies/create?vehicleId=${vehicleId}`);
     };
 
+    // Navigate to bulk import page
+    const navigateToImport = () => {
+        router.push('/vehicles/import');
+    };
+
     return (
         <div className="p-6 space-y-6">
-            {customerId && (
-                <div className="flex items-center justify-between">
-                    <div>
-                        <Breadcrumb className="mt-1">
-                            <BreadcrumbItem>
-                                <BreadcrumbLink href="/clients" className="text-xs text-muted-foreground flex items-center">
-                                    <User className="h-3 w-3 mr-1" />
-                                    Clients
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink className="text-xs font-medium flex items-center">
-                                    {customerName || 'Customer Vehicles'}
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                        </Breadcrumb>
-                    </div>
-                </div>
-            )}
-
             {loading && vehicles.length === 0 ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -120,7 +105,7 @@ export default function VehiclesPage() {
                             data={vehicles}
                             searchKey="registrationNo"
                             actionButton={
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-2">
                                     <CreateVehicleForm
                                         onVehicleCreated={fetchVehicles}
                                         customerId={customerId || undefined}
@@ -129,6 +114,15 @@ export default function VehiclesPage() {
                                         onUploadComplete={fetchVehicles}
                                         customerId={customerId || undefined}
                                     />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={navigateToImport}
+                                        className="flex items-center gap-1.5"
+                                    >
+                                        <FileUp className="h-4 w-4" />
+                                        Bulk Import
+                                    </Button>
                                 </div>
                             }
                             onRowClick={(vehicle) => setSelectedVehicle(vehicle as Vehicle)}

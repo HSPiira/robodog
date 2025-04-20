@@ -20,7 +20,7 @@ interface SidebarItemProps {
 
 function SidebarItem({ icon, tooltip, href }: SidebarItemProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <TooltipProvider>

@@ -1,5 +1,12 @@
 // Extract user ID from a request
 // In a real world app, this would decode a JWT token or session cookie
+export async function auth() {
+    // For now, return a simple session object
+    return {
+        user: { id: "system-admin" }
+    };
+}
+
 export async function getUserFromRequest(request: Request): Promise<string | null> {
     try {
         // Look for auth token in cookies

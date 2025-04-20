@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
                                     }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-1 px-3">
+                                        <TableCell key={cell.id} className="py-1 px-3 whitespace-nowrap">
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()

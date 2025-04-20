@@ -2,7 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Mail, Phone, CheckCircle, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Mail, Phone, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,6 +16,7 @@ import { EditClientForm } from "./edit-client-form";
 // Define meta types for the table
 type TableMeta = {
     fetchCustomers?: () => void;
+    navigateToClientDetails?: (clientId: string) => void;
 };
 
 interface Customer {
@@ -31,6 +32,7 @@ interface Customer {
     updatedBy?: string | null;
 }
 
+// Export the columns
 export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: "name",
@@ -111,6 +113,7 @@ export const columns: ColumnDef<Customer>[] = [
             // Access table refresh callback from meta
             const meta = table.options.meta as TableMeta | undefined;
             const fetchCustomers = meta?.fetchCustomers;
+            const navigate = meta?.navigateToClientDetails;
 
             return (
                 <div className="text-right w-[40px]">
@@ -130,7 +133,17 @@ export const columns: ColumnDef<Customer>[] = [
                             >
                                 Copy customer ID
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs">View details</DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="text-xs"
+                                onClick={() => {
+                                    if (navigate) {
+                                        navigate(customer.id);
+                                    }
+                                }}
+                            >
+                                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                                View details
+                            </DropdownMenuItem>
                             <EditClientForm
                                 customerId={customer.id}
                                 trigger={

@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Phone, Mail, User, Clock, PenTool, Shield, Info, Car, ArrowRight, Plus } from "lucide-react";
+import { Calendar, Phone, Mail, User, Clock, PenTool, Shield, Info, Car, ArrowRight, Plus, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,13 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
         }
     };
 
+    // Navigate to client details page
+    const handleViewDetails = () => {
+        if (customer) {
+            router.push(`/clients/${customer.id}`);
+        }
+    };
+
     // Load vehicle count when customer changes
     useEffect(() => {
         const fetchVehicleCount = async () => {
@@ -90,7 +97,20 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
     return (
         <Card className="h-full overflow-hidden border-t-4 border-t-primary shadow-md">
             <CardHeader className="pb-3 bg-muted/30">
-                <CardTitle className="text-base font-medium">Customer Details</CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-medium">Customer Details</CardTitle>
+                    {customer && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={handleViewDetails}
+                        >
+                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                            View Details
+                        </Button>
+                    )}
+                </div>
                 <CardDescription className="text-xs">
                     {customer ? "View full customer information" : "Select a customer to view details"}
                 </CardDescription>

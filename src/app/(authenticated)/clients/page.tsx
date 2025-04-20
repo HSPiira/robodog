@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { CustomerDetail } from "./components/customer-detail";
@@ -20,11 +21,17 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
+
+  // Create navigation function
+  const navigateToClientDetails = useCallback((clientId: string) => {
+    router.push(`/clients/${clientId}`);
+  }, [router]);
 
   // Use useCallback to create a stable reference
   const fetchCustomers = useCallback(async () => {
@@ -65,6 +72,8 @@ export default function CustomersPage() {
               }
               onRowClick={(customer) => setSelectedCustomer(customer)}
               fetchData={fetchCustomers}
+              navigateOnDoubleClick={true}
+              navigateToClientDetails={navigateToClientDetails}
             />
           </div>
           <div className="w-[300px] flex-shrink-0">
