@@ -66,7 +66,10 @@ export async function GET() {
             type: customer.type,
             status: customer.isActive ? 'active' : 'inactive',
             policies: customer._count.policies,
-            joinedDate: customer.createdAt.toISOString().split('T')[0]
+            joinedDate: customer.createdAt.toISOString().split('T')[0],
+            // Add dummy values for createdBy and updatedBy until schema is updated
+            createdBy: "system",
+            updatedBy: "system"
         }));
 
         return NextResponse.json(formattedCustomers);

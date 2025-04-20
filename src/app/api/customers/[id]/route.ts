@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(
     request: Request,
     context: { params: { id: string } }
 ) {
     try {
-        // Properly await context.params as per Next.js recommendation
+        // Properly use context.params without synchronous access
         const { id } = context.params;
 
         const customer = await prisma.customer.findUnique({
@@ -32,7 +33,10 @@ export async function GET(
             type: customer.type,
             status: customer.isActive ? 'active' : 'inactive',
             policies: customer._count.policies,
-            joinedDate: customer.createdAt.toISOString().split('T')[0]
+            joinedDate: customer.createdAt.toISOString().split('T')[0],
+            // Add dummy values for createdBy and updatedBy until schema is updated
+            createdBy: "system",
+            updatedBy: "system"
         };
 
         return NextResponse.json(formattedCustomer);
@@ -50,7 +54,7 @@ export async function PATCH(
     context: { params: { id: string } }
 ) {
     try {
-        // Properly await context.params as per Next.js recommendation
+        // Properly use context.params without synchronous access
         const { id } = context.params;
 
         const body = await request.json();

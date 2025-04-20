@@ -27,6 +27,8 @@ interface Customer {
     status: "active" | "inactive";
     policies: number;
     joinedDate: string;
+    createdBy?: string | null;
+    updatedBy?: string | null;
 }
 
 export const columns: ColumnDef<Customer>[] = [
