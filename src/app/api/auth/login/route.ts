@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!user.isActive) {
+            return NextResponse.json({ error: "Account is inactive" }, { status: 401 });
+        }
+
         console.log('[API] User authenticated successfully:', email);
 
         // Check if user is active
@@ -74,7 +78,9 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('[API] Login error:', error);
-        console.error('[API] Error stack:', error.stack);
+        if (error instanceof Error) {
+            console.error('[API] Error stack:', error.stack);
+        }
         return NextResponse.json(
             { error: "Authentication failed" },
             { status: 500 }

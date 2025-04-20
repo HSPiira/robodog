@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Users | RoboDog",
+    title: "Users | robodog",
     description: "Manage system users",
 };
 

@@ -75,6 +75,7 @@ export function Header() {
           size="icon"
           variant="ghost"
           className="h-9 w-9 rounded-full hover:bg-muted/50"
+          aria-label="Messages"
         >
           <MessageSquare size={18} className="text-pink-400" />
         </Button>
@@ -82,6 +83,7 @@ export function Header() {
           size="icon"
           variant="ghost"
           className="h-9 w-9 rounded-full hover:bg-muted/50"
+          aria-label="Notifications"
         >
           <Bell size={18} className="text-muted-foreground" />
         </Button>
