@@ -57,3 +57,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Remove focus ring from dropdowns */
+.select-trigger:focus,
+.select-trigger:focus-visible,
+[role="combobox"]:focus-visible,
+[data-state="open"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  ring-width: 0 !important;
+  ring-offset-width: 0 !important;
+}

@@ -28,7 +28,24 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, Car, Loader2, CarFront } from "lucide-react";
+import {
+    Plus,
+    Car,
+    Loader2,
+    CarFront,
+    ScrollText,
+    Calendar,
+    Factory,
+    Wrench,
+    Tag,
+    LayoutGrid,
+    UserCheck,
+    KeyRound,
+    CircuitBoard,
+    Users,
+    Weight,
+    Ruler
+} from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -194,9 +211,10 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="pb-4 border-b">
-                    <DialogTitle className="text-xl font-semibold tracking-tight">
+                    <DialogTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                        <CarFront className="h-5 w-5 text-primary" />
                         Add New Vehicle
                     </DialogTitle>
                 </DialogHeader>
@@ -206,99 +224,186 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                     </div>
                 ) : (
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6">
-                            <Tabs defaultValue="basic" className="w-full">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+                            <Tabs defaultValue="basic" className="w-full flex-1 overflow-hidden flex flex-col">
                                 <TabsList className="grid grid-cols-2 w-full">
-                                    <TabsTrigger value="basic">Basic Information</TabsTrigger>
-                                    <TabsTrigger value="technical">Technical Details</TabsTrigger>
+                                    <TabsTrigger value="basic" className="flex items-center gap-2">
+                                        <Car className="h-4 w-4" />
+                                        Basic Information
+                                    </TabsTrigger>
+                                    <TabsTrigger value="technical" className="flex items-center gap-2">
+                                        <Wrench className="h-4 w-4" />
+                                        Technical Details
+                                    </TabsTrigger>
                                 </TabsList>
 
-                                <TabsContent value="basic" className="space-y-4 mt-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="registrationNo"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Registration No. *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="UBB 000A"
+                                <div className="flex-1 overflow-auto">
+                                    <TabsContent value="basic" className="space-y-4 mt-4 pb-4 h-[340px] overflow-y-auto pr-1">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="registrationNo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Registration No. *
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="UBB 000A"
+                                                                disabled={isLoading}
+                                                                className="uppercase"
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="year"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Year *
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                type="number"
+                                                                placeholder="2023"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="make"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Factory className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Make *
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="Toyota"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="model"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Model *
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="Corolla"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="vehicleTypeId"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Vehicle Type *
+                                                        </FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
                                                             disabled={isLoading}
-                                                            className="uppercase"
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select vehicle type" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {vehicleTypes.map((type) => (
+                                                                    <SelectItem key={type.id} value={type.id}>
+                                                                        {type.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="categoryId"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Category *
+                                                        </FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
+                                                            disabled={isLoading}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select category" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {vehicleCategories.map((category) => (
+                                                                    <SelectItem key={category.id} value={category.id}>
+                                                                        {category.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
 
                                         <FormField
                                             control={form.control}
-                                            name="year"
+                                            name="bodyTypeId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Year *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            type="number"
-                                                            placeholder="2023"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="make"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Make *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="Toyota"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="model"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Model *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="Corolla"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="vehicleTypeId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Vehicle Type *</FormLabel>
+                                                    <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                        <CarFront className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Body Type *
+                                                    </FormLabel>
                                                     <Select
                                                         onValueChange={field.onChange}
                                                         defaultValue={field.value}
@@ -306,11 +411,11 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                                     >
                                                         <FormControl>
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder="Select vehicle type" />
+                                                                <SelectValue placeholder="Select body type" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {vehicleTypes.map((type) => (
+                                                            {bodyTypes.map((type) => (
                                                                 <SelectItem key={type.id} value={type.id}>
                                                                     {type.name}
                                                                 </SelectItem>
@@ -322,198 +427,158 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                             )}
                                         />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="categoryId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Category *</FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        defaultValue={field.value}
-                                                        disabled={isLoading}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select category" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {vehicleCategories.map((category) => (
-                                                                <SelectItem key={category.id} value={category.id}>
-                                                                    {category.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <FormField
-                                        control={form.control}
-                                        name="bodyTypeId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-sm font-medium">Body Type *</FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    defaultValue={field.value}
-                                                    disabled={isLoading}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select body type" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {bodyTypes.map((type) => (
-                                                            <SelectItem key={type.id} value={type.id}>
-                                                                {type.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage className="text-xs" />
-                                            </FormItem>
+                                        {!customerId && (
+                                            <FormField
+                                                control={form.control}
+                                                name="customerId"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Owner *
+                                                        </FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value}
+                                                            disabled={isLoading}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select vehicle owner" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                {customers.map((customer) => (
+                                                                    <SelectItem key={customer.id} value={customer.id}>
+                                                                        {customer.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
                                         )}
-                                    />
+                                    </TabsContent>
 
-                                    {!customerId && (
-                                        <FormField
-                                            control={form.control}
-                                            name="customerId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Owner *</FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        defaultValue={field.value}
-                                                        disabled={isLoading}
-                                                    >
+                                    <TabsContent value="technical" className="space-y-4 mt-4 pb-4 h-[340px] overflow-y-auto pr-1">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="chassisNo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Chassis No. *
+                                                        </FormLabel>
                                                         <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select vehicle owner" />
-                                                            </SelectTrigger>
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="JTDZS3EU0E3298500"
+                                                                disabled={isLoading}
+                                                            />
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            {customers.map((customer) => (
-                                                                <SelectItem key={customer.id} value={customer.id}>
-                                                                    {customer.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
-                                </TabsContent>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                <TabsContent value="technical" className="space-y-4 mt-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="chassisNo"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Chassis No. *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="JTDZS3EU0E3298500"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
+                                            <FormField
+                                                control={form.control}
+                                                name="engineNo"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Engine No. *
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="2ZR-3298500"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
 
-                                        <FormField
-                                            control={form.control}
-                                            name="engineNo"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Engine No. *</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder="2ZR-3298500"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="seatingCapacity"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Seating
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                type="number"
+                                                                placeholder="5"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="seatingCapacity"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Seating</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            type="number"
-                                                            placeholder="5"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
+                                            <FormField
+                                                control={form.control}
+                                                name="cubicCapacity"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Engine Capacity
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                type="number"
+                                                                placeholder="1800"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="cubicCapacity"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Engine Capacity (cc)</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            type="number"
-                                                            placeholder="1800"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="grossWeight"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Weight (kg)</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            type="number"
-                                                            placeholder="1500"
-                                                            disabled={isLoading}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage className="text-xs" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </TabsContent>
+                                            <FormField
+                                                control={form.control}
+                                                name="grossWeight"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-sm font-medium flex items-center gap-1.5">
+                                                            <Weight className="h-3.5 w-3.5 text-muted-foreground" />
+                                                            Weight (kg)
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                {...field}
+                                                                type="number"
+                                                                placeholder="1500"
+                                                                disabled={isLoading}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage className="text-xs" />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                </div>
                             </Tabs>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t">
+                            <div className="flex justify-end gap-3 pt-4 border-t mt-auto">
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -522,8 +587,8 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={isLoading}>
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Button type="submit" disabled={isLoading} className="gap-1.5">
+                                    {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                                     Create Vehicle
                                 </Button>
                             </div>
