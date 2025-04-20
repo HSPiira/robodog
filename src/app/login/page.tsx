@@ -110,7 +110,6 @@ export default function LoginPage() {
                                                 <Input
                                                     placeholder="Enter your email"
                                                     type="email"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -128,7 +127,6 @@ export default function LoginPage() {
                                                 <Input
                                                     placeholder="Enter your password"
                                                     type="password"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>

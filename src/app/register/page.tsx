@@ -114,7 +114,6 @@ export default function RegisterPage() {
                                             <FormControl>
                                                 <Input
                                                     placeholder="Enter your full name"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -132,7 +131,6 @@ export default function RegisterPage() {
                                                 <Input
                                                     placeholder="Enter your email"
                                                     type="email"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -150,7 +148,6 @@ export default function RegisterPage() {
                                                 <Input
                                                     placeholder="Create a password"
                                                     type="password"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -168,7 +165,6 @@ export default function RegisterPage() {
                                                 <Input
                                                     placeholder="Confirm your password"
                                                     type="password"
-                                                    className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                                     {...field}
                                                 />
                                             </FormControl>
