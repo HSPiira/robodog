@@ -28,7 +28,23 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Edit, Loader2 } from "lucide-react";
+import {
+    Car,
+    Loader2,
+    CarFront,
+    ScrollText,
+    Calendar,
+    Factory,
+    Wrench,
+    Tag,
+    LayoutGrid,
+    UserCheck,
+    KeyRound,
+    CircuitBoard,
+    Users,
+    Weight,
+    Pencil
+} from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -80,15 +96,15 @@ interface Customer {
 }
 
 interface EditVehicleFormProps {
+    onVehicleUpdated: () => void;
     vehicleId: string;
     trigger?: React.ReactNode;
-    onVehicleUpdated: () => void;
 }
 
-export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVehicleFormProps) {
+export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVehicleFormProps) {
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isFetching, setIsFetching] = useState(false);
+    const [isFetchingVehicle, setIsFetchingVehicle] = useState(false);
     const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [bodyTypes, setBodyTypes] = useState<BodyType[]>([]);
     const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
@@ -114,68 +130,76 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
         },
     });
 
-    // Fetch vehicle data when the dialog is opened
+    // Fetch reference data and vehicle data when the dialog is opened
     useEffect(() => {
-        if (open && vehicleId) {
-            const fetchVehicleData = async () => {
-                setIsFetching(true);
+        if (open) {
+            const fetchReferenceData = async () => {
+                setIsLoadingOptions(true);
                 try {
-                    // Fetch reference data
-                    const [vehicleResponse, typesResponse, bodyResponse, categoryResponse, customerResponse] = await Promise.all([
-                        fetch(`/api/vehicles/${vehicleId}`),
+                    // Fetch reference data (vehicle types, body types, etc.)
+                    const [typesResponse, bodyResponse, categoryResponse, customerResponse] = await Promise.all([
                         fetch('/api/vehicle-types'),
                         fetch('/api/body-types'),
                         fetch('/api/vehicle-categories'),
                         fetch('/api/customers')
                     ]);
 
-                    if (!vehicleResponse.ok) {
-                        throw new Error("Failed to fetch vehicle");
-                    }
+                    const [typesData, bodyData, categoryData, customerData] = await Promise.all([
+                        typesResponse.json(),
+                        bodyResponse.json(),
+                        categoryResponse.json(),
+                        customerResponse.json()
+                    ]);
 
-                    // Load reference data
-                    const typesData = await typesResponse.json();
                     setVehicleTypes(typesData);
-
-                    const bodyData = await bodyResponse.json();
                     setBodyTypes(bodyData);
-
-                    const categoryData = await categoryResponse.json();
                     setVehicleCategories(categoryData);
-
-                    const customerData = await customerResponse.json();
                     setCustomers(customerData);
+                } catch (error) {
+                    console.error("Error fetching reference data:", error);
+                    toast.error("Failed to load form data");
+                } finally {
+                    setIsLoadingOptions(false);
+                }
+            };
 
-                    // Load vehicle data
-                    const vehicleData = await vehicleResponse.json();
+            // Fetch vehicle data
+            const fetchVehicleData = async () => {
+                setIsFetchingVehicle(true);
+                try {
+                    const response = await fetch(`/api/vehicles/${vehicleId}`);
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch vehicle data");
+                    }
+                    const vehicleData = await response.json();
 
-                    // Update form with vehicle data
+                    // Populate form with vehicle data
                     form.reset({
                         registrationNo: vehicleData.registrationNo,
                         make: vehicleData.make,
                         model: vehicleData.model,
                         year: vehicleData.year,
-                        bodyTypeId: vehicleData.bodyTypeId,
-                        categoryId: vehicleData.categoryId,
-                        vehicleTypeId: vehicleData.vehicleTypeId,
-                        customerId: vehicleData.customerId,
+                        bodyTypeId: vehicleData.bodyType.id,
+                        categoryId: vehicleData.vehicleCategory.id,
+                        vehicleTypeId: vehicleData.vehicleType.id,
+                        customerId: vehicleData.customer.id,
                         chassisNo: vehicleData.chassisNo,
                         engineNo: vehicleData.engineNo,
-                        seatingCapacity: vehicleData.seatingCapacity || undefined,
-                        cubicCapacity: vehicleData.cubicCapacity || undefined,
-                        grossWeight: vehicleData.grossWeight || undefined,
+                        seatingCapacity: vehicleData.seatingCapacity,
+                        cubicCapacity: vehicleData.cubicCapacity,
+                        grossWeight: vehicleData.grossWeight,
                     });
                 } catch (error) {
-                    console.error("Error fetching vehicle data:", error);
-                    toast.error("Failed to load vehicle information");
+                    console.error("Error fetching vehicle:", error);
+                    toast.error("Failed to load vehicle data");
                     setOpen(false);
                 } finally {
-                    setIsFetching(false);
-                    setIsLoadingOptions(false);
+                    setIsFetchingVehicle(false);
                 }
             };
 
-            fetchVehicleData();
+            // Run reference data and vehicle data fetches in parallel
+            Promise.all([fetchReferenceData(), fetchVehicleData()]);
         }
     }, [open, vehicleId, form]);
 
@@ -210,44 +234,59 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild onClick={(e) => e.preventDefault()}>
                 {trigger || (
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
+                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        Edit
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="pb-4 border-b">
-                    <DialogTitle className="text-xl font-semibold tracking-tight">
+                    <DialogTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                        <CarFront className="h-5 w-5 text-primary" />
                         Edit Vehicle
                     </DialogTitle>
                 </DialogHeader>
-                {isFetching || isLoadingOptions ? (
-                    <div className="py-8 flex justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                ) : (
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-6">
-                            <Tabs defaultValue="basic" className="w-full">
-                                <TabsList className="grid grid-cols-2 w-full">
-                                    <TabsTrigger value="basic">Basic Information</TabsTrigger>
-                                    <TabsTrigger value="technical">Technical Details</TabsTrigger>
-                                </TabsList>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4 space-y-4 flex-1 overflow-hidden flex flex-col text-xs">
+                        <Tabs defaultValue="basic" className="w-full flex-1 overflow-hidden flex flex-col">
+                            <TabsList className="grid grid-cols-2 w-full text-xs">
+                                <TabsTrigger value="basic" className="flex items-center gap-2">
+                                    <Car className="h-4 w-4" />
+                                    Basic Information
+                                </TabsTrigger>
+                                <TabsTrigger value="technical" className="flex items-center gap-2">
+                                    <Wrench className="h-4 w-4" />
+                                    Technical Details
+                                </TabsTrigger>
+                            </TabsList>
 
-                                <TabsContent value="basic" className="space-y-4 mt-4">
+                            <div className="flex-1 overflow-auto relative">
+                                {(isLoadingOptions || isFetchingVehicle) && (
+                                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-20">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+                                            <p className="text-sm text-muted-foreground">Loading vehicle data...</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <TabsContent value="basic" className="space-y-4 mt-4 pb-4 h-[460px] overflow-y-auto pr-1">
                                     <div className="grid grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="registrationNo"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Registration No. *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Registration No. *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
-                                                            placeholder="UBB 000A"
+                                                            placeholder="KAA 123A"
                                                             disabled={isLoading}
-                                                            className="uppercase"
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -260,13 +299,17 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="year"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Year *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Year *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             type="number"
                                                             placeholder="2023"
                                                             disabled={isLoading}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -281,12 +324,16 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="make"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Make *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Factory className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Make *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             placeholder="Toyota"
                                                             disabled={isLoading}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -299,12 +346,16 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="model"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Model *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Model *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             placeholder="Corolla"
                                                             disabled={isLoading}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -313,21 +364,24 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-3 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="vehicleTypeId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Vehicle Type *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Vehicle Type *
+                                                    </FormLabel>
                                                     <Select
-                                                        onValueChange={field.onChange}
                                                         value={field.value}
+                                                        onValueChange={field.onChange}
                                                         disabled={isLoading}
                                                     >
                                                         <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select vehicle type" />
+                                                            <SelectTrigger className="h-8">
+                                                                <SelectValue placeholder="Select type" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
@@ -348,14 +402,17 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="categoryId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Category *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Category *
+                                                    </FormLabel>
                                                     <Select
-                                                        onValueChange={field.onChange}
                                                         value={field.value}
+                                                        onValueChange={field.onChange}
                                                         disabled={isLoading}
                                                     >
                                                         <FormControl>
-                                                            <SelectTrigger>
+                                                            <SelectTrigger className="h-8">
                                                                 <SelectValue placeholder="Select category" />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -371,51 +428,57 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="bodyTypeId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-sm font-medium">Body Type *</FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    value={field.value}
-                                                    disabled={isLoading}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select body type" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {bodyTypes.map((type) => (
-                                                            <SelectItem key={type.id} value={type.id}>
-                                                                {type.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage className="text-xs" />
-                                            </FormItem>
-                                        )}
-                                    />
+                                        <FormField
+                                            control={form.control}
+                                            name="bodyTypeId"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Body Type *
+                                                    </FormLabel>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                        disabled={isLoading}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-8">
+                                                                <SelectValue placeholder="Select body type" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {bodyTypes.map((type) => (
+                                                                <SelectItem key={type.id} value={type.id}>
+                                                                    {type.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage className="text-xs" />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
 
                                     <FormField
                                         control={form.control}
                                         name="customerId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-sm font-medium">Owner *</FormLabel>
+                                                <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                    <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    Owner *
+                                                </FormLabel>
                                                 <Select
-                                                    onValueChange={field.onChange}
                                                     value={field.value}
+                                                    onValueChange={field.onChange}
                                                     disabled={isLoading}
                                                 >
                                                     <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select vehicle owner" />
+                                                        <SelectTrigger className="h-8">
+                                                            <SelectValue placeholder="Select owner" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -432,19 +495,23 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                     />
                                 </TabsContent>
 
-                                <TabsContent value="technical" className="space-y-4 mt-4">
+                                <TabsContent value="technical" className="space-y-4 mt-4 pb-4 h-[460px] overflow-y-auto pr-1">
                                     <div className="grid grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="chassisNo"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Chassis No. *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Chassis No. *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
-                                                            placeholder="JTDZS3EU0E3298500"
+                                                            placeholder="JTEBU4BF4AK082095"
                                                             disabled={isLoading}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -457,12 +524,16 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="engineNo"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Engine No. *</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Engine No. *
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             placeholder="2ZR-3298500"
                                                             disabled={isLoading}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -477,13 +548,19 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="seatingCapacity"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Seating</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Seating
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             type="number"
                                                             placeholder="5"
                                                             disabled={isLoading}
+                                                            value={field.value === undefined ? "" : field.value}
+                                                            onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -496,13 +573,19 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="cubicCapacity"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Engine Capacity (cc)</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Engine Capacity
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             type="number"
                                                             placeholder="1800"
                                                             disabled={isLoading}
+                                                            value={field.value === undefined ? "" : field.value}
+                                                            onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value))}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -515,13 +598,19 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                             name="grossWeight"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium">Weight (kg)</FormLabel>
+                                                    <FormLabel className="text-xs font-medium flex items-center gap-1.5">
+                                                        <Weight className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        Weight (kg)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
                                                             type="number"
                                                             placeholder="1500"
                                                             disabled={isLoading}
+                                                            value={field.value === undefined ? "" : field.value}
+                                                            onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                                                            className="h-8"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -530,25 +619,25 @@ export function EditVehicleForm({ vehicleId, trigger, onVehicleUpdated }: EditVe
                                         />
                                     </div>
                                 </TabsContent>
-                            </Tabs>
-
-                            <div className="flex justify-end gap-3 pt-4 border-t">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setOpen(false)}
-                                    disabled={isLoading}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={isLoading}>
-                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Update Vehicle
-                                </Button>
                             </div>
-                        </form>
-                    </Form>
-                )}
+                        </Tabs>
+
+                        <div className="flex justify-end gap-3 pt-4 border-t mt-auto">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setOpen(false)}
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading} className="gap-1.5">
+                                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Update Vehicle
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </DialogContent>
         </Dialog>
     );

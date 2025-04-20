@@ -2,7 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Calendar, Tag, FileText, CheckCircle, AlertCircle, Check, X } from "lucide-react";
+import { MoreHorizontal, Calendar, Tag, FileText, CheckCircle, AlertCircle, Check, X, ArchiveX } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,6 +17,7 @@ import { EditVehicleForm } from "./edit-vehicle-form";
 // Define meta types for the table
 type TableMeta = {
     fetchVehicles?: () => void;
+    deactivateVehicle?: (vehicleId: string) => void;
 };
 
 interface Vehicle {
@@ -142,7 +143,7 @@ export const columns: ColumnDef<Vehicle>[] = [
         id: "actions",
         cell: ({ row, table }) => {
             const vehicle = row.original;
-            const fetchVehicles = (table.options.meta as TableMeta)?.fetchVehicles;
+            const meta = table.options.meta as TableMeta;
 
             return (
                 <DropdownMenu>
@@ -153,58 +154,19 @@ export const columns: ColumnDef<Vehicle>[] = [
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
                         <EditVehicleForm
                             vehicleId={vehicle.id}
-                            onVehicleUpdated={fetchVehicles || (() => { })}
                             trigger={
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     Edit vehicle
                                 </DropdownMenuItem>
                             }
+                            onVehicleUpdated={() => meta?.fetchVehicles?.()}
                         />
-                        {vehicle.isActive ? (
-                            <DropdownMenuItem
-                                onClick={async () => {
-                                    try {
-                                        const response = await fetch(`/api/vehicles/${vehicle.id}/deactivate`, {
-                                            method: 'PATCH'
-                                        });
-
-                                        if (!response.ok) {
-                                            throw new Error("Failed to deactivate vehicle");
-                                        }
-
-                                        fetchVehicles?.();
-                                    } catch (error) {
-                                        console.error("Error deactivating vehicle:", error);
-                                    }
-                                }}
-                            >
-                                Deactivate
-                            </DropdownMenuItem>
-                        ) : (
-                            <DropdownMenuItem
-                                onClick={async () => {
-                                    try {
-                                        const response = await fetch(`/api/vehicles/${vehicle.id}/activate`, {
-                                            method: 'PATCH'
-                                        });
-
-                                        if (!response.ok) {
-                                            throw new Error("Failed to activate vehicle");
-                                        }
-
-                                        fetchVehicles?.();
-                                    } catch (error) {
-                                        console.error("Error activating vehicle:", error);
-                                    }
-                                }}
-                            >
-                                Activate
-                            </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem className="text-destructive" onClick={() => meta?.deactivateVehicle?.(vehicle.id)}>
+                            <ArchiveX className="h-4 w-4 mr-2" />
+                            Deactivate
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
