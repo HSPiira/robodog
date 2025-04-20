@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     description: "View and manage reported operations",
 };
 
-export default function ReportedLayout({
+export default function HomeLayout({
     children,
 }: {
     children: React.ReactNode;

@@ -1,18 +1,15 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { RootLayoutContent } from "@/components/layout/root-layout";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/lib/context/auth-context";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
   variable: "--font-montserrat",
 });
-
-export const metadata: Metadata = {
-  title: "Robodog",
-  description: "A modern web app for Robodog operations",
-  generator: "v0.dev",
-};
 
 export default function RootLayout({
   children,
@@ -21,8 +18,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${montserrat.variable} font-sans bg-background text-foreground`}>
-        <RootLayoutContent>{children}</RootLayoutContent>
+      <body className={`${montserrat.variable} font-sans`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
