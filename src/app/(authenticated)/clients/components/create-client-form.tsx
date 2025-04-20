@@ -149,7 +149,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                     <FormControl>
                                         <Input
                                             {...field}
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
                                             placeholder="Enter customer name"
                                             disabled={isChecking}
                                         />
@@ -170,7 +170,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                         disabled={isChecking}
                                     >
                                         <FormControl>
-                                            <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary">
+                                            <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0">
                                                 <SelectValue placeholder="Select customer type" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -195,7 +195,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                         <Input
                                             {...field}
                                             type="email"
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
                                             placeholder="customer@example.com"
                                             disabled={isChecking}
                                         />
@@ -213,7 +213,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                     <FormControl>
                                         <Input
                                             {...field}
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
                                             placeholder="+1 (555) 000-0000"
                                             disabled={isChecking}
                                         />

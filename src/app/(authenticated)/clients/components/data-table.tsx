@@ -35,6 +35,7 @@ interface DataTableProps<TData, TValue> {
     searchKey?: string;
     actionButton?: React.ReactNode;
     onRowClick?: (row: TData) => void;
+    fetchData?: () => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +44,7 @@ export function DataTable<TData, TValue>({
     searchKey = "name",
     actionButton,
     onRowClick,
+    fetchData,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -66,6 +68,9 @@ export function DataTable<TData, TValue>({
             columnFilters,
             columnVisibility,
             rowSelection,
+        },
+        meta: {
+            fetchCustomers: fetchData
         },
     });
 

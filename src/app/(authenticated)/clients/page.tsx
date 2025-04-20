@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { CustomerDetail } from "./components/customer-detail";
@@ -11,6 +11,7 @@ interface Customer {
   name: string;
   email: string;
   phone: string;
+  type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
   status: "active" | "inactive";
   policies: number;
   joinedDate: string;
@@ -23,8 +24,10 @@ export default function CustomersPage() {
     null
   );
 
-  const fetchCustomers = async () => {
+  // Use useCallback to create a stable reference
+  const fetchCustomers = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch("/api/customers");
       if (!response.ok) {
         throw new Error("Failed to fetch customers");
@@ -36,15 +39,15 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [fetchCustomers]);
 
   return (
     <div className="p-6 space-y-6">
-      {loading ? (
+      {loading && customers.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -59,6 +62,7 @@ export default function CustomersPage() {
                 <CreateCustomerForm onCustomerCreated={fetchCustomers} />
               }
               onRowClick={(customer) => setSelectedCustomer(customer)}
+              fetchData={fetchCustomers}
             />
           </div>
           <div className="w-[300px] flex-shrink-0">

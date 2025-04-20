@@ -11,6 +11,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EditClientForm } from "./edit-client-form";
+
+// Define meta types for the table
+type TableMeta = {
+    fetchCustomers?: () => void;
+};
 
 interface Customer {
     id: string;
@@ -97,8 +103,12 @@ export const columns: ColumnDef<Customer>[] = [
     },
     {
         id: "actions",
-        cell: ({ row }: { row: Row<Customer> }) => {
+        cell: ({ row, table }) => {
             const customer = row.original;
+
+            // Access table refresh callback from meta
+            const meta = table.options.meta as TableMeta | undefined;
+            const fetchCustomers = meta?.fetchCustomers;
 
             return (
                 <div className="text-right w-[40px]">
@@ -119,7 +129,20 @@ export const columns: ColumnDef<Customer>[] = [
                                 Copy customer ID
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-xs">View details</DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs">Edit</DropdownMenuItem>
+                            <EditClientForm
+                                customerId={customer.id}
+                                trigger={
+                                    <DropdownMenuItem className="text-xs" onSelect={(e) => e.preventDefault()}>
+                                        Edit
+                                    </DropdownMenuItem>
+                                }
+                                onClientUpdated={() => {
+                                    // Refresh the table data
+                                    if (fetchCustomers) {
+                                        fetchCustomers();
+                                    }
+                                }}
+                            />
                             <DropdownMenuItem className="text-xs text-red-600">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
