@@ -29,12 +29,30 @@ export async function POST(request: Request) {
                     make: vehicle.make,
                     model: vehicle.model,
                     year: vehicle.year,
-                    bodyTypeId: vehicle.bodyTypeId,
-                    categoryId: vehicle.categoryId,
-                    vehicleTypeId: vehicle.vehicleTypeId,
-                    customerId: vehicle.customerId,
+                    bodyType: {
+                        connect: {
+                            id: vehicle.bodyTypeId
+                        }
+                    },
+                    vehicleCategory: {
+                        connect: {
+                            id: vehicle.categoryId
+                        }
+                    },
+                    vehicleType: {
+                        connect: {
+                            id: vehicle.vehicleTypeId
+                        }
+                    },
+                    customer: {
+                        connect: {
+                            id: vehicle.customerId
+                        }
+                    },
                     chassisNo: vehicle.chassisNo || "",
                     engineNo: vehicle.engineNo || "",
+                    chassisNumber: vehicle.chassisNo || "",
+                    engineNumber: vehicle.engineNo || "",
                     seatingCapacity: vehicle.seatingCapacity || null,
                     cubicCapacity: vehicle.cubicCapacity || null,
                     grossWeight: vehicle.grossWeight || null,
