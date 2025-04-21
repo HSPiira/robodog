@@ -61,12 +61,20 @@ export async function POST(request: Request) {
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        // Get pagination parameters from query string
+        const url = new URL(request.url);
+        const page = parseInt(url.searchParams.get('page') || '1');
+        const limit = parseInt(url.searchParams.get('limit') || '20');
+        const skip = (page - 1) * limit;
+
         const clients = await prisma.client.findMany({
             orderBy: {
                 createdAt: 'desc'
             },
+            skip,
+            take: limit,
             select: {
                 id: true,
                 name: true,
@@ -86,6 +94,9 @@ export async function GET() {
             }
         });
 
+        // Get total count for pagination
+        const totalCount = await prisma.client.count();
+
         // Transform the data to match the expected format
         const formattedClients = clients.map((client: ClientWithPolicyCount) => ({
             id: client.id,
@@ -101,7 +112,15 @@ export async function GET() {
             updatedBy: client.updatedBy || 'system'
         }));
 
-        return NextResponse.json(formattedClients);
+        return NextResponse.json({
+            data: formattedClients,
+            pagination: {
+                total: totalCount,
+                page,
+                limit,
+                pages: Math.ceil(totalCount / limit)
+            }
+        });
     } catch (error) {
         console.error("Error fetching clients:", error);
         return NextResponse.json(
@@ -109,4 +128,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-} 
+}
