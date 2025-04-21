@@ -101,6 +101,10 @@ export async function updateDatabaseEnumValue(
         // This is a placeholder implementation
         return { success: true };
     } catch (error) {
-        return { success: false, error: 'Failed to update enum value in database' };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+            success: false,
+            error: `Failed to update enum value in database: ${errorMessage}`
+        };
     }
-} 
+}
