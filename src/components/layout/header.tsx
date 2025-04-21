@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Search,
   MessageSquare,
@@ -20,6 +21,7 @@ import {
   Globe,
   Book,
   MessageCircle,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,32 +35,138 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
 
 export function Header() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, logout } = useAuth();
+  const [customerName, setCustomerName] = useState<string>("Customer Vehicles");
 
-  // Get the current page name from the pathname
-  const getPageName = (path: string) => {
-    const segments = path.split("/").filter(Boolean);
-    return segments[0] || "home";
+  // Get current section/page from pathname
+  const getCurrentPage = () => {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return "Home";
+    return segments[0].charAt(0).toUpperCase() + segments[0].slice(1);
   };
 
-  const currentPage = getPageName(pathname);
-  const formattedPageName =
-    currentPage.charAt(0).toUpperCase() + currentPage.slice(1);
+  const currentPage = getCurrentPage();
+
+  // Get customerId from search params if it exists
+  const customerId = searchParams.get("customerId");
+
+  // Fetch customer name if customerId is present
+  useEffect(() => {
+    if (customerId && pathname.includes("/vehicles")) {
+      const fetchCustomerName = async () => {
+        try {
+          const response = await fetch(`/api/customers/${customerId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.name) {
+              setCustomerName(data.name);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching customer name:", error);
+        }
+      };
+
+      fetchCustomerName();
+    }
+
+    // For client details page
+    if (pathname.includes("/clients/") && !pathname.includes("/vehicles")) {
+      const clientId = pathname.split("/").pop();
+      if (clientId) {
+        const fetchClientName = async () => {
+          try {
+            const response = await fetch(`/api/customers/${clientId}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.name) {
+                setCustomerName(data.name);
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching client name:", error);
+          }
+        };
+
+        fetchClientName();
+      }
+    }
+  }, [customerId, pathname]);
+
+  // Determine if we're on a client's vehicles page
+  const isClientVehicles = pathname.includes("/vehicles") && customerId;
+
+  // Determine if we're on a client details page
+  const isClientDetails = pathname.includes("/clients/") && pathname.split("/").length > 2;
 
   return (
     <header className="h-14 px-4 flex items-center justify-between bg-background fixed top-0 right-0 left-16 z-20 border-b">
-      <h1 className="text-xl font-medium tracking-wide text-foreground flex items-center gap-1">
-        <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
-          robodog
-        </span>
-        <span className="text-muted-foreground">·</span>
-        <span className="text-[10px] font-normal text-muted-foreground tracking-wider">
-          {formattedPageName}
-        </span>
-      </h1>
+      <div className="flex items-center">
+        <div className="flex items-center text-xs h-full my-auto">
+          <span className="text-xl font-black tracking-tight bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent flex items-center">
+            robodog
+          </span>
+
+          <span className="text-muted-foreground mx-1 flex items-center">.</span>
+
+          {isClientVehicles ? (
+            <>
+              <Link
+                href="/clients"
+                className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
+              >
+                Clients
+              </Link>
+              <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+              <Link
+                href={`/clients/${customerId}`}
+                className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
+              >
+                {customerName}
+              </Link>
+              <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+              <span className="text-foreground font-medium flex items-center">
+                Vehicles
+              </span>
+            </>
+          ) : isClientDetails ? (
+            <>
+              <Link
+                href="/clients"
+                className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
+              >
+                Clients
+              </Link>
+              <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+              <span className="text-foreground font-medium flex items-center">
+                {customerName}
+              </span>
+            </>
+          ) : (
+            <>
+              <Link
+                href={`/${currentPage.toLowerCase()}`}
+                className="text-foreground font-medium flex items-center"
+              >
+                {currentPage}
+              </Link>
+              {pathname.includes('/import') && (
+                <>
+                  <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+                  <span className="text-foreground font-medium flex items-center">
+                    Import
+                  </span>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="flex items-center gap-2">
         <div className="relative w-[400px] mr-2">

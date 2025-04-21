@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
-import { CustomerDetail } from "./components/customer-detail";
+import { ClientDetail } from "./components/client-detail";
 import { CreateCustomerForm } from "./components/create-client-form";
 
 interface Customer {
@@ -11,20 +12,31 @@ interface Customer {
   name: string;
   email: string;
   phone: string;
+  type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
   status: "active" | "inactive";
   policies: number;
   joinedDate: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
 
-  const fetchCustomers = async () => {
+  // Create navigation function
+  const navigateToClientDetails = useCallback((clientId: string) => {
+    router.push(`/clients/${clientId}`);
+  }, [router]);
+
+  // Use useCallback to create a stable reference
+  const fetchCustomers = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch("/api/customers");
       if (!response.ok) {
         throw new Error("Failed to fetch customers");
@@ -36,15 +48,15 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [fetchCustomers]);
 
   return (
     <div className="p-6 space-y-6">
-      {loading ? (
+      {loading && customers.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -59,10 +71,13 @@ export default function CustomersPage() {
                 <CreateCustomerForm onCustomerCreated={fetchCustomers} />
               }
               onRowClick={(customer) => setSelectedCustomer(customer)}
+              fetchData={fetchCustomers}
+              navigateOnDoubleClick={true}
+              navigateToClientDetails={navigateToClientDetails}
             />
           </div>
           <div className="w-[300px] flex-shrink-0">
-            <CustomerDetail customer={selectedCustomer || undefined} />
+            <ClientDetail client={selectedCustomer || undefined} />
           </div>
         </div>
       )}
