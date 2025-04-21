@@ -204,7 +204,8 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
         <Dialog
             open={open}
             onOpenChange={(newOpen) => {
-                if (newOpen === false && isLoading) return;
+                // Only allow opening, prevent closing except through buttons
+                if (newOpen === false) return;
                 setOpen(newOpen);
             }}
         >
@@ -217,6 +218,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                         className="h-8"
                         onClick={() => setOpen(true)}
                     >
+                        <Plus className="h-3.5 w-3.5 mr-1 text-blue-500" />
                         Add Vehicle
                     </Button>
                 ) : (
@@ -227,10 +229,10 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                     type="button"
                                     variant="outline"
                                     size="icon"
-                                    className="h-8 w-8 rounded-full text-foreground hover:text-foreground"
+                                    className="h-8 w-8 rounded-full bg-primary/5 hover:bg-primary/10 transition-colors"
                                     onClick={() => setOpen(true)}
                                 >
-                                    <CarFront className="h-4 w-4" />
+                                    <CarFront className="h-4 w-4 text-blue-500" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="text-xs">
@@ -243,7 +245,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="pb-4 border-b">
                     <DialogTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
-                        <CarFront className="h-5 w-5 text-primary" />
+                        <CarFront className="h-5 w-5 text-blue-500" />
                         Add New Vehicle
                     </DialogTitle>
                 </DialogHeader>
@@ -252,11 +254,11 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                         <Tabs defaultValue="basic" className="w-full flex-1 overflow-hidden flex flex-col">
                             <TabsList className="grid grid-cols-2 w-full text-xs">
                                 <TabsTrigger value="basic" className="flex items-center gap-2">
-                                    <Car className="h-4 w-4" />
+                                    <Car className="h-4 w-4 text-blue-500" />
                                     Basic Information
                                 </TabsTrigger>
                                 <TabsTrigger value="technical" className="flex items-center gap-2">
-                                    <Wrench className="h-4 w-4" />
+                                    <Wrench className="h-4 w-4 text-purple-500" />
                                     Technical Details
                                 </TabsTrigger>
                             </TabsList>
@@ -275,7 +277,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <ScrollText className="h-3.5 w-3.5 text-amber-500" />
                                                         Registration No. *
                                                     </FormLabel>
                                                     <FormControl>
@@ -283,7 +285,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             {...field}
                                                             placeholder="UBB 000A"
                                                             disabled={isLoading}
-                                                            className="uppercase h-8"
+                                                            className="uppercase h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -297,7 +299,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Calendar className="h-3.5 w-3.5 text-green-500" />
                                                         Year *
                                                     </FormLabel>
                                                     <FormControl>
@@ -306,7 +308,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             type="number"
                                                             placeholder="2023"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -322,7 +324,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Factory className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Factory className="h-3.5 w-3.5 text-indigo-500" />
                                                         Make *
                                                     </FormLabel>
                                                     <FormControl>
@@ -330,7 +332,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             {...field}
                                                             placeholder="Toyota"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -344,7 +346,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Car className="h-3.5 w-3.5 text-blue-500" />
                                                         Model *
                                                     </FormLabel>
                                                     <FormControl>
@@ -352,7 +354,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             {...field}
                                                             placeholder="Corolla"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -368,7 +370,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <LayoutGrid className="h-3.5 w-3.5 text-purple-500" />
                                                         Vehicle Type *
                                                     </FormLabel>
                                                     <Select
@@ -377,7 +379,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                         value={field.value}
                                                     >
                                                         <FormControl>
-                                                            <SelectTrigger className="h-8">
+                                                            <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
                                                                 <SelectValue placeholder="Select vehicle type" />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -400,7 +402,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Tag className="h-3.5 w-3.5 text-orange-500" />
                                                         Category *
                                                     </FormLabel>
                                                     <Select
@@ -409,7 +411,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                         disabled={isLoading}
                                                     >
                                                         <FormControl>
-                                                            <SelectTrigger className="h-8">
+                                                            <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
                                                                 <SelectValue placeholder="Select category" />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -433,7 +435,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                    <CarFront className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    <CarFront className="h-3.5 w-3.5 text-cyan-500" />
                                                     Body Type *
                                                 </FormLabel>
                                                 <Select
@@ -442,7 +444,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                     disabled={isLoading}
                                                 >
                                                     <FormControl>
-                                                        <SelectTrigger className="h-8">
+                                                        <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
                                                             <SelectValue placeholder="Select body type" />
                                                         </SelectTrigger>
                                                     </FormControl>
@@ -466,7 +468,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <UserCheck className="h-3.5 w-3.5 text-pink-500" />
                                                         Owner *
                                                     </FormLabel>
                                                     <Select
@@ -475,7 +477,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                         disabled={isLoading}
                                                     >
                                                         <FormControl>
-                                                            <SelectTrigger className="h-8">
+                                                            <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
                                                                 <SelectValue placeholder="Select vehicle owner" />
                                                             </SelectTrigger>
                                                         </FormControl>
@@ -507,7 +509,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <KeyRound className="h-3.5 w-3.5 text-amber-500" />
                                                         Chassis No. *
                                                     </FormLabel>
                                                     <FormControl>
@@ -515,7 +517,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             {...field}
                                                             placeholder="JTDZS3EU0E3298500"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -529,7 +531,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <CircuitBoard className="h-3.5 w-3.5 text-red-500" />
                                                         Engine No. *
                                                     </FormLabel>
                                                     <FormControl>
@@ -537,7 +539,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             {...field}
                                                             placeholder="2ZR-3298500"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -553,7 +555,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Users className="h-3.5 w-3.5 text-indigo-500" />
                                                         Seating
                                                     </FormLabel>
                                                     <FormControl>
@@ -562,7 +564,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             type="number"
                                                             placeholder="5"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -576,7 +578,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <CircuitBoard className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <CircuitBoard className="h-3.5 w-3.5 text-teal-500" />
                                                         Engine Capacity
                                                     </FormLabel>
                                                     <FormControl>
@@ -585,7 +587,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             type="number"
                                                             placeholder="1800"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -599,7 +601,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
-                                                        <Weight className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Weight className="h-3.5 w-3.5 text-orange-500" />
                                                         Weight (kg)
                                                     </FormLabel>
                                                     <FormControl>
@@ -608,7 +610,7 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                                             type="number"
                                                             placeholder="1500"
                                                             disabled={isLoading}
-                                                            className="h-8"
+                                                            className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-xs" />
@@ -626,12 +628,26 @@ export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = fals
                                 variant="outline"
                                 onClick={() => setOpen(false)}
                                 disabled={isLoading}
+                                className="hover:bg-background/80 transition-colors"
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isLoading} className="gap-1.5">
-                                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                                Create Vehicle
+                            <Button
+                                type="submit"
+                                disabled={isLoading}
+                                className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus className="h-4 w-4" />
+                                        Create Vehicle
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </form>

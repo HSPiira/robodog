@@ -28,7 +28,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Mail, Phone, Home, Building2, User, Loader2, Shield, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -130,16 +130,23 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(newOpen) => {
+            // Only allow closing through cancel button or close button
+            if (newOpen === false) return;
+            setOpen(newOpen);
+        }}>
             <DialogTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full">
-                    <UserPlus className="h-4 w-4" />
+                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full bg-primary/5 hover:bg-primary/10 transition-colors">
+                    <UserPlus className="h-4 w-4 text-blue-500" />
                     <span className="sr-only">Add client</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader className="pb-4 border-b">
-                    <DialogTitle className="text-xl font-semibold tracking-tight">Add New Client</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                        <User className="h-5 w-5 text-blue-500" />
+                        Add New Client
+                    </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-5">
@@ -148,11 +155,14 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Name *</FormLabel>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <User className="h-4 w-4 text-blue-500" />
+                                        Name *
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
                                             placeholder="Enter client name"
                                             disabled={isChecking}
                                         />
@@ -166,22 +176,33 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Client Type *</FormLabel>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-purple-500" />
+                                        Client Type *
+                                    </FormLabel>
                                     <Select
                                         onValueChange={field.onChange}
                                         defaultValue={field.value}
                                         disabled={isChecking}
                                     >
                                         <FormControl>
-                                            <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0">
+                                            <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors">
                                                 <SelectValue placeholder="Select client type" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                                            <SelectItem value="BUSINESS">Business</SelectItem>
-                                            <SelectItem value="GOVERNMENT">Government</SelectItem>
-                                            <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
+                                            <SelectItem value="INDIVIDUAL">
+                                                Individual
+                                            </SelectItem>
+                                            <SelectItem value="BUSINESS">
+                                                Business
+                                            </SelectItem>
+                                            <SelectItem value="GOVERNMENT">
+                                                Government
+                                            </SelectItem>
+                                            <SelectItem value="NON_PROFIT">
+                                                Non-Profit
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage className="text-xs" />
@@ -193,12 +214,15 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                             name="email"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Email (optional)</FormLabel>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-indigo-500" />
+                                        Email (optional)
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
                                             type="email"
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
                                             placeholder="client@example.com"
                                             disabled={isChecking}
                                         />
@@ -212,11 +236,14 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                             name="phone"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Phone (optional)</FormLabel>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-green-500" />
+                                        Phone (optional)
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
                                             placeholder="+1 (555) 000-0000"
                                             disabled={isChecking}
                                         />
@@ -230,11 +257,14 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                             name="address"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Address (optional)</FormLabel>
+                                    <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                        <Home className="h-4 w-4 text-orange-500" />
+                                        Address (optional)
+                                    </FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
-                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
                                             placeholder="Enter address"
                                             disabled={isChecking}
                                         />
@@ -248,17 +278,27 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                                 type="button"
                                 variant="outline"
                                 onClick={() => setOpen(false)}
-                                className="h-10 px-5 text-sm font-medium rounded-lg"
+                                className="h-10 px-5 text-sm font-medium rounded-lg hover:bg-background/80 transition-colors"
                                 disabled={isChecking}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 type="submit"
-                                className="h-10 px-5 text-sm font-medium rounded-lg"
+                                className="h-10 px-5 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors flex items-center gap-2"
                                 disabled={isChecking}
                             >
-                                {isChecking ? "Checking..." : "Create Client"}
+                                {isChecking ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Checking...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UserPlus className="h-4 w-4" />
+                                        Create Client
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </form>
