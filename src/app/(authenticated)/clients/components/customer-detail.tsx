@@ -67,24 +67,37 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
 
     // Load vehicle count when customer changes
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchVehicleCount = async () => {
             if (!customer) return;
 
             try {
                 setIsLoadingVehicles(true);
-                const response = await fetch(`/api/customers/${customer.id}/vehicles/count`);
+                const response = await fetch(
+                    `/api/customers/${customer.id}/vehicles/count`,
+                    { signal: controller.signal },
+                );
                 if (response.ok) {
                     const data: VehicleCount = await response.json();
                     setVehicleCount(data.count);
                 }
             } catch (error) {
-                console.error("Error fetching vehicle count:", error);
+                // Ignore abort errors, log everything else
+                if ((error as any).name !== "AbortError") {
+                    console.error("Error fetching vehicle count:", error);
+                }
             } finally {
                 setIsLoadingVehicles(false);
             }
         };
 
+        // Reset any stale count immediately
+        setVehicleCount(0);
         fetchVehicleCount();
+
+        // Cleanup: abort any in-flight request on unmount or deps change
+        return () => controller.abort();
     }, [customer]);
 
     const handleVehicleCreated = () => {
