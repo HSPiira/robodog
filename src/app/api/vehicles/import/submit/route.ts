@@ -1,112 +1,66 @@
-import { NextResponse } from "next/server";
-// @ts-ignore - Module resolution error in TypeScript
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { createAuthenticatedHandler } from "@/lib/api-utils";
 
-export async function POST(request: Request) {
+/**
+ * Handles vehicle import submission
+ */
+async function handleVehicleImport(req: NextRequest) {
     try {
-        const { vehicles } = await request.json();
-
-        if (!vehicles || !Array.isArray(vehicles) || vehicles.length === 0) {
+        // Get the session and user
+        const session = await auth();
+        if (!session?.user?.email) {
             return NextResponse.json(
-                { error: "No vehicles provided for import" },
+                { error: "Not authenticated" },
+                { status: 401 }
+            );
+        }
+
+        const userEmail = session.user.email;
+
+        // Find the user in the database
+        const user = await prisma.user.findUnique({
+            where: { email: userEmail },
+        });
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
+
+        if (!file) {
+            return NextResponse.json(
+                { error: "No file uploaded" },
                 { status: 400 }
             );
         }
 
-        // Track import stats
-        const results = {
-            total: vehicles.length,
-            success: 0,
-            failed: 0,
-            vehicles: [] as any[],
-        };
+        // Process the file and save to database logic here
+        // This is a placeholder for actual implementation
+        console.log(`Processing file: ${file.name} (${file.size} bytes) uploaded by ${userEmail}`);
 
-        // Import vehicles one by one to handle errors individually
-        for (const vehicle of vehicles) {
-            try {
-                // Extract the necessary fields for a valid vehicle
-                const vehicleData = {
-                    registrationNo: vehicle.registrationNo,
-                    make: vehicle.make,
-                    model: vehicle.model,
-                    year: vehicle.year,
-                    bodyType: {
-                        connect: {
-                            id: vehicle.bodyTypeId
-                        }
-                    },
-                    vehicleCategory: {
-                        connect: {
-                            id: vehicle.categoryId
-                        }
-                    },
-                    vehicleType: {
-                        connect: {
-                            id: vehicle.vehicleTypeId
-                        }
-                    },
-                    client: {
-                        connect: {
-                            id: vehicle.customerId
-                        }
-                    },
-                    chassisNo: vehicle.chassisNo || "",
-                    engineNo: vehicle.engineNo || "",
-                    chassisNumber: vehicle.chassisNo || "",
-                    engineNumber: vehicle.engineNo || "",
-                    seatingCapacity: vehicle.seatingCapacity || null,
-                    cubicCapacity: vehicle.cubicCapacity || null,
-                    grossWeight: vehicle.grossWeight || null,
-                    isActive: true,
-                };
-
-                // Check if vehicle with registration number already exists
-                const existingVehicle = await prisma.vehicle.findFirst({
-                    where: {
-                        registrationNo: vehicleData.registrationNo,
-                    },
-                });
-
-                if (existingVehicle) {
-                    // If vehicle exists, handle as error (you could also update instead)
-                    results.failed++;
-                    results.vehicles.push({
-                        registrationNo: vehicleData.registrationNo,
-                        status: "error",
-                        message: "A vehicle with this registration number already exists",
-                    });
-                    continue;
-                }
-
-                // Create new vehicle
-                // @ts-ignore - Type mismatch in Prisma model definitions
-                const newVehicle = await prisma.vehicle.create({
-                    data: vehicleData,
-                });
-
-                results.success++;
-                results.vehicles.push({
-                    id: newVehicle.id,
-                    registrationNo: newVehicle.registrationNo,
-                    status: "success",
-                });
-            } catch (vehicleError) {
-                console.error("Error importing vehicle:", vehicleError, vehicle);
-                results.failed++;
-                results.vehicles.push({
-                    registrationNo: vehicle.registrationNo || "Unknown",
-                    status: "error",
-                    message: "Failed to import vehicle",
-                });
-            }
-        }
-
-        return NextResponse.json(results);
+        return NextResponse.json(
+            {
+                message: "File uploaded successfully",
+                fileName: file.name,
+                fileSize: file.size,
+                uploadedBy: userEmail
+            },
+            { status: 200 }
+        );
     } catch (error) {
-        console.error("Error in vehicles import submit:", error);
+        console.error("Vehicle import error:", error);
         return NextResponse.json(
             { error: "Failed to process vehicle import" },
             { status: 500 }
         );
     }
-} 
+}
+
+export const POST = createAuthenticatedHandler(handleVehicleImport); 

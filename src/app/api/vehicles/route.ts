@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { auth } from "@/lib/auth";
+
+interface SessionUser {
+    id: string;
+    email: string;
+    name: string;
+}
 
 // Define the type for vehicle creation input
 type VehicleCreateData = {
@@ -22,6 +29,14 @@ type VehicleCreateData = {
 
 export async function POST(request: Request) {
     try {
+        // Authenticate the user
+        const session = await auth();
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = session.user as SessionUser;
+
         const body = await request.json();
         const {
             registrationNo,
@@ -68,6 +83,16 @@ export async function POST(request: Request) {
             );
         }
 
+        // Verify user exists in the database and get their ID
+        const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true }
+        });
+
+        if (!dbUser) {
+            console.error(`User ${user.email} not found in database`);
+        }
+
         // Create the vehicle data
         const vehicleData = {
             registrationNo: registrationNo.toUpperCase(),
@@ -84,6 +109,8 @@ export async function POST(request: Request) {
             cubicCapacity: cubicCapacity || null,
             grossWeight: grossWeight || null,
             isActive: true,
+            createdBy: dbUser?.id || null, // Store user ID for the relation
+            updatedBy: dbUser?.id || null, // Store user ID for the relation
         };
 
         // Cast to any as a last resort instead of using @ts-ignore

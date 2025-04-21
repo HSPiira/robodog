@@ -6,6 +6,7 @@ import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { ClientDetail } from "./components/client-detail";
 import { CreateClientForm } from "./components/create-client-form";
+import { useAuth } from "@/lib/context/auth-context";
 
 interface Client {
   id: string;
@@ -22,11 +23,10 @@ interface Client {
 
 export default function ClientsPage() {
   const router = useRouter();
+  const { token } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(
-    null
-  );
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Create navigation function
   const navigateToClientDetails = useCallback((clientId: string) => {
@@ -37,7 +37,11 @@ export default function ClientsPage() {
   const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/clients");
+      const response = await fetch("/api/clients", {
+        headers: {
+          "Authorization": token ? `Bearer ${token}` : ""
+        }
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch clients");
       }
@@ -55,7 +59,7 @@ export default function ClientsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchClients();

@@ -31,6 +31,7 @@ import { DataTable } from "../components/data-table";
 import { columns } from "../../vehicles/components/columns";
 import { CreateVehicleForm } from "../../vehicles/components/create-vehicle-form";
 import { EditClientForm } from "../components/edit-client-form";
+import { useAuth } from "@/lib/context/auth-context";
 
 interface Client {
   id: string;
@@ -74,6 +75,7 @@ export default function ClientDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const clientId = params.id as string;
+  const { token } = useAuth();
 
   const [client, setClient] = useState<Client | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -86,7 +88,11 @@ export default function ClientDetailsPage() {
 
     try {
       setLoadingClient(true);
-      const response = await fetch(`/api/clients/${clientId}`);
+      const response = await fetch(`/api/clients/${clientId}`, {
+        headers: {
+          "Authorization": token ? `Bearer ${token}` : "",
+        }
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch client");
       }
@@ -97,7 +103,7 @@ export default function ClientDetailsPage() {
     } finally {
       setLoadingClient(false);
     }
-  }, [clientId]);
+  }, [clientId, token]);
 
   // Fetch vehicles for this client
   const fetchVehicles = useCallback(async () => {
@@ -105,7 +111,11 @@ export default function ClientDetailsPage() {
 
     try {
       setLoadingVehicles(true);
-      const response = await fetch(`/api/clients/${clientId}/vehicles`);
+      const response = await fetch(`/api/clients/${clientId}/vehicles`, {
+        headers: {
+          "Authorization": token ? `Bearer ${token}` : "",
+        }
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch vehicles");
       }
@@ -116,7 +126,7 @@ export default function ClientDetailsPage() {
     } finally {
       setLoadingVehicles(false);
     }
-  }, [clientId]);
+  }, [clientId, token]);
 
   useEffect(() => {
     fetchClient();

@@ -1,9 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parse } from "csv-parse";
+import { auth } from "@/lib/auth";
+
+interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+}
 
 export async function POST(request: Request) {
   try {
+    // Authenticate the user
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = session.user as SessionUser;
+
+    // Get the authenticated user from the database
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+      select: { id: true }
+    });
+
+    if (!dbUser) {
+      console.error(`User ${user.email} not found in database`);
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const clientId = formData.get("clientId") as string | null;
@@ -118,8 +143,7 @@ export async function POST(request: Request) {
 
           if (existingVehicle) {
             throw new Error(
-              `Row ${
-                index + 2
+              `Row ${index + 2
               }: Vehicle with registration number '${regNo}' already exists`
             );
           }
@@ -142,8 +166,7 @@ export async function POST(request: Request) {
 
           if (!category) {
             throw new Error(
-              `Row ${index + 2}: Invalid vehicle category ID '${
-                record.category_id
+              `Row ${index + 2}: Invalid vehicle category ID '${record.category_id
               }'`
             );
           }
@@ -155,8 +178,7 @@ export async function POST(request: Request) {
 
           if (!vehicleType) {
             throw new Error(
-              `Row ${index + 2}: Invalid vehicle type ID '${
-                record.vehicle_type_id
+              `Row ${index + 2}: Invalid vehicle type ID '${record.vehicle_type_id
               }'`
             );
           }
@@ -190,8 +212,7 @@ export async function POST(request: Request) {
             seatingCapacity = parseInt(record.seating_capacity);
             if (isNaN(seatingCapacity) || seatingCapacity <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid seating capacity value '${
-                  record.seating_capacity
+                `Row ${index + 2}: Invalid seating capacity value '${record.seating_capacity
                 }'`
               );
             }
@@ -201,8 +222,7 @@ export async function POST(request: Request) {
             cubicCapacity = parseInt(record.cubic_capacity);
             if (isNaN(cubicCapacity) || cubicCapacity <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid cubic capacity value '${
-                  record.cubic_capacity
+                `Row ${index + 2}: Invalid cubic capacity value '${record.cubic_capacity
                 }'`
               );
             }
@@ -212,8 +232,7 @@ export async function POST(request: Request) {
             grossWeight = parseFloat(record.gross_weight);
             if (isNaN(grossWeight) || grossWeight <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid gross weight value '${
-                  record.gross_weight
+                `Row ${index + 2}: Invalid gross weight value '${record.gross_weight
                 }'`
               );
             }
@@ -237,7 +256,9 @@ export async function POST(request: Request) {
               cubicCapacity,
               grossWeight,
               isActive: true,
-            },
+              createdBy: dbUser?.id,
+              updatedBy: dbUser?.id,
+            } as any,
           });
 
           return vehicle;

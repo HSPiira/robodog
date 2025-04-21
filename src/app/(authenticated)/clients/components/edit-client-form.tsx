@@ -40,6 +40,7 @@ import {
   Home,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/context/auth-context";
 
 // Define the form schema
 const formSchema = z.object({
@@ -93,6 +94,7 @@ export function EditClientForm({
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [client, setClient] = useState<Client | null>(null);
+  const { token } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -115,6 +117,9 @@ export function EditClientForm({
           setIsLoading(true);
           const response = await fetch(`/api/clients/${clientId}`, {
             signal: controller.signal,
+            headers: {
+              "Authorization": token ? `Bearer ${token}` : "",
+            }
           });
           if (!response.ok) {
             throw new Error("Failed to fetch client");
@@ -141,7 +146,7 @@ export function EditClientForm({
 
       return () => controller.abort(); // cleanup on unmount or effect re-run
     }
-  }, [open, clientId, form]);
+  }, [open, clientId, form, token]);
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -150,6 +155,7 @@ export function EditClientForm({
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({
           name: data.name,

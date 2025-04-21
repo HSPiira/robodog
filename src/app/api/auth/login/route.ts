@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UserService } from "@/lib/services/user-service";
 import { headers } from "next/headers";
+import { generateToken } from "@/lib/jwt";
 
 export async function POST(request: NextRequest) {
     console.log('[API] Login request received');
@@ -64,17 +65,35 @@ export async function POST(request: NextRequest) {
         // Return user data (excluding password)
         const { password: _, ...userWithoutPassword } = user;
 
-        // Set CORS headers
+        // Generate JWT token
+        const token = generateToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role
+        });
+
+        // Set CORS headers and create response with token
         const response = NextResponse.json({
             user: userWithoutPassword,
+            token: token,
             message: "Login successful",
+        });
+
+        // Set auth token cookie that expires in 7 days
+        response.cookies.set({
+            name: 'auth-token',
+            value: token,
+            httpOnly: true,
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            sameSite: 'strict'
         });
 
         response.headers.set("Access-Control-Allow-Origin", "*");
         response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
         response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-        console.log('[API] Login successful, sending response');
+        console.log('[API] Login successful, sending response with token');
         return response;
     } catch (error) {
         console.error('[API] Login error:', error);

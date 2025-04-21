@@ -30,6 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserPlus, Mail, Phone, Home, Building2, User, Loader2, Shield, Heart } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/context/auth-context";
 
 const formSchema = z.object({
     name: z.string()
@@ -53,6 +54,7 @@ interface CreateClientFormProps {
 export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
     const [open, setOpen] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
+    const { token } = useAuth();
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -66,20 +68,44 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
 
     const checkDuplicateName = async (name: string) => {
         try {
+            if (!name || name.trim().length < 2) {
+                return false; // No need to check very short names
+            }
+
+            const trimmedName = name.trim();
             setIsChecking(true);
-            const response = await fetch(`/api/clients/check-duplicate?name=${encodeURIComponent(name.trim())}`);
+            console.log(`Checking if client name exists: "${trimmedName}"`);
+
+            const response = await fetch(`/api/clients/check-duplicate?name=${encodeURIComponent(trimmedName)}`, {
+                headers: {
+                    "Authorization": token ? `Bearer ${token}` : "",
+                }
+            });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to check for duplicate client");
+                console.error("Error checking duplicate name:", errorData);
+                toast.error("Error checking client name");
+                return false;
             }
 
             const data = await response.json();
-            return data.exists;
+            console.log("Duplicate check response:", data);
+
+            // If exists is true, we found a duplicate
+            if (data.exists) {
+                form.setError("name", {
+                    type: "manual",
+                    message: `A client with this name already exists: ${data.client.name}`,
+                });
+                return true; // Return true if duplicate exists
+            }
+
+            return false; // Return false if no duplicate
         } catch (error) {
-            console.error("Error checking duplicate name:", error);
-            toast.error("Error checking for duplicate client name");
-            throw error; // Re-throw to be handled by the caller
+            console.error("Error checking client name:", error);
+            toast.error("Error checking client name");
+            return false;
         } finally {
             setIsChecking(false);
         }
@@ -90,18 +116,10 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
             const trimmedName = data.name.trim();
 
             // Check for duplicate name
-            try {
-                const isDuplicate = await checkDuplicateName(trimmedName);
-                if (isDuplicate) {
-                    form.setError("name", {
-                        type: "manual",
-                        message: "A client with this name already exists"
-                    });
-                    return;
-                }
-            } catch (error) {
-                // Error already handled in checkDuplicateName
-                return;
+            const isDuplicate = await checkDuplicateName(trimmedName);
+            if (isDuplicate) {
+                console.log("Duplicate client name detected, stopping submission");
+                return; // Stop form submission if duplicate
             }
 
             // Clean up empty strings for optional fields
@@ -115,10 +133,13 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                 status: "active"
             };
 
+            console.log("Creating client with data:", payload);
+
             const response = await fetch("/api/clients", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": token ? `Bearer ${token}` : "",
                 },
                 body: JSON.stringify(payload),
             });
@@ -128,7 +149,10 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
                 throw new Error(errorData.error || "Failed to create client");
             }
 
-            toast.success("Client created successfully");
+            // Get the created client data
+            const createdClient = await response.json();
+            toast.success(`Client "${createdClient.name}" created successfully`);
+
             form.reset();
             setOpen(false);
             onClientCreated();

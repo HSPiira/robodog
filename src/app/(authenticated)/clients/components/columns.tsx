@@ -12,6 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditClientForm } from "./edit-client-form";
+import { DeleteClientDialog } from "./delete-client-dialog";
 
 // Define meta types for the table
 type TableMeta = {
@@ -158,7 +159,16 @@ export const columns: ColumnDef<Client>[] = [
                                     }
                                 }}
                             />
-                            <DropdownMenuItem className="text-xs text-red-600">Delete</DropdownMenuItem>
+                            <DeleteClientDialog
+                                clientId={client.id}
+                                clientName={client.name}
+                                onClientDeleted={() => {
+                                    // Refresh the table data
+                                    if (fetchClients) {
+                                        fetchClients();
+                                    }
+                                }}
+                            />
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
