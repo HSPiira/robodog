@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { parse } from "@/lib/api";
 
 // Define the form schema
 const formSchema = z.object({
@@ -145,10 +146,10 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                     ]);
 
                     const [typesData, bodyData, categoryData, customerData] = await Promise.all([
-                        typesResponse.json(),
-                        bodyResponse.json(),
-                        categoryResponse.json(),
-                        customerResponse.json()
+                        parse(typesResponse),
+                        parse(bodyResponse),
+                        parse(categoryResponse),
+                        parse(customerResponse)
                     ]);
 
                     setVehicleTypes(typesData);
@@ -168,10 +169,7 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                 setIsFetchingVehicle(true);
                 try {
                     const response = await fetch(`/api/vehicles/${vehicleId}`);
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch vehicle data");
-                    }
-                    const vehicleData = await response.json();
+                    const vehicleData = await parse(response);
 
                     // Populate form with vehicle data
                     form.reset({

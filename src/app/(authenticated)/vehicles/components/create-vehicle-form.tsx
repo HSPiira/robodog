@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { parse } from "@/lib/api";
 
 // Define the form schema
 const formSchema = z.object({
@@ -145,9 +146,9 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                     ]);
 
                     const [typesData, bodyData, categoryData] = await Promise.all([
-                        typesResponse.json(),
-                        bodyResponse.json(),
-                        categoryResponse.json()
+                        parse(typesResponse),
+                        parse(bodyResponse),
+                        parse(categoryResponse)
                     ]);
 
                     setVehicleTypes(typesData);
@@ -156,7 +157,7 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
 
                     // Only fetch customers if customerId is not provided
                     if (!customerId && customerResponse) {
-                        const customerData = await customerResponse.json();
+                        const customerData = await parse(customerResponse);
                         setCustomers(customerData);
                     }
                 } catch (error) {
