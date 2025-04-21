@@ -21,7 +21,12 @@ export const SettingsService = {
         if (typeof window !== 'undefined') {
             const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
             if (savedSettings) {
-                return JSON.parse(savedSettings);
+                try {
+                    return JSON.parse(savedSettings);
+                } catch (error) {
+                    console.error('Failed to parse saved settings:', error);
+                    // Fall back to default settings
+                }
             }
         }
         return {
