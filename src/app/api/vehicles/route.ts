@@ -1,5 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+
+// Define the type for vehicle creation input
+type VehicleCreateData = {
+    registrationNo: string;
+    make: string;
+    model: string;
+    year: number;
+    bodyTypeId: string;
+    categoryId: string;
+    vehicleTypeId: string;
+    clientId: string;
+    chassisNumber: string;
+    engineNumber: string;
+    seatingCapacity: number | null;
+    cubicCapacity: number | null;
+    grossWeight: number | null;
+    isActive: boolean;
+};
 
 export async function POST(request: Request) {
     try {
@@ -13,25 +32,27 @@ export async function POST(request: Request) {
             categoryId,
             vehicleTypeId,
             clientId,
-            chassisNo,
-            engineNo,
+            chassisNumber,
+            engineNumber,
             seatingCapacity,
             cubicCapacity,
             grossWeight
         } = body;
 
         // Validate required fields
-        if (!registrationNo || !make || !model || !bodyTypeId || !categoryId || !clientId || !chassisNo || !engineNo) {
-          return res.status(400).json({ message: 'Missing required fields' });
-        }
-        // Verify client exists
-        const client = await prisma.client.findUnique({ where: { id: clientId } });
-        if (!client) {
-          return res.status(404).json({ message: `Client with ID ${clientId} not found` });
-        }
+        if (!registrationNo || !make || !model || !bodyTypeId || !categoryId || !clientId || !chassisNumber || !engineNumber) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
+            );
+        }
+
+        // Verify client exists
+        const client = await prisma.client.findUnique({ where: { id: clientId } });
+        if (!client) {
+            return NextResponse.json(
+                { error: `Client with ID ${clientId} not found` },
+                { status: 404 }
             );
         }
 
@@ -47,26 +68,27 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create vehicle
+        // Create the vehicle data
+        const vehicleData = {
+            registrationNo: registrationNo.toUpperCase(),
+            make,
+            model,
+            year,
+            bodyTypeId,
+            categoryId,
+            vehicleTypeId,
+            clientId,
+            chassisNumber,
+            engineNumber,
+            seatingCapacity: seatingCapacity || null,
+            cubicCapacity: cubicCapacity || null,
+            grossWeight: grossWeight || null,
+            isActive: true,
+        };
+
+        // Cast to any as a last resort instead of using @ts-ignore
         const vehicle = await prisma.vehicle.create({
-            data: {
-                registrationNo: registrationNo.toUpperCase(),
-                make,
-                model,
-                year,
-                bodyTypeId,
-                categoryId,
-                vehicleTypeId,
-                clientId,
-                chassisNo,
-                engineNo,
-                engineNumber: engineNo, // Map to both fields for compatibility
-                chassisNumber: chassisNo, // Map to both fields for compatibility
-                seatingCapacity: seatingCapacity || null,
-                cubicCapacity: cubicCapacity || null,
-                grossWeight: grossWeight || null,
-                isActive: true,
-            },
+            data: vehicleData as any,
             include: {
                 bodyType: true,
                 vehicleCategory: true,
@@ -128,8 +150,8 @@ export async function GET() {
             make: vehicle.make,
             model: vehicle.model,
             year: vehicle.year,
-            chassisNo: vehicle.chassisNo || vehicle.chassisNumber,
-            engineNo: vehicle.engineNo || vehicle.engineNumber,
+            chassisNumber: vehicle.chassisNumber,
+            engineNumber: vehicle.engineNumber,
             bodyType: vehicle.bodyType,
             vehicleCategory: vehicle.vehicleCategory,
             vehicleType: vehicle.vehicleType,
@@ -149,4 +171,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-} 
+}

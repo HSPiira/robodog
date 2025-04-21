@@ -41,8 +41,15 @@ export default function ClientsPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch clients");
       }
-      const data = await response.json();
-      setClients(data);
+      const result = await response.json();
+
+      // API now returns data wrapped in a 'data' field with pagination
+      if (result.data) {
+        setClients(result.data);
+      } else {
+        // Fallback for older API format or if data structure changes
+        setClients(result);
+      }
     } catch (error) {
       console.error("Error fetching clients:", error);
     } finally {

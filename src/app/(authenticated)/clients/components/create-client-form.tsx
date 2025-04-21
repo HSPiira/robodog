@@ -66,31 +66,41 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
 
     const checkDuplicateName = async (name: string) => {
         try {
+            setIsChecking(true);
             const response = await fetch(`/api/clients/check-duplicate?name=${encodeURIComponent(name.trim())}`);
+
             if (!response.ok) {
-                throw new Error("Failed to check for duplicate name");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to check for duplicate client");
             }
+
             const data = await response.json();
             return data.exists;
         } catch (error) {
             console.error("Error checking duplicate name:", error);
-            return false;
+            toast.error("Error checking for duplicate client name");
+            throw error; // Re-throw to be handled by the caller
+        } finally {
+            setIsChecking(false);
         }
     };
 
     async function onSubmit(data: FormValues) {
         try {
-            setIsChecking(true);
             const trimmedName = data.name.trim();
 
             // Check for duplicate name
-            const isDuplicate = await checkDuplicateName(trimmedName);
-            if (isDuplicate) {
-                form.setError("name", {
-                    type: "manual",
-                    message: "A client with this name already exists"
-                });
-                setIsChecking(false);
+            try {
+                const isDuplicate = await checkDuplicateName(trimmedName);
+                if (isDuplicate) {
+                    form.setError("name", {
+                        type: "manual",
+                        message: "A client with this name already exists"
+                    });
+                    return;
+                }
+            } catch (error) {
+                // Error already handled in checkDuplicateName
                 return;
             }
 
@@ -114,7 +124,8 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create client");
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to create client");
             }
 
             toast.success("Client created successfully");
@@ -123,9 +134,7 @@ export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
             onClientCreated();
         } catch (error) {
             console.error("Error creating client:", error);
-            toast.error("Failed to create client");
-        } finally {
-            setIsChecking(false);
+            toast.error(error instanceof Error ? error.message : "Failed to create client");
         }
     }
 

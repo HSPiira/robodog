@@ -22,8 +22,8 @@ interface Vehicle {
     make: string;
     model: string;
     year: number;
-    chassisNo: string;
-    engineNo: string;
+    chassisNumber: string;
+    engineNumber: string;
     bodyType: {
         name: string;
     };
@@ -52,7 +52,7 @@ export default function VehiclesPage() {
 
     const router = useRouter();
     const searchParams = useSearchParams();
-    const clientId = searchParams.get('clientId');
+    const clientId = searchParams.get("clientId");
 
     // Fetch vehicles data
     const fetchVehicles = useCallback(async () => {
@@ -94,7 +94,7 @@ export default function VehiclesPage() {
 
     // Navigate to bulk import page
     const navigateToImport = () => {
-        router.push('/vehicles/import');
+        router.push("/vehicles/import");
     };
 
     return (
@@ -154,4 +154,4 @@ export default function VehiclesPage() {
             )}
         </div>
     );
-} 
+}
