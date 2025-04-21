@@ -111,8 +111,6 @@ export async function POST(req: Request) {
                         make: String(row.make),
                         model: String(row.model),
                         year: row.year ? Number(row.year) : 0,
-                        chassisNo: row.chassisNo ? String(row.chassisNo) : "",
-                        engineNo: row.engineNo ? String(row.engineNo) : "",
                         chassisNumber: row.chassisNo ? String(row.chassisNo) : "",
                         engineNumber: row.engineNo ? String(row.engineNo) : "",
                         bodyTypeId: row.bodyType || "",
