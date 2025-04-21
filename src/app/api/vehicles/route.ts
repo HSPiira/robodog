@@ -22,6 +22,13 @@ export async function POST(request: Request) {
 
         // Validate required fields
         if (!registrationNo || !make || !model || !bodyTypeId || !categoryId || !clientId || !chassisNo || !engineNo) {
+          return res.status(400).json({ message: 'Missing required fields' });
+        }
+        // Verify client exists
+        const client = await prisma.client.findUnique({ where: { id: clientId } });
+        if (!client) {
+          return res.status(404).json({ message: `Client with ID ${clientId} not found` });
+        }
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
