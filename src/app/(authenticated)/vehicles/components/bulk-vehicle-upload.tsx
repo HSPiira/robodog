@@ -166,8 +166,6 @@ export function BulkVehicleUpload({ customerId, onUploadComplete }: BulkVehicleU
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
-            // Only allow closing through the cancel button
-            if (!newOpen) return;
             setOpen(newOpen);
             if (!newOpen) {
                 resetForm();
