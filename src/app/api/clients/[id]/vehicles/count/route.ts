@@ -9,14 +9,14 @@ export async function GET(
         const params = context.params;
         const id = params.id;
 
-        // Check if customer exists
-        const customer = await prisma.customer.findUnique({
+        // Check if client exists
+        const client = await prisma.client.findUnique({
             where: { id }
         });
 
-        if (!customer) {
+        if (!client) {
             return NextResponse.json(
-                { error: "Customer not found" },
+                { error: "Client not found" },
                 { status: 404 }
             );
         }
@@ -24,7 +24,7 @@ export async function GET(
         // Get vehicle count
         const count = await prisma.vehicle.count({
             where: {
-                customerId: id,
+                clientId: id,
                 isActive: true
             }
         });

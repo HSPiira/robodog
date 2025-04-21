@@ -55,6 +55,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { VehicleType } from "@prisma/client";
 
 // Define the form schema
 const formSchema = z.object({
@@ -72,8 +73,8 @@ const formSchema = z.object({
         .max(new Date().getFullYear() + 1, `Year cannot be later than ${new Date().getFullYear() + 1}`),
     bodyTypeId: z.string().min(1, "Body type is required"),
     categoryId: z.string().min(1, "Vehicle category is required"),
-    vehicleTypeId: z.string().min(1, "Vehicle type is required"),
-    customerId: z.string().min(1, "Owner is required"),
+    vehicleType: z.enum(['PASSENGER', 'COMMERCIAL', 'MOTORCYCLE', 'OTHER'] as const),
+    clientId: z.string().min(1, "Owner is required"),
     chassisNo: z.string().min(1, "Chassis number is required"),
     engineNo: z.string().min(1, "Engine number is required"),
     seatingCapacity: z.coerce.number().int().positive().optional(),
@@ -82,11 +83,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-interface VehicleType {
-    id: string;
-    name: string;
-}
 
 interface BodyType {
     id: string;
@@ -98,25 +94,26 @@ interface VehicleCategory {
     name: string;
 }
 
-interface Customer {
+interface Client {
     id: string;
     name: string;
 }
 
 interface CreateVehicleFormProps {
     onVehicleCreated: () => void;
-    customerId?: string;
+    clientId?: string;
     isCompact?: boolean;
 }
 
-export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = false }: CreateVehicleFormProps) {
+export function CreateVehicleForm({ onVehicleCreated, clientId, isCompact = false }: CreateVehicleFormProps) {
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [bodyTypes, setBodyTypes] = useState<BodyType[]>([]);
     const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+
+    const vehicleTypes = ['PASSENGER', 'COMMERCIAL', 'MOTORCYCLE', 'OTHER'] as const;
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -127,8 +124,8 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
             year: new Date().getFullYear(),
             bodyTypeId: "",
             categoryId: "",
-            vehicleTypeId: "",
-            customerId: customerId || "",
+            vehicleType: 'PASSENGER',
+            clientId: clientId || "",
             chassisNo: "",
             engineNo: "",
             seatingCapacity: undefined,
@@ -144,27 +141,24 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                 setIsLoadingOptions(true);
                 try {
                     // Fetch all reference data in parallel
-                    const [typesResponse, bodyResponse, categoryResponse, customerResponse] = await Promise.all([
-                        fetch('/api/vehicle-types'),
+                    const [bodyResponse, categoryResponse, clientResponse] = await Promise.all([
                         fetch('/api/body-types'),
                         fetch('/api/vehicle-categories'),
-                        !customerId ? fetch('/api/customers') : Promise.resolve(null)
+                        !clientId ? fetch('/api/clients') : Promise.resolve(null)
                     ]);
 
-                    const [typesData, bodyData, categoryData] = await Promise.all([
-                        parse(typesResponse),
+                    const [bodyData, categoryData] = await Promise.all([
                         parse(bodyResponse),
                         parse(categoryResponse)
                     ]);
 
-                    setVehicleTypes(typesData);
                     setBodyTypes(bodyData);
                     setVehicleCategories(categoryData);
 
-                    // Only fetch customers if customerId is not provided
-                    if (!customerId && customerResponse) {
-                        const customerData = await parse(customerResponse);
-                        setCustomers(customerData);
+                    // Only fetch clients if clientId is not provided
+                    if (!clientId && clientResponse) {
+                        const clientData = await parse(clientResponse);
+                        setClients(clientData);
                     }
                 } catch (error) {
                     console.error("Error fetching reference data:", error);
@@ -176,7 +170,7 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
 
             fetchReferenceData();
         }
-    }, [open, customerId]);
+    }, [open, clientId]);
 
     const onSubmit = async (data: FormValues) => {
         try {
@@ -370,7 +364,7 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                     <div className="grid grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
-                                            name="vehicleTypeId"
+                                            name="vehicleType"
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
@@ -380,7 +374,7 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                                     <Select
                                                         onValueChange={field.onChange}
                                                         defaultValue={field.value}
-                                                        disabled={isLoading}
+                                                        value={field.value}
                                                     >
                                                         <FormControl>
                                                             <SelectTrigger className="h-8">
@@ -389,8 +383,8 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                                         </FormControl>
                                                         <SelectContent>
                                                             {vehicleTypes.map((type) => (
-                                                                <SelectItem key={type.id} value={type.id}>
-                                                                    {type.name}
+                                                                <SelectItem key={type} value={type}>
+                                                                    {type.charAt(0) + type.slice(1).toLowerCase()}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>
@@ -465,10 +459,10 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                         )}
                                     />
 
-                                    {!customerId && (
+                                    {!clientId && (
                                         <FormField
                                             control={form.control}
-                                            name="customerId"
+                                            name="clientId"
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs font-medium flex items-center gap-1.5">
@@ -486,9 +480,9 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {customers.map((customer) => (
-                                                                <SelectItem key={customer.id} value={customer.id}>
-                                                                    {customer.name}
+                                                            {clients.map((client) => (
+                                                                <SelectItem key={client.id} value={client.id}>
+                                                                    {client.name}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>

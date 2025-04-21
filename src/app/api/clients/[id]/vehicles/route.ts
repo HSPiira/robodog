@@ -8,19 +8,19 @@ export async function GET(
     try {
         const { id } = context.params;
 
-        // Check if customer exists
-        const customer = await prisma.customer.findUnique({
+        // Check if client exists
+        const client = await prisma.client.findUnique({
             where: { id }
         });
 
-        if (!customer) {
-            return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+        if (!client) {
+            return NextResponse.json({ error: "Client not found" }, { status: 404 });
         }
 
         // Get vehicles
         const vehicles = await prisma.vehicle.findMany({
             where: {
-                customerId: id
+                clientId: id
             },
             orderBy: {
                 registrationNo: 'asc'
@@ -61,9 +61,9 @@ export async function GET(
             bodyType: vehicle.bodyType,
             vehicleCategory: vehicle.vehicleCategory,
             vehicleType: vehicle.vehicleType,
-            customer: {
-                id: customer.id,
-                name: customer.name
+            client: {
+                id: client.id,
+                name: client.name
             },
             isActive: vehicle.isActive,
             policies: vehicle._count.policies,
@@ -74,9 +74,9 @@ export async function GET(
 
         return NextResponse.json(formattedVehicles);
     } catch (error) {
-        console.error("Error fetching customer vehicles:", error);
+        console.error("Error fetching client vehicles:", error);
         return NextResponse.json(
-            { error: "Failed to fetch customer vehicles" },
+            { error: "Failed to fetch client vehicles" },
             { status: 500 }
         );
     }

@@ -14,7 +14,7 @@ export async function GET(
                 id,
             },
             include: {
-                customer: {
+                client: {
                     select: {
                         id: true,
                         name: true,
@@ -58,7 +58,7 @@ export async function PATCH(
             bodyTypeId,
             categoryId,
             vehicleTypeId,
-            customerId,
+            clientId,
             chassisNo,
             engineNo,
             seatingCapacity,
@@ -93,7 +93,7 @@ export async function PATCH(
                 bodyTypeId,
                 categoryId,
                 vehicleTypeId,
-                customerId,
+                clientId,
                 chassisNo,
                 engineNo,
                 seatingCapacity: seatingCapacity || null,

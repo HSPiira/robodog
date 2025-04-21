@@ -50,7 +50,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Customer {
+interface Client {
     id: string;
     name: string;
     email: string;
@@ -62,15 +62,15 @@ interface Customer {
 }
 
 interface EditClientFormProps {
-    customerId: string;
+    clientId: string;
     trigger?: React.ReactNode;
     onClientUpdated: () => void;
 }
 
-export function EditClientForm({ customerId, trigger, onClientUpdated }: EditClientFormProps) {
+export function EditClientForm({ clientId, trigger, onClientUpdated }: EditClientFormProps) {
     const [open, setOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [customer, setCustomer] = useState<Customer | null>(null);
+    const [client, setClient] = useState<Client | null>(null);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -83,18 +83,18 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
         },
     });
 
-    // Fetch customer data when the dialog is opened
+    // Fetch client data when the dialog is opened
     useEffect(() => {
-        if (open && customerId) {
-            const fetchCustomer = async () => {
+        if (open && clientId) {
+            const fetchClient = async () => {
                 try {
                     setIsLoading(true);
-                    const response = await fetch(`/api/customers/${customerId}`);
+                    const response = await fetch(`/api/clients/${clientId}`);
                     if (!response.ok) {
-                        throw new Error("Failed to fetch customer");
+                        throw new Error("Failed to fetch client");
                     }
                     const data = await response.json();
-                    setCustomer(data);
+                    setClient(data);
 
                     // Set form values
                     form.reset({
@@ -105,21 +105,21 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                         status: data.status,
                     });
                 } catch (error) {
-                    console.error("Error fetching customer:", error);
-                    toast.error("Failed to load customer data");
+                    console.error("Error fetching client:", error);
+                    toast.error("Failed to load client data");
                 } finally {
                     setIsLoading(false);
                 }
             };
 
-            fetchCustomer();
+            fetchClient();
         }
-    }, [open, customerId, form]);
+    }, [open, clientId, form]);
 
     const onSubmit = async (data: FormValues) => {
         try {
             setIsLoading(true);
-            const response = await fetch(`/api/customers/${customerId}`, {
+            const response = await fetch(`/api/clients/${clientId}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -134,15 +134,15 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update customer");
+                throw new Error("Failed to update client");
             }
 
-            toast.success("Customer updated successfully");
+            toast.success("Client updated successfully");
             setOpen(false);
             onClientUpdated();
         } catch (error) {
-            console.error("Error updating customer:", error);
-            toast.error("Failed to update customer");
+            console.error("Error updating client:", error);
+            toast.error("Failed to update client");
         } finally {
             setIsLoading(false);
         }
@@ -161,17 +161,17 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                 {trigger || (
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit customer</span>
+                        <span className="sr-only">Edit client</span>
                     </Button>
                 )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader className="pb-4 border-b">
                     <DialogTitle className="text-xl font-semibold tracking-tight">
-                        Edit Customer
+                        Edit Client
                     </DialogTitle>
                 </DialogHeader>
-                {isLoading && !customer ? (
+                {isLoading && !client ? (
                     <div className="py-8 flex justify-center">
                         <div className="animate-spin h-6 w-6 border-2 border-primary rounded-full border-t-transparent"></div>
                     </div>
@@ -187,7 +187,7 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                                         <FormControl>
                                             <Input
                                                 {...field}
-                                                placeholder="Enter customer name"
+                                                placeholder="Enter client name"
                                                 disabled={isLoading}
                                                 className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                             />
@@ -201,7 +201,7 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                                 name="type"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-sm font-medium">Customer Type</FormLabel>
+                                        <FormLabel className="text-sm font-medium">Client Type</FormLabel>
                                         <Select
                                             onValueChange={field.onChange}
                                             defaultValue={field.value}
@@ -209,7 +209,7 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                                         >
                                             <FormControl>
                                                 <SelectTrigger className="focus-visible:ring-0 focus-visible:ring-offset-0">
-                                                    <SelectValue placeholder="Select customer type" />
+                                                    <SelectValue placeholder="Select client type" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -233,7 +233,7 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                                             <Input
                                                 {...field}
                                                 type="email"
-                                                placeholder="customer@example.com"
+                                                placeholder="client@example.com"
                                                 disabled={isLoading}
                                                 className="focus-visible:ring-0 focus-visible:ring-offset-0"
                                             />
@@ -270,7 +270,7 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
                                                 Active Status
                                             </FormLabel>
                                             <div className="text-xs text-muted-foreground">
-                                                Customer will be marked as {field.value === "active" ? "active" : "inactive"}
+                                                Client will be marked as {field.value === "active" ? "active" : "inactive"}
                                             </div>
                                         </div>
                                         <FormControl>

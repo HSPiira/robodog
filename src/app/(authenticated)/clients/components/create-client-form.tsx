@@ -40,16 +40,17 @@ const formSchema = z.object({
         }),
     email: z.string().email("Invalid email address").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone number must be at least 10 characters").optional().or(z.literal("")),
+    address: z.string().min(5, "Address must be at least 5 characters").optional().or(z.literal("")),
     type: z.enum(["INDIVIDUAL", "BUSINESS", "GOVERNMENT", "NON_PROFIT"]).default("INDIVIDUAL"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface CreateCustomerFormProps {
-    onCustomerCreated: () => void;
+interface CreateClientFormProps {
+    onClientCreated: () => void;
 }
 
-export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProps) {
+export function CreateClientForm({ onClientCreated }: CreateClientFormProps) {
     const [open, setOpen] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
     const form = useForm<FormValues>({
@@ -58,13 +59,14 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
             name: "",
             email: "",
             phone: "",
+            address: "",
             type: "INDIVIDUAL",
         },
     });
 
     const checkDuplicateName = async (name: string) => {
         try {
-            const response = await fetch(`/api/customers/check-duplicate?name=${encodeURIComponent(name.trim())}`);
+            const response = await fetch(`/api/clients/check-duplicate?name=${encodeURIComponent(name.trim())}`);
             if (!response.ok) {
                 throw new Error("Failed to check for duplicate name");
             }
@@ -86,7 +88,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
             if (isDuplicate) {
                 form.setError("name", {
                     type: "manual",
-                    message: "A customer with this name already exists"
+                    message: "A client with this name already exists"
                 });
                 setIsChecking(false);
                 return;
@@ -98,11 +100,12 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                 name: trimmedName,
                 email: data.email?.trim() || undefined,
                 phone: data.phone?.trim() || undefined,
+                address: data.address?.trim() || undefined,
                 type: data.type,
                 status: "active"
             };
 
-            const response = await fetch("/api/customers", {
+            const response = await fetch("/api/clients", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -111,16 +114,16 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create customer");
+                throw new Error("Failed to create client");
             }
 
-            toast.success("Customer created successfully");
+            toast.success("Client created successfully");
             form.reset();
             setOpen(false);
-            onCustomerCreated();
+            onClientCreated();
         } catch (error) {
-            console.error("Error creating customer:", error);
-            toast.error("Failed to create customer");
+            console.error("Error creating client:", error);
+            toast.error("Failed to create client");
         } finally {
             setIsChecking(false);
         }
@@ -131,12 +134,12 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
             <DialogTrigger asChild>
                 <Button size="icon" variant="outline" className="h-8 w-8 rounded-full">
                     <UserPlus className="h-4 w-4" />
-                    <span className="sr-only">Add customer</span>
+                    <span className="sr-only">Add client</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader className="pb-4 border-b">
-                    <DialogTitle className="text-xl font-semibold tracking-tight">Add New Customer</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold tracking-tight">Add New Client</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-5">
@@ -150,7 +153,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                         <Input
                                             {...field}
                                             className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            placeholder="Enter customer name"
+                                            placeholder="Enter client name"
                                             disabled={isChecking}
                                         />
                                     </FormControl>
@@ -163,7 +166,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                             name="type"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-medium">Customer Type *</FormLabel>
+                                    <FormLabel className="text-sm font-medium">Client Type *</FormLabel>
                                     <Select
                                         onValueChange={field.onChange}
                                         defaultValue={field.value}
@@ -171,7 +174,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                     >
                                         <FormControl>
                                             <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0">
-                                                <SelectValue placeholder="Select customer type" />
+                                                <SelectValue placeholder="Select client type" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -196,7 +199,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                             {...field}
                                             type="email"
                                             className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            placeholder="customer@example.com"
+                                            placeholder="client@example.com"
                                             disabled={isChecking}
                                         />
                                     </FormControl>
@@ -222,6 +225,24 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-sm font-medium">Address (optional)</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-0 focus-visible:ring-offset-0"
+                                            placeholder="Enter address"
+                                            disabled={isChecking}
+                                        />
+                                    </FormControl>
+                                    <FormMessage className="text-xs" />
+                                </FormItem>
+                            )}
+                        />
                         <div className="flex justify-end gap-3 pt-6 mt-6 border-t">
                             <Button
                                 type="button"
@@ -237,7 +258,7 @@ export function CreateCustomerForm({ onCustomerCreated }: CreateCustomerFormProp
                                 className="h-10 px-5 text-sm font-medium rounded-lg"
                                 disabled={isChecking}
                             >
-                                {isChecking ? "Checking..." : "Create Customer"}
+                                {isChecking ? "Checking..." : "Create Client"}
                             </Button>
                         </div>
                     </form>

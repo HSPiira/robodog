@@ -13,7 +13,7 @@ import { columns } from "../../vehicles/components/columns";
 import { CreateVehicleForm } from "../../vehicles/components/create-vehicle-form";
 import { EditClientForm } from "../components/edit-client-form";
 
-interface Customer {
+interface Client {
     id: string;
     name: string;
     email: string;
@@ -43,7 +43,7 @@ interface Vehicle {
     vehicleType: {
         name: string;
     };
-    customer: {
+    client: {
         id: string;
         name: string;
     };
@@ -56,27 +56,27 @@ export default function ClientDetailsPage() {
     const router = useRouter();
     const clientId = params.id as string;
 
-    const [customer, setCustomer] = useState<Customer | null>(null);
+    const [client, setClient] = useState<Client | null>(null);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [loadingCustomer, setLoadingCustomer] = useState(true);
+    const [loadingClient, setLoadingClient] = useState(true);
     const [loadingVehicles, setLoadingVehicles] = useState(true);
 
     // Fetch client data
-    const fetchCustomer = useCallback(async () => {
+    const fetchClient = useCallback(async () => {
         if (!clientId) return;
 
         try {
-            setLoadingCustomer(true);
-            const response = await fetch(`/api/customers/${clientId}`);
+            setLoadingClient(true);
+            const response = await fetch(`/api/clients/${clientId}`);
             if (!response.ok) {
-                throw new Error("Failed to fetch customer");
+                throw new Error("Failed to fetch client");
             }
             const data = await response.json();
-            setCustomer(data);
+            setClient(data);
         } catch (error) {
-            console.error("Error fetching customer:", error);
+            console.error("Error fetching client:", error);
         } finally {
-            setLoadingCustomer(false);
+            setLoadingClient(false);
         }
     }, [clientId]);
 
@@ -86,7 +86,7 @@ export default function ClientDetailsPage() {
 
         try {
             setLoadingVehicles(true);
-            const response = await fetch(`/api/customers/${clientId}/vehicles`);
+            const response = await fetch(`/api/clients/${clientId}/vehicles`);
             if (!response.ok) {
                 throw new Error("Failed to fetch vehicles");
             }
@@ -100,16 +100,16 @@ export default function ClientDetailsPage() {
     }, [clientId]);
 
     useEffect(() => {
-        fetchCustomer();
+        fetchClient();
         fetchVehicles();
-    }, [fetchCustomer, fetchVehicles]);
+    }, [fetchClient, fetchVehicles]);
 
     // Handle client update
     const handleClientUpdated = () => {
-        fetchCustomer();
+        fetchClient();
     };
 
-    // Get color based on customer type
+    // Get color based on client type
     const getTypeColor = (type: string) => {
         switch (type.toUpperCase()) {
             case "INDIVIDUAL": return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300";
@@ -146,43 +146,43 @@ export default function ClientDetailsPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <h1 className="text-xl font-semibold tracking-tight">
-                        {loadingCustomer ? "Loading..." : customer?.name || "Client Details"}
+                        {loadingClient ? "Loading..." : client?.name || "Client Details"}
                     </h1>
-                    {customer && (
+                    {client && (
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary" className={cn(
                                 "text-xs px-2 py-0.5 h-5",
-                                getStatusColor(customer.status)
+                                getStatusColor(client.status)
                             )}>
-                                {customer.status}
+                                {client.status}
                             </Badge>
                             <Badge variant="secondary" className={cn(
                                 "text-xs px-2 py-0.5 h-5",
-                                getTypeColor(customer.type)
+                                getTypeColor(client.type)
                             )}>
-                                {customer.type.toLowerCase().replace("_", " ")}
+                                {client.type.toLowerCase().replace("_", " ")}
                             </Badge>
                         </div>
                     )}
                 </div>
-                {customer && (
+                {client && (
                     <EditClientForm
-                        customerId={customer.id}
+                        clientId={client.id}
                         onClientUpdated={handleClientUpdated}
                     />
                 )}
             </div>
 
-            {loadingCustomer ? (
+            {loadingClient ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-            ) : customer ? (
+            ) : client ? (
                 <Tabs defaultValue="overview" className="w-full">
                     <TabsList>
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="vehicles">Vehicles ({vehicles.length})</TabsTrigger>
-                        <TabsTrigger value="policies">Policies ({customer.policies})</TabsTrigger>
+                        <TabsTrigger value="policies">Policies ({client.policies})</TabsTrigger>
                     </TabsList>
 
                     {/* Overview Tab */}
@@ -197,17 +197,17 @@ export default function ClientDetailsPage() {
                                         <div className="flex items-center gap-2 text-sm">
                                             <Mail className="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
                                             <span className="font-medium">Email:</span>
-                                            <span className="truncate">{customer.email || "—"}</span>
+                                            <span className="truncate">{client.email || "—"}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm">
                                             <Phone className="h-4 w-4 text-green-500 dark:text-green-400 flex-shrink-0" />
                                             <span className="font-medium">Phone:</span>
-                                            <span className="truncate">{customer.phone || "—"}</span>
+                                            <span className="truncate">{client.phone || "—"}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm">
                                             <Calendar className="h-4 w-4 text-orange-500 dark:text-orange-400 flex-shrink-0" />
                                             <span className="font-medium">Joined Date:</span>
-                                            <span className="truncate">{new Date(customer.joinedDate).toLocaleDateString()}</span>
+                                            <span className="truncate">{new Date(client.joinedDate).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -224,7 +224,7 @@ export default function ClientDetailsPage() {
                                                 <Shield className="h-5 w-5 text-primary" />
                                                 <h3 className="text-sm font-medium">Policies</h3>
                                             </div>
-                                            <div className="text-2xl font-bold text-primary">{customer.policies}</div>
+                                            <div className="text-2xl font-bold text-primary">{client.policies}</div>
                                             <p className="text-xs text-muted-foreground mt-1">Active policies</p>
                                         </div>
 
@@ -240,7 +240,7 @@ export default function ClientDetailsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-6 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950 -mr-2 px-2"
-                                                    onClick={() => router.push(`/vehicles?customerId=${customer.id}`)}
+                                                    onClick={() => router.push(`/vehicles?clientId=${client.id}`)}
                                                 >
                                                     View All
                                                 </Button>
@@ -256,18 +256,18 @@ export default function ClientDetailsPage() {
                                     <CardTitle className="text-base font-medium">Audit Information</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                    {customer.createdBy && (
+                                    {client.createdBy && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <PenTool className="h-4 w-4 text-purple-500 dark:text-purple-400 flex-shrink-0" />
                                             <span className="font-medium">Created by:</span>
-                                            <span className="truncate">{customer.createdBy}</span>
+                                            <span className="truncate">{client.createdBy}</span>
                                         </div>
                                     )}
-                                    {customer.updatedBy && (
+                                    {client.updatedBy && (
                                         <div className="flex items-center gap-2 text-sm">
                                             <Clock className="h-4 w-4 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                                             <span className="font-medium">Last updated by:</span>
-                                            <span className="truncate">{customer.updatedBy}</span>
+                                            <span className="truncate">{client.updatedBy}</span>
                                         </div>
                                     )}
                                 </CardContent>
@@ -282,7 +282,7 @@ export default function ClientDetailsPage() {
                                 <h3 className="text-base font-medium">Client Vehicles</h3>
                                 <CreateVehicleForm
                                     onVehicleCreated={fetchVehicles}
-                                    customerId={customer.id}
+                                    clientId={client.id}
                                 />
                             </div>
 
@@ -297,7 +297,7 @@ export default function ClientDetailsPage() {
                                         <p>No vehicles found for this client</p>
                                         <CreateVehicleForm
                                             onVehicleCreated={fetchVehicles}
-                                            customerId={customer.id}
+                                            clientId={client.id}
                                             isCompact={true}
                                         />
                                     </div>

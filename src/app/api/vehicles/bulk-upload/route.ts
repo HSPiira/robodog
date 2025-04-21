@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     try {
         const formData = await request.formData();
         const file = formData.get('file') as File;
-        const customerId = formData.get('customerId') as string | null;
+        const clientId = formData.get('clientId') as string | null;
 
         if (!file) {
             return NextResponse.json(
@@ -123,20 +123,20 @@ export async function POST(request: Request) {
                         throw new Error(`Row ${index + 2}: Invalid vehicle type ID '${record.vehicle_type_id}'`);
                     }
 
-                    // If customerId not provided in form but required for vehicle
-                    const finalCustomerId = customerId || record.customer_id;
-                    if (!finalCustomerId) {
-                        throw new Error(`Row ${index + 2}: Customer ID is required`);
+                    // If clientId not provided in form but required for vehicle
+                    const finalClientId = clientId || record.client_id;
+                    if (!finalClientId) {
+                        throw new Error(`Row ${index + 2}: Client ID is required`);
                     }
 
-                    // Validate customer ID exists if provided
-                    if (finalCustomerId) {
-                        const customer = await prisma.customer.findUnique({
-                            where: { id: finalCustomerId }
+                    // Validate client ID exists if provided
+                    if (finalClientId) {
+                        const client = await prisma.client.findUnique({
+                            where: { id: finalClientId }
                         });
 
-                        if (!customer) {
-                            throw new Error(`Row ${index + 2}: Invalid customer ID '${finalCustomerId}'`);
+                        if (!client) {
+                            throw new Error(`Row ${index + 2}: Invalid client ID '${finalClientId}'`);
                         }
                     }
 
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
                             bodyTypeId: record.body_type_id,
                             categoryId: record.category_id,
                             vehicleTypeId: record.vehicle_type_id,
-                            customerId: finalCustomerId,
+                            clientId: finalClientId,
                             chassisNo: record.chassis_no.trim(),
                             engineNo: record.engine_no.trim(),
                             chassisNumber: record.chassis_no.trim(),

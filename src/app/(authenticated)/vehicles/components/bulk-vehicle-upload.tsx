@@ -23,11 +23,11 @@ UBC123D,Toyota,Corolla,2022,JTDZS3EU0E3298500,2ZR-3298500,body_type_id_here,cate
 UBE456F,Honda,Civic,2021,HDZS3EU0E3298501,2FG-3298501,body_type_id_here,category_id_here,vehicle_type_id_here,5,1600,1400`;
 
 interface BulkVehicleUploadProps {
-    customerId?: string;
+    clientId?: string;
     onUploadComplete: () => void;
 }
 
-export function BulkVehicleUpload({ customerId, onUploadComplete }: BulkVehicleUploadProps) {
+export function BulkVehicleUpload({ clientId, onUploadComplete }: BulkVehicleUploadProps) {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -103,8 +103,8 @@ export function BulkVehicleUpload({ customerId, onUploadComplete }: BulkVehicleU
             const formData = new FormData();
             formData.append('file', file);
 
-            if (customerId) {
-                formData.append('customerId', customerId);
+            if (clientId) {
+                formData.append('clientId', clientId);
             }
 
             // Simulate progress for better UX
@@ -250,7 +250,7 @@ export function BulkVehicleUpload({ customerId, onUploadComplete }: BulkVehicleU
                                         <li>Registration number, make, model, year, chassis and engine numbers are required</li>
                                         <li>You will need to obtain the correct IDs for body types, categories and vehicle types</li>
                                         <li>Seating capacity, cubic capacity, and gross weight are optional</li>
-                                        <li>For bulk uploads, the customer ID will be set automatically if provided</li>
+                                        <li>For bulk uploads, the client ID will be set automatically if provided</li>
                                     </ul>
                                     <div className="mt-3">
                                         <Button

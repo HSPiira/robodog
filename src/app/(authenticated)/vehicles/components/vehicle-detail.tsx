@@ -21,7 +21,7 @@ interface VehicleDetailProps {
         vehicleType?: {
             name: string;
         };
-        customer: {
+        client: {
             id: string;
             name: string;
         };
@@ -90,7 +90,7 @@ export function VehicleDetail({ vehicle }: VehicleDetailProps) {
                         </div>
                         <div className="flex items-center text-xs mt-2 pl-5">
                             <User className="h-3 w-3 mr-1.5 text-primary flex-shrink-0" />
-                            Owner: <span className="font-medium ml-1 truncate max-w-[180px] inline-block">{vehicle.customer?.name}</span>
+                            Owner: <span className="font-medium ml-1 truncate max-w-[180px] inline-block">{vehicle.client?.name}</span>
                         </div>
                     </div>
 

@@ -81,7 +81,7 @@ export function DataTable<TData, TValue>({
             rowSelection,
         },
         meta: {
-            fetchCustomers: fetchData,
+            fetchClients: fetchData,
             navigateToClientDetails: navigateToClientDetails,
         },
     });

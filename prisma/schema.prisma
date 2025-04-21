@@ -12,23 +12,24 @@ datasource db {
 
 // Enums
 enum PolicyStatus {
-    ACTIVE
-    EXPIRED
-    PENDING
-    CANCELLED
+    ACTIVE    @map("Active")
+    INACTIVE  @map("Inactive")
+    EXPIRED   @map("Expired")
+    PENDING   @map("Pending")
+    CANCELLED @map("Cancelled")
 }
 
 enum UsageType {
-    PRIVATE
-    COMMERCIAL
-    GOVERNMENT
+    PRIVATE    @map("Private")
+    COMMERCIAL @map("Commercial")
+    GOVERNMENT @map("Government")
 }
 
-enum CustomerType {
-    INDIVIDUAL
-    BUSINESS
-    GOVERNMENT
-    NON_PROFIT
+enum ClientType {
+    INDIVIDUAL @map("Individual")
+    BUSINESS   @map("Business")
+    GOVERNMENT @map("Government")
+    NON_PROFIT @map("NonProfit")
 }
 
 // Base Models
@@ -47,17 +48,21 @@ model User {
     issuedPolicies Policy[]  @relation("IssuedPolicies")
 }
 
-model Customer {
-    id        String       @id @default(cuid())
+model Client {
+    id        String     @id @default(cuid())
     name      String
-    email     String?      @unique
+    address   String?
+    email     String?    @unique
     phone     String?
-    type      CustomerType @default(INDIVIDUAL)
-    isActive  Boolean      @default(true)
-    createdAt DateTime     @default(now())
-    updatedAt DateTime     @updatedAt
+    type      ClientType @default(INDIVIDUAL)
+    isActive  Boolean    @default(true)
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
     policies  Policy[]
     Vehicle   Vehicle[]
+    createdBy String?
+    updatedBy String?
+    deletedAt DateTime?
 }
 
 model Vehicle {
@@ -72,8 +77,8 @@ model Vehicle {
     bodyTypeId        String
     vehicleCategory   VehicleCategory  @relation(fields: [categoryId], references: [id])
     categoryId        String
-    customer          Customer         @relation(fields: [customerId], references: [id])
-    customerId        String
+    client            Client           @relation(fields: [clientId], references: [id])
+    clientId          String
     policies          Policy[]
     stickers          Sticker[]
     createdAt         DateTime         @default(now())
@@ -93,52 +98,56 @@ model Vehicle {
     vehicleBodyTypeId String?
 }
 
-model BodyType {
-    id        String    @id @default(uuid())
-    name      String    @unique
-    vehicles  Vehicle[]
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    isActive  Boolean   @default(true)
-    createdBy String?
-    updatedBy String?
-    deletedAt DateTime?
+model VehicleType {
+    id          String    @id
+    name        String    @unique
+    description String?
+    vehicles    Vehicle[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    isActive    Boolean   @default(true)
+    createdBy   String?
+    updatedBy   String?
+    deletedAt   DateTime?
 }
 
-model VehicleType {
-    id        String    @id @default(uuid())
-    name      String
-    vehicles  Vehicle[]
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    createdBy String?
-    updatedBy String?
-    isActive  Boolean   @default(true)
-    deletedAt DateTime?
+model BodyType {
+    id          String    @id @default(uuid())
+    name        String    @unique
+    description String?
+    vehicles    Vehicle[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    isActive    Boolean   @default(true)
+    createdBy   String?
+    updatedBy   String?
+    deletedAt   DateTime?
 }
 
 model VehicleBodyType {
-    id        String    @id @default(uuid())
-    name      String
-    vehicles  Vehicle[]
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    createdBy String?
-    updatedBy String?
-    isActive  Boolean   @default(true)
-    deletedAt DateTime?
+    id          String    @id @default(uuid())
+    name        String
+    description String?
+    vehicles    Vehicle[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    createdBy   String?
+    updatedBy   String?
+    isActive    Boolean   @default(true)
+    deletedAt   DateTime?
 }
 
 model VehicleCategory {
-    id        String    @id @default(uuid())
-    name      String    @unique
-    vehicles  Vehicle[]
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    isActive  Boolean   @default(true)
-    createdBy String?
-    updatedBy String?
-    deletedAt DateTime?
+    id          String    @id @default(uuid())
+    name        String    @unique
+    description String?
+    vehicles    Vehicle[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    isActive    Boolean   @default(true)
+    createdBy   String?
+    updatedBy   String?
+    deletedAt   DateTime?
 }
 
 // Insurance Related Models
@@ -146,7 +155,7 @@ model Policy {
     id               String       @id @default(cuid())
     certificateNo    String       @unique
     policyNo         String       @unique
-    customerId       String
+    clientId         String
     vehicleId        String
     usage            UsageType
     status           PolicyStatus
@@ -168,7 +177,7 @@ model Policy {
     isActive         Boolean      @default(true)
     deletedAt        DateTime?
 
-    customer       Customer        @relation(fields: [customerId], references: [id])
+    client         Client          @relation(fields: [clientId], references: [id])
     vehicle        Vehicle         @relation(fields: [vehicleId], references: [id])
     issuingCompany IssuingCompany  @relation(fields: [issuingCompanyId], references: [id])
     issuingOfficer User            @relation("IssuedPolicies", fields: [issuingOfficerId], references: [id])

@@ -37,7 +37,7 @@ interface Vehicle {
     vehicleType: {
         name: string;
     };
-    customer: {
+    client: {
         id: string;
         name: string;
     };
@@ -99,12 +99,12 @@ export const columns: ColumnDef<Vehicle>[] = [
         },
     },
     {
-        accessorKey: "customer.name",
+        accessorKey: "client.name",
         header: "Owner",
         cell: ({ row }: { row: Row<Vehicle> }) => {
             return (
                 <div className="truncate whitespace-nowrap max-w-[140px]">
-                    {row.original.customer?.name || "—"}
+                    {row.original.client?.name || "—"}
                 </div>
             );
         },

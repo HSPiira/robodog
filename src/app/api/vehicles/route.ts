@@ -12,7 +12,7 @@ export async function POST(request: Request) {
             bodyTypeId,
             categoryId,
             vehicleTypeId,
-            customerId,
+            clientId,
             chassisNo,
             engineNo,
             seatingCapacity,
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         } = body;
 
         // Validate required fields
-        if (!registrationNo || !make || !model || !bodyTypeId || !categoryId || !customerId || !chassisNo || !engineNo) {
+        if (!registrationNo || !make || !model || !bodyTypeId || !categoryId || !clientId || !chassisNo || !engineNo) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
                 bodyTypeId,
                 categoryId,
                 vehicleTypeId,
-                customerId,
+                clientId,
                 chassisNo,
                 engineNo,
                 engineNumber: engineNo, // Map to both fields for compatibility
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
                 bodyType: true,
                 vehicleCategory: true,
                 vehicleType: true,
-                customer: true,
+                client: true,
             },
         });
 
@@ -100,7 +100,7 @@ export async function GET() {
                         name: true
                     }
                 },
-                customer: {
+                client: {
                     select: {
                         id: true,
                         name: true
@@ -126,7 +126,7 @@ export async function GET() {
             bodyType: vehicle.bodyType,
             vehicleCategory: vehicle.vehicleCategory,
             vehicleType: vehicle.vehicleType,
-            customer: vehicle.customer,
+            client: vehicle.client,
             isActive: vehicle.isActive,
             policies: vehicle._count.policies,
             seatingCapacity: vehicle.seatingCapacity,

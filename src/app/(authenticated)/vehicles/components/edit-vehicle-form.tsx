@@ -66,7 +66,7 @@ const formSchema = z.object({
     bodyTypeId: z.string().min(1, "Body type is required"),
     categoryId: z.string().min(1, "Vehicle category is required"),
     vehicleTypeId: z.string().min(1, "Vehicle type is required"),
-    customerId: z.string().min(1, "Owner is required"),
+    clientId: z.string().min(1, "Owner is required"),
     chassisNo: z.string().min(1, "Chassis number is required"),
     engineNo: z.string().min(1, "Engine number is required"),
     seatingCapacity: z.coerce.number().int().positive().optional(),
@@ -91,7 +91,7 @@ interface VehicleCategory {
     name: string;
 }
 
-interface Customer {
+interface Client {
     id: string;
     name: string;
 }
@@ -109,7 +109,7 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
     const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [bodyTypes, setBodyTypes] = useState<BodyType[]>([]);
     const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoadingOptions, setIsLoadingOptions] = useState(true);
 
     const form = useForm<FormValues>({
@@ -122,7 +122,7 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
             bodyTypeId: "",
             categoryId: "",
             vehicleTypeId: "",
-            customerId: "",
+            clientId: "",
             chassisNo: "",
             engineNo: "",
             seatingCapacity: undefined,
@@ -138,24 +138,24 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                 setIsLoadingOptions(true);
                 try {
                     // Fetch reference data (vehicle types, body types, etc.)
-                    const [typesResponse, bodyResponse, categoryResponse, customerResponse] = await Promise.all([
+                    const [typesResponse, bodyResponse, categoryResponse, clientResponse] = await Promise.all([
                         fetch('/api/vehicle-types'),
                         fetch('/api/body-types'),
                         fetch('/api/vehicle-categories'),
-                        fetch('/api/customers')
+                        fetch('/api/clients')
                     ]);
 
-                    const [typesData, bodyData, categoryData, customerData] = await Promise.all([
+                    const [typesData, bodyData, categoryData, clientData] = await Promise.all([
                         parse(typesResponse),
                         parse(bodyResponse),
                         parse(categoryResponse),
-                        parse(customerResponse)
+                        parse(clientResponse)
                     ]);
 
                     setVehicleTypes(typesData);
                     setBodyTypes(bodyData);
                     setVehicleCategories(categoryData);
-                    setCustomers(customerData);
+                    setClients(clientData);
                 } catch (error) {
                     console.error("Error fetching reference data:", error);
                     toast.error("Failed to load form data");
@@ -184,7 +184,7 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                         bodyTypeId: vehicleData.bodyType?.id || "",
                         categoryId: vehicleData.vehicleCategory?.id || "",
                         vehicleTypeId: vehicleData.vehicleType?.id || "",
-                        customerId: vehicleData.customer?.id || "",
+                        clientId: vehicleData.client?.id || "",
                         chassisNo: vehicleData.chassisNo || "",
                         engineNo: vehicleData.engineNo || "",
                         seatingCapacity: vehicleData.seatingCapacity,
@@ -472,7 +472,7 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
 
                                     <FormField
                                         control={form.control}
-                                        name="customerId"
+                                        name="clientId"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="text-xs font-medium flex items-center gap-1.5">
@@ -490,9 +490,9 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {customers.map((customer) => (
-                                                            <SelectItem key={customer.id} value={customer.id}>
-                                                                {customer.name}
+                                                        {clients.map((client) => (
+                                                            <SelectItem key={client.id} value={client.id}>
+                                                                {client.name}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
