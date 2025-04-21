@@ -20,7 +20,7 @@ interface SidebarItemProps {
 
 function SidebarItem({ icon, tooltip, href }: SidebarItemProps) {
   const pathname = usePathname();
-  const isActive = pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = pathname.split('/')[1] === href.split('/')[1];
 
   return (
     <TooltipProvider>

@@ -166,14 +166,16 @@ export function BulkVehicleUpload({ customerId, onUploadComplete }: BulkVehicleU
 
     return (
         <Dialog open={open} onOpenChange={(newOpen) => {
+            // Only allow closing through the cancel button
+            if (!newOpen) return;
             setOpen(newOpen);
             if (!newOpen) {
                 resetForm();
             }
         }}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full ml-2" aria-label="Bulk upload vehicles">
-                    <Upload className="h-5 w-5" />
+            <DialogTrigger asChild onClick={() => setOpen(true)}>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" aria-label="Bulk upload vehicles">
+                    <Upload className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">

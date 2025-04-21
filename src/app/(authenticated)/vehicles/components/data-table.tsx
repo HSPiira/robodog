@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Car } from "lucide-react";
+import { Car, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -81,7 +81,7 @@ export function DataTable<TData, TValue>({
                         onChange={(event) =>
                             table.getColumn(searchKey)?.setFilterValue(event.target.value)
                         }
-                        className="w-full pl-9 h-10 rounded-full bg-muted/50 text-xs"
+                        className="w-full pl-9 h-8 rounded-full bg-muted text-xs"
                     />
                 </div>
                 {actionButton}
@@ -93,7 +93,7 @@ export function DataTable<TData, TValue>({
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id} className="text-xs py-2 h-9">
+                                        <TableHead key={header.id} className="text-xs py-0 h-9 px-2">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -112,14 +112,14 @@ export function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    className={`text-xs hover:bg-muted/50 h-4 ${selectedRow === row.original ? "bg-muted/30" : ""}`}
+                                    className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-4 ${selectedRow === row.original ? "bg-muted" : ""}`}
                                     onClick={() => {
                                         setSelectedRow(row.original as TData);
                                         onRowClick?.(row.original as TData);
                                     }}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-1 px-3 whitespace-nowrap">
+                                        <TableCell key={cell.id} className="py-0 px-2 border-b border-border/40">
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()
@@ -141,26 +141,30 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                    {table.getFilteredRowModel().rows.length} vehicle(s) found
+            <div className="flex items-center justify-end space-x-2 mt-2">
+                <div className="flex-1 text-xs text-muted-foreground">
+                    {table.getFilteredRowModel().rows.length} row(s) selected.
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="space-x-2">
                     <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
+                        className="h-8 w-8 rounded-full"
                     >
-                        Previous
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="sr-only">Previous</span>
                     </Button>
                     <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
+                        className="h-8 w-8 rounded-full"
                     >
-                        Next
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="sr-only">Next</span>
                     </Button>
                 </div>
             </div>

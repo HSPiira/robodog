@@ -1,101 +1,209 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Mail, Phone, Calendar, Briefcase, CircleDot } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Phone, Calendar, User, CheckCircle, XCircle, Shield, ExternalLink, Car, Eye } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface CustomerDetailProps {
-    customer?: {
+    client?: {
         id: string;
         name: string;
         email: string;
         phone: string;
         status: "active" | "inactive";
+        type: string;
         policies: number;
         joinedDate: string;
     };
 }
 
-export function CustomerDetail({ customer }: CustomerDetailProps) {
-    return (
-        <Card className="w-[300px] p-4 space-y-4 shrink-0">
-            <div className="flex items-center justify-between">
-                <h3 className="font-medium">Customer Details</h3>
-            </div>
+export function ClientDetail({ client }: CustomerDetailProps) {
+    const router = useRouter();
+    const [vehicleCount, setVehicleCount] = useState<number>(0);
+    const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(true);
 
-            <div className="space-y-4">
-                <div>
-                    {customer ? (
-                        <>
-                            <h4 className="text-sm font-medium mb-2">{customer.name}</h4>
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                    <Mail className="h-3.5 w-3.5" />
-                                    {customer.email}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Phone className="h-3.5 w-3.5" />
-                                    {customer.phone}
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <Skeleton className="h-4 w-[140px] mb-2" />
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Skeleton className="h-3.5 w-3.5" />
-                                    <Skeleton className="h-3.5 w-[160px]" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Skeleton className="h-3.5 w-3.5" />
-                                    <Skeleton className="h-3.5 w-[120px]" />
-                                </div>
-                            </div>
-                        </>
-                    )}
+    // Get color based on client type
+    const getTypeColor = (type: string) => {
+        switch (type.toUpperCase()) {
+            case "INDIVIDUAL": return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300";
+            case "BUSINESS": return "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300";
+            case "GOVERNMENT": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300";
+            case "NON_PROFIT": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+            default: return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        }
+    };
+
+    // Get status color
+    const getStatusColor = (status: string) => {
+        return status === "active"
+            ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300";
+    };
+
+    // Handle navigation
+    const handleViewDetails = () => {
+        if (client) {
+            router.push(`/clients/${client.id}`);
+        }
+    };
+
+    const handleViewVehicles = () => {
+        if (client) {
+            router.push(`/vehicles?customerId=${client.id}`);
+        }
+    };
+
+    // Fetch vehicle count
+    useEffect(() => {
+        const fetchVehicleCount = async () => {
+            if (!client) return;
+
+            try {
+                setIsLoadingVehicles(true);
+                const response = await fetch(`/api/customers/${client.id}/vehicles/count`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setVehicleCount(data.count);
+                }
+            } catch (error) {
+                console.error("Error fetching vehicle count:", error);
+            } finally {
+                setIsLoadingVehicles(false);
+            }
+        };
+
+        fetchVehicleCount();
+    }, [client]);
+
+    if (!client) {
+        return (
+            <Card className="h-full flex items-center justify-center">
+                <div className="text-center p-6 opacity-70">
+                    <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-xs">Select a client to view details</p>
                 </div>
+            </Card>
+        );
+    }
 
-                <div className="space-y-2">
-                    {customer ? (
-                        <>
-                            <div className="flex items-center gap-2 text-xs">
-                                <CircleDot className="h-3.5 w-3.5" />
-                                <span>Status: </span>
-                                <span className={`${customer.status === "active"
-                                    ? "text-green-500"
-                                    : "text-yellow-500"
-                                    }`}>
-                                    {customer.status.charAt(0).toUpperCase() + customer.status.slice(1)}
+    return (
+        <Card className="h-full shadow-sm">
+            <CardHeader className="border-b pb-2.5">
+                <div className="flex justify-between items-start">
+                    <div className="space-y-1.5">
+                        <CardTitle className="text-sm font-medium">{client.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className={cn(
+                                "text-[10px] px-1 py-0 h-4 rounded-sm",
+                                getStatusColor(client.status)
+                            )}>
+                                {client.status}
+                            </Badge>
+                            <Badge variant="secondary" className={cn(
+                                "text-[10px] px-1 py-0 h-4 rounded-sm",
+                                getTypeColor(client.type)
+                            )}>
+                                {client.type.toLowerCase().replace("_", " ")}
+                            </Badge>
+                        </div>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={handleViewDetails}
+                        title="View Details"
+                    >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+            </CardHeader>
+
+            <CardContent className="p-4">
+                <div className="space-y-6">
+                    {/* Contact Information */}
+                    <div className="space-y-2">
+                        <h4 className="text-[11px] font-medium text-muted-foreground flex items-center">
+                            <Mail className="h-3.5 w-3.5 text-primary mr-1.5 flex-shrink-0" />
+                            Contact Information
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                            <div className="flex items-center space-x-2">
+                                <Mail className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                                <span className="text-xs">{client.email || "—"}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Phone className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                                <span className="text-xs">{client.phone || "—"}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Customer Details */}
+                    <div className="space-y-2">
+                        <h4 className="text-[11px] font-medium text-muted-foreground flex items-center">
+                            <User className="h-3.5 w-3.5 text-primary mr-1.5 flex-shrink-0" />
+                            Customer Details
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <Calendar className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                                    <span className="text-xs text-muted-foreground">Joined Date</span>
+                                </div>
+                                <span className="text-xs">
+                                    {new Date(client.joinedDate).toLocaleDateString()}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs">
-                                <Briefcase className="h-3.5 w-3.5" />
-                                <span>Active Policies: {customer.policies}</span>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <Car className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                                    <span className="text-xs text-muted-foreground">Vehicles</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium">
+                                        {isLoadingVehicles ? (
+                                            <span className="inline-block h-3 w-3 rounded-full border border-blue-500 border-t-transparent animate-spin" />
+                                        ) : vehicleCount}
+                                    </span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={handleViewVehicles}
+                                        title="View Vehicles"
+                                    >
+                                        <Eye className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs">
-                                <Calendar className="h-3.5 w-3.5" />
-                                <span>Joined: {new Date(customer.joinedDate).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+
+                    {/* Policy Information */}
+                    <div className="space-y-2">
+                        <h4 className="text-[11px] font-medium text-muted-foreground flex items-center">
+                            <Shield className="h-3.5 w-3.5 text-primary mr-1.5 flex-shrink-0" />
+                            Policy Information
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                                    <span className="text-xs text-muted-foreground">Active Policies</span>
+                                </div>
+                                <span className="text-xs font-medium">
+                                    {client.policies}
+                                </span>
                             </div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-3.5 w-3.5" />
-                                <Skeleton className="h-3.5 w-[100px]" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-3.5 w-3.5" />
-                                <Skeleton className="h-3.5 w-[140px]" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-3.5 w-3.5" />
-                                <Skeleton className="h-3.5 w-[120px]" />
-                            </div>
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </CardContent>
         </Card>
     );
 } 

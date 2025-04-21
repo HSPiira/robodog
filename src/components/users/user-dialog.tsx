@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     Form,
@@ -29,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Pencil } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 // Define the form schema
 const userFormSchema = z.object({
@@ -62,6 +65,7 @@ interface UserDialogProps {
     onClose: (success: boolean) => void;
     user: User | null;
     isEditMode: boolean;
+    trigger?: React.ReactNode;
 }
 
 export function UserDialog({
@@ -69,8 +73,10 @@ export function UserDialog({
     onClose,
     user,
     isEditMode,
+    trigger,
 }: UserDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Initialize form
     const form = useForm<UserFormValues>({
@@ -105,54 +111,56 @@ export function UserDialog({
         }
     }, [user, form]);
 
-    // Handle form submission
-    const onSubmit = async (data: UserFormValues) => {
+    const handleSubmit = async (data: UserFormValues) => {
         try {
             setIsSubmitting(true);
+            setIsLoading(true);
 
             // Prepare request data
             const requestData = {
-                name: data.name,
-                email: data.email,
-                role: data.role,
-                isActive: data.isActive,
+                ...data,
+                id: user?.id,
             };
 
-            // Add password only if it's provided (for new users or password changes)
-            if (data.password) {
-                Object.assign(requestData, { password: data.password });
-            }
-
-            // Determine the endpoint and method
-            const url = isEditMode ? `/api/users/${user?.id}` : "/api/users";
-            const method = isEditMode ? "PUT" : "POST";
-
-            // Send request
-            const response = await fetch(url, {
-                method,
+            // Make API call
+            const response = await fetch('/api/users', {
+                method: isEditMode ? 'PUT' : 'POST',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(requestData),
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to save user");
+                throw new Error('Failed to save user');
             }
 
-            // Close dialog with success
             onClose(true);
         } catch (error) {
-            console.error("Error saving user:", error);
-            // You could add toast notification here
+            console.error('Error saving user:', error);
+            toast.error('Failed to save user');
         } finally {
             setIsSubmitting(false);
+            setIsLoading(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={() => onClose(false)}>
+        <Dialog
+            open={open}
+            onOpenChange={(newOpen) => {
+                if (newOpen === false && isLoading) return;
+                onClose(false);
+            }}
+        >
+            <DialogTrigger asChild>
+                {trigger || (
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit user</span>
+                    </Button>
+                )}
+            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>
@@ -160,7 +168,7 @@ export function UserDialog({
                     </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"

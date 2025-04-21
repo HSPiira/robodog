@@ -99,7 +99,7 @@ export function DataTable<TData, TValue>({
                 />
                 {actionButton}
             </div>
-            <div className="rounded-md overflow-x-auto">
+            <div className="rounded-md border overflow-x-auto">
                 <div className="min-h-[300px] flex flex-col">
                     <Table>
                         <TableHeader className="bg-primary/5">
@@ -107,7 +107,7 @@ export function DataTable<TData, TValue>({
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => {
                                         return (
-                                            <TableHead key={header.id} className="text-xs py-2 h-8 border-b border-border/40">
+                                            <TableHead key={header.id} className="text-xs py-2 h-8 border-b border-border/40 px-2">
                                                 {header.isPlaceholder
                                                     ? null
                                                     : flexRender(
@@ -138,7 +138,7 @@ export function DataTable<TData, TValue>({
                                         }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id} className="py-0.5 px-4 border-b border-border/40">
+                                            <TableCell key={cell.id} className="py-0.5 px-2 border-b border-border/40">
                                                 {flexRender(
                                                     cell.column.columnDef.cell,
                                                     cell.getContext()

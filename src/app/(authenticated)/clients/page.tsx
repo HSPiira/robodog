@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
-import { CustomerDetail } from "./components/customer-detail";
+import { ClientDetail } from "./components/client-detail";
 import { CreateCustomerForm } from "./components/create-client-form";
 
 interface Customer {
@@ -77,7 +77,7 @@ export default function CustomersPage() {
             />
           </div>
           <div className="w-[300px] flex-shrink-0">
-            <CustomerDetail customer={selectedCustomer || undefined} />
+            <ClientDetail client={selectedCustomer || undefined} />
           </div>
         </div>
       )}

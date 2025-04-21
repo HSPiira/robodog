@@ -49,6 +49,12 @@ import {
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parse } from "@/lib/api";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Define the form schema
 const formSchema = z.object({
@@ -201,17 +207,43 @@ export function CreateVehicleForm({ onVehicleCreated, customerId, isCompact = fa
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(newOpen) => {
+                if (newOpen === false && isLoading) return;
+                setOpen(newOpen);
+            }}
+        >
             <DialogTrigger asChild>
                 {isCompact ? (
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
-                        <Car className="h-3.5 w-3.5 mr-1" />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => setOpen(true)}
+                    >
                         Add Vehicle
                     </Button>
                 ) : (
-                    <Button size="icon" className="h-9 w-9 rounded-full" aria-label="Add vehicle">
-                        <CarFront className="h-5 w-5" />
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full text-foreground hover:text-foreground"
+                                    onClick={() => setOpen(true)}
+                                >
+                                    <CarFront className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">
+                                Add new vehicle
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">

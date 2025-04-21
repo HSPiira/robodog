@@ -171,18 +171,22 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
                     const response = await fetch(`/api/vehicles/${vehicleId}`);
                     const vehicleData = await parse(response);
 
+                    if (!response.ok || !vehicleData) {
+                        throw new Error("Failed to fetch vehicle data");
+                    }
+
                     // Populate form with vehicle data
                     form.reset({
-                        registrationNo: vehicleData.registrationNo,
-                        make: vehicleData.make,
-                        model: vehicleData.model,
-                        year: vehicleData.year,
-                        bodyTypeId: vehicleData.bodyType.id,
-                        categoryId: vehicleData.vehicleCategory.id,
-                        vehicleTypeId: vehicleData.vehicleType.id,
-                        customerId: vehicleData.customer.id,
-                        chassisNo: vehicleData.chassisNo,
-                        engineNo: vehicleData.engineNo,
+                        registrationNo: vehicleData.registrationNo || "",
+                        make: vehicleData.make || "",
+                        model: vehicleData.model || "",
+                        year: vehicleData.year || new Date().getFullYear(),
+                        bodyTypeId: vehicleData.bodyType?.id || "",
+                        categoryId: vehicleData.vehicleCategory?.id || "",
+                        vehicleTypeId: vehicleData.vehicleType?.id || "",
+                        customerId: vehicleData.customer?.id || "",
+                        chassisNo: vehicleData.chassisNo || "",
+                        engineNo: vehicleData.engineNo || "",
                         seatingCapacity: vehicleData.seatingCapacity,
                         cubicCapacity: vehicleData.cubicCapacity,
                         grossWeight: vehicleData.grossWeight,
@@ -229,8 +233,14 @@ export function EditVehicleForm({ onVehicleUpdated, vehicleId, trigger }: EditVe
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild onClick={(e) => e.preventDefault()}>
+        <Dialog
+            open={open}
+            onOpenChange={(newOpen) => {
+                if (newOpen === false && isLoading) return;
+                setOpen(newOpen);
+            }}
+        >
+            <DialogTrigger asChild>
                 {trigger || (
                     <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
                         <Pencil className="h-3.5 w-3.5 mr-1" />

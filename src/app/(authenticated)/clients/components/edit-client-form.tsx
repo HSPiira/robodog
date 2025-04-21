@@ -149,7 +149,14 @@ export function EditClientForm({ customerId, trigger, onClientUpdated }: EditCli
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(newOpen) => {
+                if (newOpen === false && isLoading) return;
+                if (!newOpen) return;
+                setOpen(newOpen);
+            }}
+        >
             <DialogTrigger asChild>
                 {trigger || (
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

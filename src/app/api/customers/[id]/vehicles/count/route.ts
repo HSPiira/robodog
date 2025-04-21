@@ -6,7 +6,8 @@ export async function GET(
     context: { params: { id: string } }
 ) {
     try {
-        const { id } = context.params;
+        const params = context.params;
+        const id = params.id;
 
         // Check if customer exists
         const customer = await prisma.customer.findUnique({
@@ -14,10 +15,13 @@ export async function GET(
         });
 
         if (!customer) {
-            return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Customer not found" },
+                { status: 404 }
+            );
         }
 
-        // Count vehicles
+        // Get vehicle count
         const count = await prisma.vehicle.count({
             where: {
                 customerId: id,
@@ -27,9 +31,9 @@ export async function GET(
 
         return NextResponse.json({ count });
     } catch (error) {
-        console.error("Error counting vehicles:", error);
+        console.error("Error fetching vehicle count:", error);
         return NextResponse.json(
-            { error: "Failed to count vehicles" },
+            { error: "Failed to fetch vehicle count" },
             { status: 500 }
         );
     }
