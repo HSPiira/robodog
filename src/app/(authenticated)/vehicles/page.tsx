@@ -6,6 +6,7 @@ import { DataTable } from "./components/data-table";
 import { VehicleDetail } from "./components/vehicle-detail";
 import { CreateVehicleForm } from "./components/create-vehicle-form";
 import { BulkVehicleUpload } from "./components/bulk-vehicle-upload";
+import { ImportVehicleForm } from "./components/import-vehicle-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -129,28 +130,10 @@ export default function VehiclesPage() {
                                         onVehicleCreated={fetchVehicles}
                                         clientId={clientId || undefined}
                                     />
-                                    <BulkVehicleUpload
-                                        onUploadComplete={fetchVehicles}
+                                    <ImportVehicleForm
+                                        onImportComplete={fetchVehicles}
                                         clientId={clientId || undefined}
                                     />
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    onClick={navigateToImport}
-                                                    className="h-8 w-8 rounded-full"
-                                                    aria-label="Go to bulk import"
-                                                >
-                                                    <FileUp className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="bottom" className="text-xs">
-                                                Go to bulk import
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
                                 </div>
                             }
                             onRowClick={handleVehicleSelect}
