@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { ClientDetail } from "./components/client-detail";
-import { CreateCustomerForm } from "./components/create-client-form";
+import { CreateClientForm } from "./components/create-client-form";
+import { useAuth } from "@/lib/context/auth-context";
 
-interface Customer {
+interface Client {
   id: string;
   name: string;
   email: string;
@@ -20,13 +21,12 @@ interface Customer {
   updatedBy?: string | null;
 }
 
-export default function CustomersPage() {
+export default function ClientsPage() {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { token } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Create navigation function
   const navigateToClientDetails = useCallback((clientId: string) => {
@@ -34,29 +34,40 @@ export default function CustomersPage() {
   }, [router]);
 
   // Use useCallback to create a stable reference
-  const fetchCustomers = useCallback(async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/customers");
+      const response = await fetch("/api/clients", {
+        headers: {
+          "Authorization": token ? `Bearer ${token}` : ""
+        }
+      });
       if (!response.ok) {
-        throw new Error("Failed to fetch customers");
+        throw new Error("Failed to fetch clients");
       }
-      const data = await response.json();
-      setCustomers(data);
+      const result = await response.json();
+
+      // API now returns data wrapped in a 'data' field with pagination
+      if (result.data) {
+        setClients(result.data);
+      } else {
+        // Fallback for older API format or if data structure changes
+        setClients(result);
+      }
     } catch (error) {
-      console.error("Error fetching customers:", error);
+      console.error("Error fetching clients:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
+    fetchClients();
+  }, [fetchClients]);
 
   return (
     <div className="p-6 space-y-6">
-      {loading && customers.length === 0 ? (
+      {loading && clients.length === 0 ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -65,19 +76,19 @@ export default function CustomersPage() {
           <div className="flex-1 min-w-0">
             <DataTable
               columns={columns}
-              data={customers}
+              data={clients}
               searchKey="name"
               actionButton={
-                <CreateCustomerForm onCustomerCreated={fetchCustomers} />
+                <CreateClientForm onClientCreated={fetchClients} />
               }
-              onRowClick={(customer) => setSelectedCustomer(customer)}
-              fetchData={fetchCustomers}
+              onRowClick={(client) => setSelectedClient(client)}
+              fetchData={fetchClients}
               navigateOnDoubleClick={true}
               navigateToClientDetails={navigateToClientDetails}
             />
           </div>
           <div className="w-[300px] flex-shrink-0">
-            <ClientDetail client={selectedCustomer || undefined} />
+            <ClientDetail client={selectedClient || undefined} />
           </div>
         </div>
       )}

@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export function Header() {
   const pathname = usePathname();
@@ -147,6 +148,8 @@ export function Header() {
                 {customerName}
               </span>
             </>
+          ) : pathname.startsWith('/settings') ? (
+            <Breadcrumb />
           ) : (
             <>
               <Link

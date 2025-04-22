@@ -25,3 +25,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database
+/prisma/migrations/
+*.db
+*.db-journal
+
+# editor files
+.DS_Store
+.idea/
+.vscode/
+
+# logs
+/logs
+*.log
+
+# testing
+/coverage
+.nyc_output

@@ -12,14 +12,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditClientForm } from "./edit-client-form";
+import { DeleteClientDialog } from "./delete-client-dialog";
 
 // Define meta types for the table
 type TableMeta = {
-    fetchCustomers?: () => void;
+    fetchClients?: () => void;
     navigateToClientDetails?: (clientId: string) => void;
 };
 
-interface Customer {
+interface Client {
     id: string;
     name: string;
     email: string;
@@ -33,7 +34,7 @@ interface Customer {
 }
 
 // Export the columns
-export const columns: ColumnDef<Customer>[] = [
+export const columns: ColumnDef<Client>[] = [
     {
         accessorKey: "name",
         header: "Name",
@@ -46,7 +47,7 @@ export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: "email",
         header: "Email",
-        cell: ({ row }: { row: Row<Customer> }) => {
+        cell: ({ row }: { row: Row<Client> }) => {
             return (
                 <div className="text-muted-foreground max-w-[200px] truncate">
                     <span>{row.original.email || "—"}</span>
@@ -57,7 +58,7 @@ export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: "phone",
         header: "Phone",
-        cell: ({ row }: { row: Row<Customer> }) => {
+        cell: ({ row }: { row: Row<Client> }) => {
             return (
                 <div className="text-muted-foreground max-w-[150px] truncate">
                     <span>{row.original.phone || "—"}</span>
@@ -68,7 +69,7 @@ export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: "type",
         header: "Type",
-        cell: ({ row }: { row: Row<Customer> }) => {
+        cell: ({ row }: { row: Row<Client> }) => {
             const type = row.getValue("type") as string;
             const formattedType = type.replace("_", " ");
             return (
@@ -81,7 +82,7 @@ export const columns: ColumnDef<Customer>[] = [
     {
         accessorKey: "status",
         header: () => <div className="text-center">Status</div>,
-        cell: ({ row }: { row: Row<Customer> }) => {
+        cell: ({ row }: { row: Row<Client> }) => {
             const status = row.getValue("status") as string;
             return (
                 <div className="flex justify-center items-center w-[50px]">
@@ -108,11 +109,11 @@ export const columns: ColumnDef<Customer>[] = [
     {
         id: "actions",
         cell: ({ row, table }) => {
-            const customer = row.original;
+            const client = row.original;
 
             // Access table refresh callback from meta
             const meta = table.options.meta as TableMeta | undefined;
-            const fetchCustomers = meta?.fetchCustomers;
+            const fetchClients = meta?.fetchClients;
             const navigate = meta?.navigateToClientDetails;
 
             return (
@@ -129,15 +130,15 @@ export const columns: ColumnDef<Customer>[] = [
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-xs"
-                                onClick={() => navigator.clipboard.writeText(customer.id)}
+                                onClick={() => navigator.clipboard.writeText(client.id)}
                             >
-                                Copy customer ID
+                                Copy client ID
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-xs"
                                 onClick={() => {
                                     if (navigate) {
-                                        navigate(customer.id);
+                                        navigate(client.id);
                                     }
                                 }}
                             >
@@ -145,7 +146,7 @@ export const columns: ColumnDef<Customer>[] = [
                                 View details
                             </DropdownMenuItem>
                             <EditClientForm
-                                customerId={customer.id}
+                                clientId={client.id}
                                 trigger={
                                     <DropdownMenuItem className="text-xs" onSelect={(e) => e.preventDefault()}>
                                         Edit
@@ -153,12 +154,21 @@ export const columns: ColumnDef<Customer>[] = [
                                 }
                                 onClientUpdated={() => {
                                     // Refresh the table data
-                                    if (fetchCustomers) {
-                                        fetchCustomers();
+                                    if (fetchClients) {
+                                        fetchClients();
                                     }
                                 }}
                             />
-                            <DropdownMenuItem className="text-xs text-red-600">Delete</DropdownMenuItem>
+                            <DeleteClientDialog
+                                clientId={client.id}
+                                clientName={client.name}
+                                onClientDeleted={() => {
+                                    // Refresh the table data
+                                    if (fetchClients) {
+                                        fetchClients();
+                                    }
+                                }}
+                            />
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

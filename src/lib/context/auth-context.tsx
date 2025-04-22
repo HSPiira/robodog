@@ -13,6 +13,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
+    token: string | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (name: string, email: string, password: string) => Promise<void>;
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -32,8 +34,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const checkAuth = () => {
             try {
                 const storedUser = localStorage.getItem("user");
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
+                const storedToken = localStorage.getItem("token");
+
+                if (storedUser && storedToken) {
+                    try {
+                        // Optionally add client-side token validation if needed
+                        // For example, check token expiration using a library or simple JWT parsing
+                        const tokenData = JSON.parse(atob(storedToken.split('.')[1]));
+                        const isExpired = tokenData.exp * 1000 < Date.now();
+
+                        if (isExpired) {
+                            console.warn("Token expired on load, clearing authentication");
+                            localStorage.removeItem("user");
+                            localStorage.removeItem("token");
+                            return;
+                        }
+
+                        setUser(JSON.parse(storedUser));
+                        setToken(storedToken);
+                    } catch (error) {
+                        console.error("Error validating stored token:", error);
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                    }
                 }
             } catch (error) {
                 console.error("Error checking authentication:", error);
@@ -85,9 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             console.log('[Auth] Login successful, user data:', { ...data.user, password: undefined });
 
-            // Store user data
+            // Store user data and token
             setUser(data.user);
+            setToken(data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
+            localStorage.setItem("token", data.token);
         } catch (error) {
             console.error('[Auth] Login error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -135,9 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             console.log('[Auth] Registration successful, user data:', { ...data.user, password: undefined });
 
-            // Store user data and log in
+            // Store user data and token and log in
             setUser(data.user);
+            setToken(data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
+            localStorage.setItem("token", data.token);
         } catch (error) {
             console.error('[Auth] Registration error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -151,7 +178,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = () => {
         console.log('[Auth] Logging out user');
         setUser(null);
+        setToken(null);
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        // Clear the auth cookie
+        document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         router.push("/login");
     };
 
@@ -159,11 +190,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <AuthContext.Provider
             value={{
                 user,
+                token,
                 loading,
                 login,
                 register,
                 logout,
-                isAuthenticated: !!user,
+                isAuthenticated: !!user && !!token,
             }}
         >
             {children}

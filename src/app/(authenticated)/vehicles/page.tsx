@@ -22,8 +22,8 @@ interface Vehicle {
     make: string;
     model: string;
     year: number;
-    chassisNo: string;
-    engineNo: string;
+    chassisNumber: string;
+    engineNumber: string;
     bodyType: {
         name: string;
     };
@@ -33,7 +33,7 @@ interface Vehicle {
     vehicleType: {
         name: string;
     };
-    customer: {
+    client: {
         id: string;
         name: string;
     };
@@ -48,11 +48,11 @@ export default function VehiclesPage() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-    const [customerName, setCustomerName] = useState<string>("");
+    const [clientName, setClientName] = useState<string>("");
 
     const router = useRouter();
     const searchParams = useSearchParams();
-    const customerId = searchParams.get('customerId');
+    const clientId = searchParams.get("clientId");
 
     // Fetch vehicles data
     const fetchVehicles = useCallback(async () => {
@@ -60,9 +60,9 @@ export default function VehiclesPage() {
             setLoading(true);
             let url = "/api/vehicles";
 
-            // If customerId is provided, fetch only vehicles for that customer
-            if (customerId) {
-                url = `/api/customers/${customerId}/vehicles`;
+            // If clientId is provided, fetch only vehicles for that client
+            if (clientId) {
+                url = `/api/clients/${clientId}/vehicles`;
             }
 
             const response = await fetch(url);
@@ -72,16 +72,16 @@ export default function VehiclesPage() {
             const data = await response.json();
             setVehicles(data);
 
-            // If there are vehicles and they have a customer, set the customer name
-            if (data.length > 0 && data[0].customer) {
-                setCustomerName(data[0].customer.name);
+            // If there are vehicles and they have a client, set the client name
+            if (data.length > 0 && data[0].client) {
+                setClientName(data[0].client.name);
             }
         } catch (error) {
             console.error("Error fetching vehicles:", error);
         } finally {
             setLoading(false);
         }
-    }, [customerId]);
+    }, [clientId]);
 
     useEffect(() => {
         fetchVehicles();
@@ -94,7 +94,7 @@ export default function VehiclesPage() {
 
     // Navigate to bulk import page
     const navigateToImport = () => {
-        router.push('/vehicles/import');
+        router.push("/vehicles/import");
     };
 
     return (
@@ -114,11 +114,11 @@ export default function VehiclesPage() {
                                 <div className="flex items-center gap-2">
                                     <CreateVehicleForm
                                         onVehicleCreated={fetchVehicles}
-                                        customerId={customerId || undefined}
+                                        clientId={clientId || undefined}
                                     />
                                     <BulkVehicleUpload
                                         onUploadComplete={fetchVehicles}
-                                        customerId={customerId || undefined}
+                                        clientId={clientId || undefined}
                                     />
                                     <TooltipProvider>
                                         <Tooltip>
@@ -154,4 +154,4 @@ export default function VehiclesPage() {
             )}
         </div>
     );
-} 
+}
