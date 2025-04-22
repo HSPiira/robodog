@@ -5,17 +5,8 @@ import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { VehicleDetail } from "./components/vehicle-detail";
 import { CreateVehicleForm } from "./components/create-vehicle-form";
-import { BulkVehicleUpload } from "./components/bulk-vehicle-upload";
 import { ImportVehicleForm } from "./components/import-vehicle-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FileUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface Vehicle {
     id: string;

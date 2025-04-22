@@ -8,6 +8,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Authenticate the user
+    const session = await auth(request);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const id = params.id;
 
     const vehicle = await prisma.vehicle.findUnique({

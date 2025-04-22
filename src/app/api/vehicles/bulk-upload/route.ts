@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parse } from "csv-parse";
 import { auth } from "@/lib/auth";
+import path from "path";
+import fs from "fs";
 
 interface SessionUser {
   id: string;
@@ -75,6 +77,10 @@ export async function POST(request: Request) {
         if (clientsJson) clientsMap = JSON.parse(clientsJson);
       } catch (error) {
         console.error("Error parsing reference data maps:", error);
+        return NextResponse.json(
+          { error: "Invalid reference data sent from client" },
+          { status: 400 }
+        );
       }
     }
 
@@ -448,6 +454,44 @@ export async function POST(request: Request) {
       success: successCount,
       failed: failureCount,
       errors: errors.length > 0 ? errors : undefined,
+    });
+  } catch (error) {
+    console.error("Error processing vehicle import:", error);
+    return NextResponse.json(
+      { error: "Failed to process vehicle import" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    // Authenticate the user
+    const session = await auth(request);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get the template file path
+    const templatePath = path.join(process.cwd(), 'public', 'templates', 'vehicle-import-template.csv');
+
+    // Check if file exists
+    if (!fs.existsSync(templatePath)) {
+      return NextResponse.json(
+        { error: "Template file not found" },
+        { status: 404 }
+      );
+    }
+
+    // Read the file
+    const fileContent = fs.readFileSync(templatePath);
+
+    // Return the file with appropriate headers
+    return new NextResponse(fileContent, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="vehicle-import-template.csv"'
+      }
     });
   } catch (error) {
     console.error("Error processing vehicle import:", error);

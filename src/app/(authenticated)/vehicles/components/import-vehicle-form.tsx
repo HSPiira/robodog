@@ -73,6 +73,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
     } | null>(null);
     const [dragActive, setDragActive] = useState(false);
     const [importMethod, setImportMethod] = useState<'names' | 'ids'>('names');
+    const [isProgressActive, setIsProgressActive] = useState(false);
 
     // Step-based import flow
     const [currentStep, setCurrentStep] = useState<ImportStep>('file-selection');
@@ -133,89 +134,85 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
 
     // Fetch all reference data needed for the import
     const fetchReferenceData = async () => {
+        const controller = new AbortController();
         setIsLoadingReference(true);
         setReferenceDataError(false);
+
         try {
-            // Fetch body types
-            const bodyTypesResponse = await fetch('/api/body-types');
-            if (!bodyTypesResponse.ok) {
-                throw new Error(`Failed to fetch body types: ${bodyTypesResponse.statusText}`);
-            }
-            const bodyTypesResponseData = await bodyTypesResponse.json();
+            // Fetch all reference data in parallel
+            const [bodyTypesRes, categoriesRes, typesRes, clientsRes] = await Promise.all([
+                fetch('/api/body-types', { signal: controller.signal }),
+                fetch('/api/vehicle-categories', { signal: controller.signal }),
+                fetch('/api/vehicle-types', { signal: controller.signal }),
+                clientId ? Promise.resolve(null) : fetch('/api/clients', { signal: controller.signal })
+            ]);
 
-            // Handle different response formats
-            const bodyTypesData = bodyTypesResponseData.data || bodyTypesResponseData;
+            // Check responses and parse JSON in parallel
+            const [bodyTypesData, categoriesData, typesData, clientsData] = await Promise.all([
+                bodyTypesRes.json(),
+                categoriesRes.json(),
+                typesRes.json(),
+                clientsRes ? clientsRes.json() : Promise.resolve(null)
+            ]);
 
-            if (Array.isArray(bodyTypesData)) {
-                setBodyTypes(bodyTypesData.map((item: any) => ({ id: item.id, name: item.name })));
+            // Process body types
+            const bodyTypesResult = bodyTypesData.data || bodyTypesData;
+            if (Array.isArray(bodyTypesResult)) {
+                setBodyTypes(bodyTypesResult.map((item: any) => ({ id: item.id, name: item.name })));
             } else {
-                console.error("bodyTypesData is not an array:", bodyTypesResponseData);
+                console.error("bodyTypesData is not an array:", bodyTypesData);
                 setBodyTypes([]);
                 throw new Error("Invalid body types data format");
             }
 
-            // Fetch vehicle categories
-            const categoriesResponse = await fetch('/api/vehicle-categories');
-            if (!categoriesResponse.ok) {
-                throw new Error(`Failed to fetch vehicle categories: ${categoriesResponse.statusText}`);
-            }
-            const categoriesResponseData = await categoriesResponse.json();
-
-            // Handle different response formats
-            const categoriesData = categoriesResponseData.data || categoriesResponseData;
-
-            if (Array.isArray(categoriesData)) {
-                setVehicleCategories(categoriesData.map((item: any) => ({ id: item.id, name: item.name })));
+            // Process vehicle categories
+            const categoriesResult = categoriesData.data || categoriesData;
+            if (Array.isArray(categoriesResult)) {
+                setVehicleCategories(categoriesResult.map((item: any) => ({ id: item.id, name: item.name })));
             } else {
-                console.error("categoriesData is not an array:", categoriesResponseData);
+                console.error("categoriesData is not an array:", categoriesData);
                 setVehicleCategories([]);
                 throw new Error("Invalid vehicle categories data format");
             }
 
-            // Fetch vehicle types
-            const typesResponse = await fetch('/api/vehicle-types');
-            if (!typesResponse.ok) {
-                throw new Error(`Failed to fetch vehicle types: ${typesResponse.statusText}`);
-            }
-            const typesResponseData = await typesResponse.json();
-
-            // Handle different response formats
-            const typesData = typesResponseData.data || typesResponseData;
-
-            if (Array.isArray(typesData)) {
-                setVehicleTypes(typesData.map((item: any) => ({ id: item.id, name: item.name })));
+            // Process vehicle types
+            const typesResult = typesData.data || typesData;
+            if (Array.isArray(typesResult)) {
+                setVehicleTypes(typesResult.map((item: any) => ({ id: item.id, name: item.name })));
             } else {
-                console.error("typesData is not an array:", typesResponseData);
+                console.error("typesData is not an array:", typesData);
                 setVehicleTypes([]);
                 throw new Error("Invalid vehicle types data format");
             }
 
-            // Fetch clients if clientId is not provided
-            if (!clientId) {
-                const clientsResponse = await fetch('/api/clients');
-                if (!clientsResponse.ok) {
-                    throw new Error(`Failed to fetch clients: ${clientsResponse.statusText}`);
-                }
-                const clientsResponseData = await clientsResponse.json();
-
-                // Handle different response formats
-                const clientsData = clientsResponseData.data || clientsResponseData;
-
-                if (Array.isArray(clientsData)) {
-                    setClients(clientsData.map((item: any) => ({ id: item.id, name: item.name })));
+            // Process clients if fetched
+            if (clientsData) {
+                const clientsResult = clientsData.data || clientsData;
+                if (Array.isArray(clientsResult)) {
+                    setClients(clientsResult.map((item: any) => ({ id: item.id, name: item.name })));
                 } else {
-                    console.error("clientsData is not an array:", clientsResponseData);
+                    console.error("clientsData is not an array:", clientsData);
                     setClients([]);
                     throw new Error("Invalid clients data format");
                 }
             }
         } catch (error) {
-            console.error("Error fetching reference data:", error);
-            toast.error("Failed to load reference data");
-            setReferenceDataError(true);
+            // Only set error state if the request wasn't aborted
+            if (!controller.signal.aborted) {
+                console.error("Error fetching reference data:", error);
+                toast.error("Failed to load reference data");
+                setReferenceDataError(true);
+            }
         } finally {
-            setIsLoadingReference(false);
+            // Only update loading state if the request wasn't aborted
+            if (!controller.signal.aborted) {
+                setIsLoadingReference(false);
+            }
         }
+
+        return () => {
+            controller.abort();
+        };
     };
 
     const getTemplateData = () => {
@@ -337,6 +334,28 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
         }
     };
 
+    // Effect to handle progress updates
+    useEffect(() => {
+        let progressInterval: NodeJS.Timeout;
+
+        if (isProgressActive) {
+            progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) {
+                        return prev;
+                    }
+                    return prev + 10;
+                });
+            }, 500);
+        }
+
+        return () => {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+        };
+    }, [isProgressActive]);
+
     const handleUpload = async () => {
         if (!file) {
             toast.error("Please select a file to upload");
@@ -347,6 +366,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
             setIsUploading(true);
             setUploadProgress(0);
             setUploadResult(null);
+            setIsProgressActive(true);
 
             // Convert Excel file to CSV for backend compatibility
             const arrayBuffer = await file.arrayBuffer();
@@ -374,30 +394,17 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                 formData.append('clientsMap', JSON.stringify(clients));
             }
 
-            // Simulate progress for better UX
-            const progressInterval = setInterval(() => {
-                setUploadProgress(prev => {
-                    if (prev >= 90) {
-                        clearInterval(progressInterval);
-                        return prev;
-                    }
-                    return prev + 10;
-                });
-            }, 500);
-
             // Make the API call
             const response = await fetch('/api/vehicles/bulk-upload', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
                 headers: {
-                    // Don't set Content-Type header when using FormData
-                    // FormData automatically sets the correct multipart/form-data
                     'Accept': 'application/json',
                 },
             });
 
-            clearInterval(progressInterval);
+            setIsProgressActive(false);
             setUploadProgress(100);
 
             if (!response.ok) {
@@ -427,6 +434,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
             console.error("Error uploading vehicles:", error);
             toast.error("Failed to upload vehicles");
         } finally {
+            setIsProgressActive(false);
             setIsUploading(false);
         }
     };
