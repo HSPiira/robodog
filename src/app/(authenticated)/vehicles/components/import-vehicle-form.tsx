@@ -119,9 +119,13 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
 
     // Fetch reference data when dialog opens
     useEffect(() => {
-        if (open) {
-            fetchReferenceData();
-        }
+        if (!open) return;
+
+        const controller = new AbortController();
+        const fetchAll = async () => fetchReferenceData(controller);
+
+        fetchAll();
+        return () => controller.abort();
     }, [open]);
 
     // Reset reference data loading state when dialog closes
@@ -133,10 +137,13 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
     }, [open]);
 
     // Fetch all reference data needed for the import
-    const fetchReferenceData = async () => {
-        const controller = new AbortController();
+    const fetchReferenceData = async (controller: AbortController) => {
         setIsLoadingReference(true);
         setReferenceDataError(false);
+
+        const assertOk = (res: Response, label: string) => {
+            if (!res.ok) throw new Error(`${label} fetch failed: ${res.status}`);
+        };
 
         try {
             // Fetch all reference data in parallel
@@ -146,6 +153,12 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                 fetch('/api/vehicle-types', { signal: controller.signal }),
                 clientId ? Promise.resolve(null) : fetch('/api/clients', { signal: controller.signal })
             ]);
+
+            // Validate response status before parsing
+            assertOk(bodyTypesRes, "Body types");
+            assertOk(categoriesRes, "Vehicle categories");
+            assertOk(typesRes, "Vehicle types");
+            if (clientsRes) assertOk(clientsRes, "Clients");
 
             // Check responses and parse JSON in parallel
             const [bodyTypesData, categoriesData, typesData, clientsData] = await Promise.all([
@@ -200,7 +213,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
             // Only set error state if the request wasn't aborted
             if (!controller.signal.aborted) {
                 console.error("Error fetching reference data:", error);
-                toast.error("Failed to load reference data");
+                toast.error(error instanceof Error ? error.message : "Failed to load reference data");
                 setReferenceDataError(true);
             }
         } finally {
@@ -209,10 +222,6 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                 setIsLoadingReference(false);
             }
         }
-
-        return () => {
-            controller.abort();
-        };
     };
 
     const getTemplateData = () => {

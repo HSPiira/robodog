@@ -56,7 +56,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const clientId = formData.get("clientId") as string | null;
-    const importMethod = formData.get("importMethod") as string || "ids";
+    const rawMethod = (formData.get("importMethod") as string | null)?.toLowerCase() ?? "ids";
+    const importMethod: "names" | "ids" = rawMethod === "names" ? "names" : "ids";
 
     // Get reference data maps for name-based imports
     let bodyTypesMap: { id: string, name: string }[] = [];
