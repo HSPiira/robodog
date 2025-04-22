@@ -40,6 +40,7 @@ interface DataTableProps<TData, TValue> {
   navigateOnDoubleClick?: boolean;
   navigateToClientDetails?: (clientId: string) => void;
   selectedRow?: TData | null;
+  showDetails?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -52,6 +53,7 @@ export function DataTable<TData, TValue>({
   navigateOnDoubleClick = true,
   navigateToClientDetails: externalNavigate,
   selectedRow,
+  showDetails = false,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -68,6 +70,15 @@ export function DataTable<TData, TValue>({
     ((clientId: string) => {
       router.push(`/clients/${clientId}`);
     });
+
+  // Update column visibility when details panel is shown/hidden
+  React.useEffect(() => {
+    // Hide address column when details panel is open to save space
+    setColumnVisibility((prev) => ({
+      ...prev,
+      address: !showDetails,
+    }));
+  }, [showDetails]);
 
   const table = useReactTable({
     data,
@@ -105,7 +116,7 @@ export function DataTable<TData, TValue>({
         />
         {actionButton}
       </div>
-      <div className="rounded-md border overflow-x-auto">
+      <div className="rounded-md border overflow-hidden">
         <div className="min-h-[300px] flex flex-col">
           <Table>
             <TableHeader className="bg-primary/5">

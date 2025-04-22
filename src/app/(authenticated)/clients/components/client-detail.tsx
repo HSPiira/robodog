@@ -25,9 +25,9 @@ interface ClientDetailProps {
     name: string;
     email: string;
     phone: string;
-    address: string;
+    address: string | null;
     status: "active" | "inactive";
-    type: string;
+    type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
     policies: number;
     joinedDate: string;
     createdBy?: string | null;
@@ -75,13 +75,21 @@ export function ClientDetail({ client, onRefresh }: ClientDetailProps) {
   };
 
   // Copy client ID to clipboard
-  const copyClientId = () => {
+  const copyClientId = async () => {
     if (client) {
-      navigator.clipboard.writeText(client.id);
-      toast({
-        title: "Client ID copied",
-        description: "The client ID has been copied to your clipboard."
-      });
+      try {
+        await navigator.clipboard.writeText(client.id);
+        toast({
+          title: "Client ID copied",
+          description: "The client ID has been copied to your clipboard."
+        });
+      } catch {
+        toast({
+          title: "Copy failed",
+          description: "Your browser blocked access to the clipboard.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

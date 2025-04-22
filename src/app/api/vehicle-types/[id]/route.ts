@@ -72,18 +72,28 @@ export async function PATCH(
         const { name, description } = body;
 
         // Validate input
-        if (name && typeof name !== 'string') {
-            return NextResponse.json(
-                { error: "Invalid name format" },
-                { status: 400 }
-            );
+        if (name !== undefined) {
+            if (typeof name !== 'string') {
+                return NextResponse.json(
+                    { error: "Invalid name format" },
+                    { status: 400 }
+                );
+            }
+
+            // Check for empty string or whitespace-only string
+            if (name.trim() === '') {
+                return NextResponse.json(
+                    { error: "Name cannot be empty" },
+                    { status: 400 }
+                );
+            }
         }
 
         // Check if the updated name conflicts with another vehicle type
         if (name && name !== existingVehicleType.name) {
             const nameConflict = await prisma.vehicleType.findFirst({
                 where: {
-                    name: { equals: name, mode: 'insensitive' },
+                    name: { equals: name.trim(), mode: 'insensitive' },
                     id: { not: id },
                     isActive: true
                 }
@@ -101,7 +111,7 @@ export async function PATCH(
         const updatedVehicleType = await prisma.vehicleType.update({
             where: { id },
             data: {
-                name: name || undefined,
+                name: name ? name.trim() : undefined,
                 description: description === undefined ? undefined : description,
                 updatedBy: userId,
                 updatedAt: new Date()

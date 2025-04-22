@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditVehicleForm } from "./edit-vehicle-form";
 import { useState } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 interface VehicleDetailProps {
     vehicle?: {
@@ -70,6 +71,12 @@ export function VehicleDetail({ vehicle, onCreatePolicy, onRefresh }: VehicleDet
             });
 
             if (!response.ok) {
+                const errorData = await response.json();
+                toast({
+                    title: "Deactivation failed",
+                    description: errorData.error || "Failed to deactivate vehicle",
+                    variant: "destructive"
+                });
                 throw new Error('Failed to deactivate vehicle');
             }
 
@@ -77,6 +84,11 @@ export function VehicleDetail({ vehicle, onCreatePolicy, onRefresh }: VehicleDet
             onRefresh?.();
         } catch (error) {
             console.error('Error deactivating vehicle:', error);
+            toast({
+                title: "Deactivation failed",
+                description: "Failed to deactivate vehicle. Please try again.",
+                variant: "destructive"
+            });
         } finally {
             setIsDeactivating(false);
         }

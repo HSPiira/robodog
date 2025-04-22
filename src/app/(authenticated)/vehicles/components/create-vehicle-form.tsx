@@ -157,13 +157,17 @@ export function CreateVehicleForm({
         setIsLoadingOptions(true);
         try {
           // Fetch all reference data in parallel
-          const [bodyResponse, categoryResponse, vehicleTypeResponse, clientResponse] =
-            await Promise.all([
-              fetch("/api/body-types"),
-              fetch("/api/vehicle-categories"),
-              fetch("/api/vehicle-types"),
-              !clientId ? fetch("/api/clients") : Promise.resolve(null),
-            ]);
+          const [
+            bodyResponse,
+            categoryResponse,
+            vehicleTypeResponse,
+            clientResponse,
+          ] = await Promise.all([
+            fetch("/api/body-types"),
+            fetch("/api/vehicle-categories"),
+            fetch("/api/vehicle-types"),
+            !clientId ? fetch("/api/clients") : Promise.resolve(null),
+          ]);
 
           const [bodyData, categoryData, vehicleTypeData] = await Promise.all([
             parse(bodyResponse),
@@ -178,7 +182,9 @@ export function CreateVehicleForm({
           // Only fetch clients if clientId is not provided
           if (!clientId && clientResponse) {
             const clientData = await parse(clientResponse);
-            setClients(Array.isArray(clientData) ? clientData : (clientData?.data || []));
+            setClients(
+              Array.isArray(clientData) ? clientData : clientData?.data || []
+            );
           }
         } catch (error) {
           console.error("Error fetching reference data:", error);
@@ -517,11 +523,13 @@ export function CreateVehicleForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {Array.isArray(clients) && clients.map((client) => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  {client.name}
-                                </SelectItem>
-                              ))}
+                              {(Array.isArray(clients) ? clients : []).map(
+                                (client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {client.name}
+                                  </SelectItem>
+                                )
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage className="text-xs" />

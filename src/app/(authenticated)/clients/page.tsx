@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
@@ -91,8 +91,8 @@ export default function ClientsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="flex gap-6">
-          <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showDetails ? '' : 'w-full'}`}>
+        <div className="flex flex-wrap md:flex-nowrap gap-6 w-full overflow-hidden">
+          <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[calc(100%-352px)]' : 'w-full'}`}>
             <DataTable
               columns={columns}
               data={clients}
@@ -105,6 +105,7 @@ export default function ClientsPage() {
               navigateOnDoubleClick={true}
               navigateToClientDetails={navigateToClientDetails}
               selectedRow={selectedClient}
+              showDetails={showDetails}
             />
           </div>
           <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${detailPanelClasses}`}>

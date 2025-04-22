@@ -91,7 +91,9 @@ export default function VehicleSettingsPage() {
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState<EntityType>("vehicleTypes");
     const [entities, setEntities] = useState<VehicleEntity[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
     const [selectedEntity, setSelectedEntity] = useState<VehicleEntity | null>(null);
@@ -163,7 +165,7 @@ export default function VehicleSettingsPage() {
     }, [activeTab]);
 
     const fetchEntities = async () => {
-        setIsLoading(true);
+        setIsFetching(true);
         try {
             const response = await fetch(`${apiEndpoints[activeTab]}?include=stats`);
             const data = await response.json();
@@ -175,7 +177,7 @@ export default function VehicleSettingsPage() {
                 variant: "destructive",
             });
         } finally {
-            setIsLoading(false);
+            setIsFetching(false);
         }
     };
 
@@ -211,7 +213,7 @@ export default function VehicleSettingsPage() {
             return;
         }
 
-        setIsLoading(true);
+        setIsSaving(true);
         setNameError("");
         try {
             const response = await fetch(`${apiEndpoints[activeTab]}/${editingEntity.id}`, {
@@ -229,7 +231,7 @@ export default function VehicleSettingsPage() {
                 const errorData = await response.json();
                 if (errorData.error === "DUPLICATE_NAME") {
                     setNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
-                    setIsLoading(false);
+                    setIsSaving(false);
                     return;
                 }
                 throw new Error(errorData.message || "Failed to update");
@@ -249,7 +251,7 @@ export default function VehicleSettingsPage() {
                 variant: "destructive",
             });
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -269,7 +271,7 @@ export default function VehicleSettingsPage() {
             return;
         }
 
-        setIsLoading(true);
+        setIsSaving(true);
         setNewNameError("");
         try {
             const response = await fetch(apiEndpoints[activeTab], {
@@ -287,7 +289,7 @@ export default function VehicleSettingsPage() {
                 const errorData = await response.json();
                 if (errorData.error === "DUPLICATE_NAME") {
                     setNewNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
-                    setIsLoading(false);
+                    setIsSaving(false);
                     return;
                 }
                 throw new Error(errorData.message || "Failed to create");
@@ -307,7 +309,7 @@ export default function VehicleSettingsPage() {
                 variant: "destructive",
             });
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -319,7 +321,7 @@ export default function VehicleSettingsPage() {
     const handleDeleteSubmit = async () => {
         if (!deletingEntityId) return;
 
-        setIsLoading(true);
+        setIsDeleting(true);
         try {
             const response = await fetch(`${apiEndpoints[activeTab]}/${deletingEntityId}`, {
                 method: "DELETE",
@@ -343,7 +345,7 @@ export default function VehicleSettingsPage() {
                 variant: "destructive",
             });
         } finally {
-            setIsLoading(false);
+            setIsDeleting(false);
             setDeletingEntityId(null);
         }
     };
@@ -505,7 +507,7 @@ export default function VehicleSettingsPage() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {isLoading ? (
+                                            {isFetching ? (
                                                 <TableRow>
                                                     <TableCell colSpan={3} className="h-[200px] text-center">
                                                         <div className="flex flex-col items-center justify-center h-full">
@@ -758,11 +760,11 @@ export default function VehicleSettingsPage() {
                             />
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
+                            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button onClick={handleEditSubmit} disabled={isLoading || !entityName.trim()} className="rounded-full h-6 text-xs px-3">
-                                {isLoading ? (
+                            <Button onClick={handleEditSubmit} disabled={isSaving || !entityName.trim()} className="rounded-full h-6 text-xs px-3">
+                                {isSaving ? (
                                     <>
                                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Saving...
@@ -819,11 +821,11 @@ export default function VehicleSettingsPage() {
                             />
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" onClick={() => setIsAddingNew(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
+                            <Button variant="outline" onClick={() => setIsAddingNew(false)} disabled={isSaving} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button onClick={handleAddNewSubmit} disabled={isLoading || !newEntityName.trim()} className="rounded-full h-6 text-xs px-3">
-                                {isLoading ? (
+                            <Button onClick={handleAddNewSubmit} disabled={isSaving || !newEntityName.trim()} className="rounded-full h-6 text-xs px-3">
+                                {isSaving ? (
                                     <>
                                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Creating...
@@ -855,11 +857,11 @@ export default function VehicleSettingsPage() {
                             This action cannot be undone.
                         </p>
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button variant="destructive" onClick={handleDeleteSubmit} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
-                                {isLoading ? (
+                            <Button variant="destructive" onClick={handleDeleteSubmit} disabled={isDeleting} className="rounded-full h-6 text-xs px-3">
+                                {isDeleting ? (
                                     <>
                                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Deleting...

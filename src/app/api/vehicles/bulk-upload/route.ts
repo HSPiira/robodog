@@ -9,6 +9,25 @@ interface SessionUser {
   name: string;
 }
 
+// Process items in batches with concurrency control
+async function processBatchesWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((item, batchIndex) => fn(item, i + batchIndex))
+    );
+    results.push(...batchResults);
+  }
+
+  return results;
+}
+
 export async function POST(request: Request) {
   try {
     // Authenticate the user
@@ -22,7 +41,7 @@ export async function POST(request: Request) {
     // Get the authenticated user from the database
     const dbUser = await prisma.user.findUnique({
       where: { email: user.email },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!dbUser) {
@@ -42,19 +61,29 @@ export async function POST(request: Request) {
 
     // Validate file type
     const fileType = file.type;
-    const validTypes = ["text/csv", "application/csv", "application/vnd.ms-excel"];
+    const validTypes = [
+      "text/csv",
+      "application/csv",
+      "application/vnd.ms-excel",
+    ];
     if (!validTypes.includes(fileType)) {
-      return NextResponse.json({
-        error: "Invalid file type. Only CSV files are accepted."
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Invalid file type. Only CSV files are accepted.",
+        },
+        { status: 400 }
+      );
     }
 
     // Validate file size (limit to 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      return NextResponse.json({
-        error: "File size exceeds the limit of 5MB."
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "File size exceeds the limit of 5MB.",
+        },
+        { status: 400 }
+      );
     }
 
     const bytes = await file.arrayBuffer();
@@ -119,8 +148,10 @@ export async function POST(request: Request) {
     }
 
     // Process the validated records
-    const results = await Promise.all(
-      records.map(async (record, index) => {
+    const results = await processBatchesWithConcurrency(
+      records,
+      15,
+      async (record, index) => {
         try {
           // Validate required fields
           const requiredFields = [
@@ -163,7 +194,8 @@ export async function POST(request: Request) {
 
           if (existingVehicle) {
             throw new Error(
-              `Row ${index + 2
+              `Row ${
+                index + 2
               }: Vehicle with registration number '${regNo}' already exists`
             );
           }
@@ -186,7 +218,8 @@ export async function POST(request: Request) {
 
           if (!category) {
             throw new Error(
-              `Row ${index + 2}: Invalid vehicle category ID '${record.category_id
+              `Row ${index + 2}: Invalid vehicle category ID '${
+                record.category_id
               }'`
             );
           }
@@ -198,7 +231,8 @@ export async function POST(request: Request) {
 
           if (!vehicleType) {
             throw new Error(
-              `Row ${index + 2}: Invalid vehicle type ID '${record.vehicle_type_id
+              `Row ${index + 2}: Invalid vehicle type ID '${
+                record.vehicle_type_id
               }'`
             );
           }
@@ -232,7 +266,8 @@ export async function POST(request: Request) {
             seatingCapacity = parseInt(record.seating_capacity);
             if (isNaN(seatingCapacity) || seatingCapacity <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid seating capacity value '${record.seating_capacity
+                `Row ${index + 2}: Invalid seating capacity value '${
+                  record.seating_capacity
                 }'`
               );
             }
@@ -242,7 +277,8 @@ export async function POST(request: Request) {
             cubicCapacity = parseInt(record.cubic_capacity);
             if (isNaN(cubicCapacity) || cubicCapacity <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid cubic capacity value '${record.cubic_capacity
+                `Row ${index + 2}: Invalid cubic capacity value '${
+                  record.cubic_capacity
                 }'`
               );
             }
@@ -252,7 +288,8 @@ export async function POST(request: Request) {
             grossWeight = parseFloat(record.gross_weight);
             if (isNaN(grossWeight) || grossWeight <= 0) {
               throw new Error(
-                `Row ${index + 2}: Invalid gross weight value '${record.gross_weight
+                `Row ${index + 2}: Invalid gross weight value '${
+                  record.gross_weight
                 }'`
               );
             }
@@ -285,7 +322,7 @@ export async function POST(request: Request) {
         } catch (error: any) {
           throw new Error(error.message);
         }
-      })
+      }
     );
 
     // Count successes and failures

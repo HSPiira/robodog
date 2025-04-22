@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
                 isActive: true,
                 createdAt: includeStats ? true : false,
                 updatedAt: includeStats ? true : false,
-                _count: includeStats ? {
-                    select: {
-                        vehicles: true
+                ...(includeStats && {
+                    _count: {
+                        select: {
+                            vehicles: true
+                        }
                     }
-                } : undefined
+                })
             }
         });
 
@@ -53,7 +55,10 @@ export async function POST(request: NextRequest) {
 
         // Parse request body
         const body = await request.json();
-        const { name, description } = body;
+        let { name, description } = body;
+        if (typeof name === "string") {
+            name = name.trim();
+        }
 
         // Validate input
         if (!name || typeof name !== 'string') {

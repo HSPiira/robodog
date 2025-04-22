@@ -30,7 +30,7 @@ export const columns: ColumnDef<Client>[] = [
         header: "Name",
         cell: ({ row }) => {
             return (
-                <div className="font-medium max-w-[200px] truncate">{row.getValue("name")}</div>
+                <div className="font-medium max-w-[160px] truncate">{row.getValue("name")}</div>
             );
         },
     },
@@ -39,7 +39,7 @@ export const columns: ColumnDef<Client>[] = [
         header: "Email",
         cell: ({ row }: { row: Row<Client> }) => {
             return (
-                <div className="text-muted-foreground max-w-[200px] truncate">
+                <div className="text-muted-foreground max-w-[160px] truncate">
                     <span>{row.original.email || "—"}</span>
                 </div>
             );
@@ -50,7 +50,7 @@ export const columns: ColumnDef<Client>[] = [
         header: "Phone",
         cell: ({ row }: { row: Row<Client> }) => {
             return (
-                <div className="text-muted-foreground max-w-[150px] truncate">
+                <div className="text-muted-foreground max-w-[120px] truncate">
                     <span>{row.original.phone || "—"}</span>
                 </div>
             );
@@ -61,7 +61,7 @@ export const columns: ColumnDef<Client>[] = [
         header: "Address",
         cell: ({ row }: { row: Row<Client> }) => {
             return (
-                <div className="text-muted-foreground max-w-[200px] truncate">
+                <div className="text-muted-foreground max-w-[180px] truncate">
                     <span>{row.original.address || "—"}</span>
                 </div>
             );
@@ -74,7 +74,7 @@ export const columns: ColumnDef<Client>[] = [
             const type = row.getValue("type") as string;
             const formattedType = type.replace("_", " ");
             return (
-                <div className="text-muted-foreground max-w-[100px] truncate capitalize">
+                <div className="text-muted-foreground max-w-[90px] truncate capitalize">
                     {formattedType.toLowerCase()}
                 </div>
             );
@@ -86,23 +86,12 @@ export const columns: ColumnDef<Client>[] = [
         cell: ({ row }: { row: Row<Client> }) => {
             const status = row.getValue("status") as string;
             return (
-                <div className="flex justify-center items-center w-[50px]">
+                <div className="flex justify-center items-center w-[40px]">
                     {status === "active" ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     ) : (
                         <AlertCircle className="h-4 w-4 text-yellow-500" />
                     )}
-                </div>
-            );
-        },
-    },
-    {
-        accessorKey: "policies",
-        header: () => <div className="text-center">Policies</div>,
-        cell: ({ row }) => {
-            return (
-                <div className="text-center font-medium w-[50px]">
-                    {row.getValue("policies")}
                 </div>
             );
         },
