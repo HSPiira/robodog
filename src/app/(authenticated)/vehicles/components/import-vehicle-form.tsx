@@ -90,6 +90,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
     const ITEMS_PER_PAGE = 10;
 
     // Calculate paginated data
@@ -279,11 +280,12 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
             // Get headers from the first row
             const headers = Object.keys(jsonData[0] || {});
 
-            // Limit preview to first 10 rows (increased from 5)
+            // Limit preview to first 10 rows
             const previewRows = jsonData.slice(0, 10);
 
             setPreviewHeaders(headers);
             setPreviewData(previewRows);
+            setTotalRecords(jsonData.length);
         } catch (error) {
             console.error("Error processing Excel file:", error);
             toast.error("Failed to process the Excel file");
@@ -696,7 +698,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                             </Alert>
 
                                             <div className="text-[10px] text-muted-foreground">
-                                                Showing {previewData.length} of {file ? 'the total' : '0'} records in the file. First 10 rows are displayed for preview.
+                                                Showing {previewData.length} of {totalRecords} records in the file. First 10 rows are displayed for preview.
                                             </div>
 
                                             <div className="w-[800px] border rounded-md overflow-hidden">
