@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate input
-        if (!name || typeof name !== 'string') {
+        if (!name || typeof name !== 'string' || name === '') {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 

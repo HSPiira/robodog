@@ -160,6 +160,16 @@ export default function VehicleSettingsPage() {
         },
     };
 
+    // Helper function to get singular form of entity types
+    const getSingularForm = (type: EntityType): string => {
+        const singularForms = {
+            vehicleTypes: "Vehicle Type",
+            bodyTypes: "Body Type",
+            vehicleCategories: "Vehicle Category",
+        };
+        return singularForms[type];
+    };
+
     useEffect(() => {
         fetchEntities();
     }, [activeTab]);
@@ -209,7 +219,7 @@ export default function VehicleSettingsPage() {
 
         // Check for duplicate names
         if (!validateEntityName(entityName, editingEntity.id)) {
-            setNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+            setNameError(`A ${getSingularForm(activeTab).toLowerCase()} with this name already exists`);
             return;
         }
 
@@ -230,7 +240,7 @@ export default function VehicleSettingsPage() {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (errorData.error === "DUPLICATE_NAME") {
-                    setNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+                    setNameError(`A ${getSingularForm(activeTab).toLowerCase()} with this name already exists`);
                     setIsSaving(false);
                     return;
                 }
@@ -239,7 +249,7 @@ export default function VehicleSettingsPage() {
 
             toast({
                 title: "Updated Successfully",
-                description: `${tabLabels[activeTab].title.slice(0, -1)} has been updated`,
+                description: `${getSingularForm(activeTab).toLowerCase()} has been updated`,
             });
 
             fetchEntities();
@@ -267,7 +277,7 @@ export default function VehicleSettingsPage() {
 
         // Check for duplicate names
         if (!validateEntityName(newEntityName)) {
-            setNewNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+            setNewNameError(`A ${getSingularForm(activeTab).toLowerCase()} with this name already exists`);
             return;
         }
 
@@ -288,7 +298,7 @@ export default function VehicleSettingsPage() {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (errorData.error === "DUPLICATE_NAME") {
-                    setNewNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+                    setNewNameError(`A ${getSingularForm(activeTab).toLowerCase()} with this name already exists`);
                     setIsSaving(false);
                     return;
                 }
@@ -297,7 +307,7 @@ export default function VehicleSettingsPage() {
 
             toast({
                 title: "Created Successfully",
-                description: `New ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} has been created`,
+                description: `New ${getSingularForm(activeTab).toLowerCase()} has been created`,
             });
 
             fetchEntities();
@@ -333,7 +343,7 @@ export default function VehicleSettingsPage() {
 
             toast({
                 title: "Deleted Successfully",
-                description: `The ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} has been deleted`,
+                description: `The ${getSingularForm(activeTab).toLowerCase()} has been deleted`,
             });
 
             fetchEntities();
@@ -651,11 +661,7 @@ export default function VehicleSettingsPage() {
                                                     </Button>
                                                 </div>
                                                 <Badge variant="outline" className={`mt-1 text-[10px] py-0 px-2 h-4 w-fit ${tabLabels[activeTab].color} bg-muted/50`}>
-                                                    {activeTab === "vehicleTypes"
-                                                        ? "Vehicle Type"
-                                                        : activeTab === "bodyTypes"
-                                                            ? "Body Type"
-                                                            : "Category"}
+                                                    {getSingularForm(activeTab)}
                                                 </Badge>
                                             </CardHeader>
                                             <CardContent className="pt-0">
@@ -726,7 +732,7 @@ export default function VehicleSettingsPage() {
                     <DialogHeader className="pb-2">
                         <DialogTitle className="flex items-center gap-2">
                             <TabIcon className={`h-4 w-4 ${tabLabels[activeTab].color}`} />
-                            Edit {tabLabels[activeTab].title.slice(0, -1)}
+                            Edit {getSingularForm(activeTab)}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-6 pt-4">
@@ -787,7 +793,7 @@ export default function VehicleSettingsPage() {
                     <DialogHeader className="pb-2">
                         <DialogTitle className="flex items-center gap-2">
                             <TabIcon className={`h-4 w-4 ${tabLabels[activeTab].color}`} />
-                            Add New {tabLabels[activeTab].title.slice(0, -1)}
+                            Add New {getSingularForm(activeTab)}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-6 pt-4">
@@ -853,7 +859,7 @@ export default function VehicleSettingsPage() {
                     </DialogHeader>
                     <div className="space-y-5 pt-4">
                         <p className="text-sm">
-                            Are you sure you want to delete this {tabLabels[activeTab].title.slice(0, -1).toLowerCase()}?
+                            Are you sure you want to delete this {getSingularForm(activeTab).toLowerCase()}?
                             This action cannot be undone.
                         </p>
                         <div className="flex justify-end gap-2 pt-2">
