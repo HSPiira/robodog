@@ -212,7 +212,7 @@ async function deleteClient(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Properly await context.params as per Next.js recommendation
+        // Extract id from context.params (no need to await in Next.js 14+)
         const { id } = context.params;
 
         // Check if client exists

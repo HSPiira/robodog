@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
-import { createAuthenticatedHandler } from "@/lib/api-utils";
+import { db } from "@/lib/db";
+import { createAuthenticatedHandler } from "@/lib/api-middleware";
 
 /**
  * Handles vehicle import submission
@@ -20,7 +20,7 @@ async function handleVehicleImport(req: NextRequest) {
         const userEmail = session.user.email;
 
         // Find the user in the database
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
             where: { email: userEmail },
         });
 

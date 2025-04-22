@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
@@ -13,6 +13,7 @@ interface Client {
   name: string;
   email: string;
   phone: string;
+  address: string;
   type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
   status: "active" | "inactive";
   policies: number;
@@ -27,6 +28,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Create navigation function
   const navigateToClientDetails = useCallback((clientId: string) => {
@@ -65,6 +67,23 @@ export default function ClientsPage() {
     fetchClients();
   }, [fetchClients]);
 
+  // Handle client selection with toggle behavior
+  const handleClientSelect = (client: Client) => {
+    if (selectedClient?.id === client.id) {
+      // If clicking the same client, toggle the details panel
+      setShowDetails(prev => !prev);
+    } else {
+      // If selecting a different client, show it and open the panel
+      setSelectedClient(client);
+      setShowDetails(true);
+    }
+  };
+
+  // Animation classes for the detail panel
+  const detailPanelClasses = showDetails && selectedClient
+    ? "w-[320px] opacity-100 visible"
+    : "w-0 opacity-0 invisible";
+
   return (
     <div className="p-6 space-y-6">
       {loading && clients.length === 0 ? (
@@ -72,8 +91,8 @@ export default function ClientsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="flex gap-6 overflow-x-auto">
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap md:flex-nowrap gap-6 w-full overflow-hidden">
+          <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[calc(100%-352px)]' : 'w-full'}`}>
             <DataTable
               columns={columns}
               data={clients}
@@ -81,14 +100,21 @@ export default function ClientsPage() {
               actionButton={
                 <CreateClientForm onClientCreated={fetchClients} />
               }
-              onRowClick={(client) => setSelectedClient(client)}
+              onRowClick={handleClientSelect}
               fetchData={fetchClients}
               navigateOnDoubleClick={true}
               navigateToClientDetails={navigateToClientDetails}
+              selectedRow={selectedClient}
+              showDetails={showDetails}
             />
           </div>
-          <div className="w-[300px] flex-shrink-0">
-            <ClientDetail client={selectedClient || undefined} />
+          <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${detailPanelClasses}`}>
+            {selectedClient && (
+              <ClientDetail
+                client={selectedClient}
+                onRefresh={fetchClients}
+              />
+            )}
           </div>
         </div>
       )}

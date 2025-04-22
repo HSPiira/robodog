@@ -49,6 +49,7 @@ export default function VehiclesPage() {
     const [loading, setLoading] = useState(true);
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
     const [clientName, setClientName] = useState<string>("");
+    const [showDetails, setShowDetails] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -97,6 +98,18 @@ export default function VehiclesPage() {
         router.push("/vehicles/import");
     };
 
+    // Toggle selected vehicle when clicking a row
+    const handleVehicleSelect = (vehicle: Vehicle) => {
+        if (selectedVehicle?.id === vehicle.id) {
+            // If clicking the same vehicle, toggle the details panel
+            setShowDetails(prev => !prev);
+        } else {
+            // If selecting a different vehicle, show it and open the panel
+            setSelectedVehicle(vehicle);
+            setShowDetails(true);
+        }
+    };
+
     return (
         <div className="p-6 space-y-6">
             {loading && vehicles.length === 0 ? (
@@ -104,8 +117,8 @@ export default function VehiclesPage() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             ) : (
-                <div className="flex gap-6 overflow-x-auto">
-                    <div className="flex-1 min-w-0">
+                <div className="flex gap-6">
+                    <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showDetails ? '' : 'w-full'}`}>
                         <DataTable
                             columns={columns}
                             data={vehicles}
@@ -140,15 +153,19 @@ export default function VehiclesPage() {
                                     </TooltipProvider>
                                 </div>
                             }
-                            onRowClick={(vehicle) => setSelectedVehicle(vehicle as Vehicle)}
+                            onRowClick={handleVehicleSelect}
                             fetchData={fetchVehicles}
+                            selectedRow={selectedVehicle}
                         />
                     </div>
-                    <div className="w-[300px] flex-shrink-0">
-                        <VehicleDetail
-                            vehicle={selectedVehicle || undefined}
-                            onCreatePolicy={handleCreatePolicy}
-                        />
+                    <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[320px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
+                        {selectedVehicle && (
+                            <VehicleDetail
+                                vehicle={selectedVehicle}
+                                onCreatePolicy={handleCreatePolicy}
+                                onRefresh={fetchVehicles}
+                            />
+                        )}
                     </div>
                 </div>
             )}

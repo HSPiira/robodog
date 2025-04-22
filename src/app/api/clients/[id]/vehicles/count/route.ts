@@ -6,8 +6,8 @@ export async function GET(
     context: { params: { id: string } }
 ) {
     try {
-        const params = context.params;
-        const id = params.id;
+        // Extract id from context.params (no need to await in Next.js 14+)
+        const { id } = context.params;
 
         // Check if client exists
         const client = await prisma.client.findUnique({

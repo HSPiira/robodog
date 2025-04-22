@@ -32,6 +32,7 @@ import { columns } from "../../vehicles/components/columns";
 import { CreateVehicleForm } from "../../vehicles/components/create-vehicle-form";
 import { EditClientForm } from "../components/edit-client-form";
 import { useAuth } from "@/lib/context/auth-context";
+import { toast } from "sonner";
 
 interface Client {
   id: string;
@@ -100,6 +101,7 @@ export default function ClientDetailsPage() {
       setClient(data);
     } catch (error) {
       console.error("Error fetching client:", error);
+      toast.error("Failed to load client details");
     } finally {
       setLoadingClient(false);
     }
@@ -120,9 +122,12 @@ export default function ClientDetailsPage() {
         throw new Error("Failed to fetch vehicles");
       }
       const data = await response.json();
-      setVehicles(data);
+      // Ensure we always have an array
+      setVehicles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
+      setVehicles([]);
+      toast.error("Failed to load vehicles");
     } finally {
       setLoadingVehicles(false);
     }

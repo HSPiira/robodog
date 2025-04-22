@@ -30,6 +30,7 @@ interface DataTableProps<TData, TValue> {
   actionButton?: React.ReactNode;
   onRowClick?: (row: TData) => void;
   fetchData?: () => void;
+  selectedRow?: TData | null;
 }
 
 export function DataTable<TData, TValue>({
@@ -39,6 +40,7 @@ export function DataTable<TData, TValue>({
   actionButton,
   onRowClick,
   fetchData,
+  selectedRow,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -47,7 +49,6 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [selectedRow, setSelectedRow] = React.useState<TData | null>(null);
 
   const table = useReactTable({
     data,
@@ -100,14 +101,14 @@ export function DataTable<TData, TValue>({
                   return (
                     <TableHead
                       key={header.id}
-                      className="text-xs py-0 h-9 px-2"
+                      className="text-xs py-2 h-10 px-4"
                     >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}
@@ -120,18 +121,16 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-4 ${
-                    selectedRow === row.original ? "bg-muted" : ""
-                  }`}
+                  className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-4 ${selectedRow === row.original ? "bg-muted" : ""
+                    }`}
                   onClick={() => {
-                    setSelectedRow(row.original as TData);
                     onRowClick?.(row.original as TData);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="py-0 px-2 border-b border-border/40"
+                      className="py-1.5 px-4 border-b border-border/40"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -156,7 +155,7 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 mt-2">
         <div className="flex-1 text-xs text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredRowModel().rows.length} row(s)
         </div>
         <div className="space-x-2">
           <Button

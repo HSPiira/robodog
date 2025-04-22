@@ -42,7 +42,7 @@ export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, logout } = useAuth();
-  const [customerName, setCustomerName] = useState<string>("Customer Vehicles");
+  const [clientName, setClientName] = useState<string>("Client Vehicles");
 
   // Get current section/page from pathname
   const getCurrentPage = () => {
@@ -53,27 +53,27 @@ export function Header() {
 
   const currentPage = getCurrentPage();
 
-  // Get customerId from search params if it exists
-  const customerId = searchParams.get("customerId");
+  // Get clientId from search params if it exists
+  const clientId = searchParams.get("clientId");
 
-  // Fetch customer name if customerId is present
+  // Fetch client name if clientId is present
   useEffect(() => {
-    if (customerId && pathname.includes("/vehicles")) {
-      const fetchCustomerName = async () => {
+    if (clientId && pathname.includes("/vehicles")) {
+      const fetchClientName = async () => {
         try {
-          const response = await fetch(`/api/customers/${customerId}`);
+          const response = await fetch(`/api/clients/${clientId}`);
           if (response.ok) {
             const data = await response.json();
             if (data && data.name) {
-              setCustomerName(data.name);
+              setClientName(data.name);
             }
           }
         } catch (error) {
-          console.error("Error fetching customer name:", error);
+          console.error("Error fetching client name:", error);
         }
       };
 
-      fetchCustomerName();
+      fetchClientName();
     }
 
     // For client details page
@@ -82,11 +82,11 @@ export function Header() {
       if (clientId) {
         const fetchClientName = async () => {
           try {
-            const response = await fetch(`/api/customers/${clientId}`);
+            const response = await fetch(`/api/clients/${clientId}`);
             if (response.ok) {
               const data = await response.json();
               if (data && data.name) {
-                setCustomerName(data.name);
+                setClientName(data.name);
               }
             }
           } catch (error) {
@@ -97,13 +97,27 @@ export function Header() {
         fetchClientName();
       }
     }
-  }, [customerId, pathname]);
+  }, [clientId, pathname]);
 
   // Determine if we're on a client's vehicles page
-  const isClientVehicles = pathname.includes("/vehicles") && customerId;
+  const isClientVehicles = pathname.includes("/vehicles") && clientId;
 
   // Determine if we're on a client details page
   const isClientDetails = pathname.includes("/clients/") && pathname.split("/").length > 2;
+
+  // Get the current page within a client context
+  const getClientSubpage = () => {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length < 3) return null;
+
+    // If we're in a client's context and have a subpage
+    if (segments[0] === "clients" && segments.length >= 3) {
+      return segments[2].charAt(0).toUpperCase() + segments[2].slice(1);
+    }
+    return null;
+  };
+
+  const clientSubpage = getClientSubpage();
 
   return (
     <header className="h-14 px-4 flex items-center justify-between bg-background fixed top-0 right-0 left-16 z-20 border-b">
@@ -125,17 +139,17 @@ export function Header() {
               </Link>
               <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
               <Link
-                href={`/clients/${customerId}`}
+                href={`/clients/${clientId}`}
                 className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
               >
-                {customerName}
+                {clientName}
               </Link>
               <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
               <span className="text-foreground font-medium flex items-center">
                 Vehicles
               </span>
             </>
-          ) : isClientDetails ? (
+          ) : isClientDetails && !clientSubpage ? (
             <>
               <Link
                 href="/clients"
@@ -145,7 +159,27 @@ export function Header() {
               </Link>
               <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
               <span className="text-foreground font-medium flex items-center">
-                {customerName}
+                {clientName}
+              </span>
+            </>
+          ) : isClientDetails && clientSubpage ? (
+            <>
+              <Link
+                href="/clients"
+                className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
+              >
+                Clients
+              </Link>
+              <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+              <Link
+                href={`/clients/${pathname.split("/")[2]}`}
+                className="text-muted-foreground hover:text-muted-foreground/80 transition-colors flex items-center"
+              >
+                {clientName}
+              </Link>
+              <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+              <span className="text-foreground font-medium flex items-center">
+                {clientSubpage}
               </span>
             </>
           ) : pathname.startsWith('/settings') ? (
@@ -178,7 +212,7 @@ export function Header() {
             size={16}
           />
           <Input
-            placeholder="Search for policies, customers, vehicles..."
+            placeholder="Search for policies, clients, vehicles..."
             className="pl-9 h-9 text-sm font-normal bg-muted/50 border-0 w-full rounded-full placeholder:text-xs text-foreground placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>

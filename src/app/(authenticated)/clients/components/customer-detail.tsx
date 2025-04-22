@@ -34,21 +34,21 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
     const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(false);
 
     // Get color based on customer type
-const getTypeColor = (type: string) => {
-    if (!type) return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-    switch (type.toUpperCase()) {
-        case "INDIVIDUAL":
-            return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300";
-        case "BUSINESS":
-            return "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300";
-        case "GOVERNMENT":
-            return "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300";
-        case "NON_PROFIT":
-            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
-        default:
-            return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-    }
-};
+    const getTypeColor = (type: string) => {
+        if (!type) return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        switch (type.toUpperCase()) {
+            case "INDIVIDUAL":
+                return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300";
+            case "BUSINESS":
+                return "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300";
+            case "GOVERNMENT":
+                return "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300";
+            case "NON_PROFIT":
+                return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300";
+            default:
+                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        }
+    };
 
     // Get status color
     const getStatusColor = (status: string) => {
@@ -81,7 +81,7 @@ const getTypeColor = (type: string) => {
             try {
                 setIsLoadingVehicles(true);
                 const response = await fetch(
-                    `/api/customers/${customer.id}/vehicles/count`,
+                    `/api/clients/${customer.id}/vehicles/count`,
                     { signal: controller.signal },
                 );
                 if (response.ok) {
@@ -202,7 +202,7 @@ const getTypeColor = (type: string) => {
                                     <div className="flex gap-2">
                                         <CreateVehicleForm
                                             onVehicleCreated={handleVehicleCreated}
-                                            customerId={customer.id}
+                                            clientId={customer.id}
                                             isCompact={true}
                                         />
                                         <Button
