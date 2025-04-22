@@ -99,7 +99,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
         return previewData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     }, [previewData, currentPage]);
 
-    const totalPages = Math.ceil(previewData.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(totalRecords / ITEMS_PER_PAGE);
 
     const goToNextPage = () => {
         if (currentPage < totalPages) {
@@ -698,7 +698,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                             </Alert>
 
                                             <div className="text-[10px] text-muted-foreground">
-                                                Showing {previewData.length} of {totalRecords} records in the file. First 10 rows are displayed for preview.
+                                                Showing {Math.min(previewData.length, ITEMS_PER_PAGE)} of {totalRecords} records in the file. First 10 rows are displayed for preview.
                                             </div>
 
                                             <div className="w-[800px] border rounded-md overflow-hidden">
@@ -761,7 +761,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                                 {previewData.length > 0 && (
                                                     <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
                                                         <div className="text-[10px] text-muted-foreground">
-                                                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, previewData.length)} of {previewData.length} records
+                                                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} of {totalRecords} records
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             <Button
