@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { DataTable } from "../components/data-table";
 import { columns } from "../../vehicles/components/columns";
 import { CreateVehicleForm } from "../../vehicles/components/create-vehicle-form";
+import { ImportVehicleForm } from "../../vehicles/components/import-vehicle-form";
 import { EditClientForm } from "../components/edit-client-form";
 import { useAuth } from "@/lib/context/auth-context";
 import { toast } from "sonner";
@@ -347,10 +348,16 @@ export default function ClientDetailsPage() {
             <div className="bg-white dark:bg-slate-950 rounded-lg border p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base font-medium">Client Vehicles</h3>
-                <CreateVehicleForm
-                  onVehicleCreated={fetchVehicles}
-                  clientId={client.id}
-                />
+                <div className="flex items-center gap-2">
+                  <CreateVehicleForm
+                    onVehicleCreated={fetchVehicles}
+                    clientId={client.id}
+                  />
+                  <ImportVehicleForm
+                    onImportComplete={fetchVehicles}
+                    clientId={client.id}
+                  />
+                </div>
               </div>
 
               {loadingVehicles ? (
@@ -359,14 +366,21 @@ export default function ClientDetailsPage() {
                 </div>
               ) : vehicles.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground border rounded-lg bg-muted/10">
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-4">
                     <Car className="h-8 w-8 text-muted-foreground/50" />
                     <p>No vehicles found for this client</p>
-                    <CreateVehicleForm
-                      onVehicleCreated={fetchVehicles}
-                      clientId={client.id}
-                      isCompact={true}
-                    />
+                    <div className="flex gap-2">
+                      <CreateVehicleForm
+                        onVehicleCreated={fetchVehicles}
+                        clientId={client.id}
+                        isCompact={true}
+                      />
+                      <ImportVehicleForm
+                        onImportComplete={fetchVehicles}
+                        clientId={client.id}
+                        compact={true}
+                      />
+                    </div>
                   </div>
                 </div>
               ) : (

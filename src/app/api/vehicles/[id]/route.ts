@@ -8,6 +8,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Authenticate the user
+    const session = await auth(request);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const id = params.id;
 
     const vehicle = await prisma.vehicle.findUnique({
@@ -63,7 +69,7 @@ export async function PATCH(
 ) {
   try {
     // Authenticate the user
-    const session = await auth();
+    const session = await auth(request);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -171,6 +177,12 @@ export async function DELETE(
   context: { params: { id: string } }
 ) {
   try {
+    // Authenticate the user
+    const session = await auth(request);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = context.params;
 
     // Check if vehicle exists
