@@ -180,6 +180,14 @@ export default function VehicleSettingsPage() {
             const response = await fetch(`${apiEndpoints[activeTab]}?include=stats`);
             const data = await response.json();
             setEntities(data);
+
+            // If an entity is selected, refresh it with the latest data
+            if (selectedEntity) {
+                const updatedSelectedEntity = data.find((entity: VehicleEntity) => entity.id === selectedEntity.id);
+                if (updatedSelectedEntity) {
+                    setSelectedEntity(updatedSelectedEntity);
+                }
+            }
         } catch (error) {
             toast({
                 title: "Error",
@@ -252,7 +260,15 @@ export default function VehicleSettingsPage() {
                 description: `${getSingularForm(activeTab).toLowerCase()} has been updated`,
             });
 
-            fetchEntities();
+            // Fetch updated data and update selected entity
+            await fetchEntities();
+
+            // If the edited entity is currently selected, refresh it
+            if (selectedEntity && selectedEntity.id === editingEntity.id) {
+                const updatedEntity = await fetch(`${apiEndpoints[activeTab]}/${editingEntity.id}?include=stats`).then(res => res.json());
+                setSelectedEntity(updatedEntity);
+            }
+
             setIsEditing(false);
         } catch (error) {
             toast({
@@ -305,12 +321,23 @@ export default function VehicleSettingsPage() {
                 throw new Error(errorData.message || "Failed to create");
             }
 
+            // Get the newly created entity
+            const newEntity = await response.json();
+
             toast({
                 title: "Created Successfully",
                 description: `New ${getSingularForm(activeTab).toLowerCase()} has been created`,
             });
 
-            fetchEntities();
+            // Fetch updated data
+            await fetchEntities();
+
+            // Select the newly created entity
+            if (newEntity && newEntity.id) {
+                const fullEntity = await fetch(`${apiEndpoints[activeTab]}/${newEntity.id}?include=stats`).then(res => res.json());
+                setSelectedEntity(fullEntity);
+            }
+
             setIsAddingNew(false);
         } catch (error) {
             toast({
@@ -346,7 +373,12 @@ export default function VehicleSettingsPage() {
                 description: `The ${getSingularForm(activeTab).toLowerCase()} has been deleted`,
             });
 
-            fetchEntities();
+            // Clear selected entity if it was deleted
+            if (selectedEntity && selectedEntity.id === deletingEntityId) {
+                setSelectedEntity(null);
+            }
+
+            await fetchEntities();
             setIsDeleteDialogOpen(false);
         } catch (error) {
             toast({

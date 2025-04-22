@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 // GET a single vehicle by ID
 export async function GET(
@@ -15,6 +16,24 @@ export async function GET(
       },
       include: {
         client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        bodyType: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        vehicleCategory: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        vehicleType: {
           select: {
             id: true,
             name: true,
@@ -43,6 +62,12 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Authenticate the user
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const id = params.id;
     const body = await request.json();
 
@@ -74,13 +99,47 @@ export async function PATCH(
       return NextResponse.json({ error: "Vehicle not found" }, { status: 404 });
     }
 
+    // If registration number is being updated, check for duplicates
+    if (registrationNo && registrationNo !== existingVehicle.registrationNo) {
+      const formattedRegNo = registrationNo.toUpperCase();
+
+      // Check if another vehicle with the same registration number already exists
+      const duplicateVehicle = await prisma.vehicle.findFirst({
+        where: {
+          registrationNo: formattedRegNo,
+          id: { not: id }, // Exclude the current vehicle
+        },
+      });
+
+      if (duplicateVehicle) {
+        return NextResponse.json(
+          { error: "A vehicle with this registration number already exists" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Get user ID for audit trail
+    const user = session.user as { id?: string; email: string };
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+      select: { id: true },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Authenticated user not found in database" },
+        { status: 401 }
+      );
+    }
+
     // Update the vehicle
     const updatedVehicle = await prisma.vehicle.update({
       where: {
         id,
       },
       data: {
-        registrationNo,
+        registrationNo: registrationNo ? registrationNo.toUpperCase() : undefined,
         make,
         model,
         year,
@@ -93,6 +152,7 @@ export async function PATCH(
         seatingCapacity: seatingCapacity || null,
         cubicCapacity: cubicCapacity || null,
         grossWeight: grossWeight || null,
+        updatedBy: dbUser.id,
       },
     });
 

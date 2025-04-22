@@ -417,7 +417,7 @@ export function EditVehicleForm({
                             </FormLabel>
                             <Select
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               disabled={isLoading}
                             >
                               <FormControl>
@@ -449,7 +449,7 @@ export function EditVehicleForm({
                             </FormLabel>
                             <Select
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               disabled={isLoading}
                             >
                               <FormControl>
@@ -486,7 +486,7 @@ export function EditVehicleForm({
                             </FormLabel>
                             <Select
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               disabled={isLoading}
                             >
                               <FormControl>
@@ -518,7 +518,7 @@ export function EditVehicleForm({
                             </FormLabel>
                             <Select
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                               disabled={isLoading}
                             >
                               <FormControl>
