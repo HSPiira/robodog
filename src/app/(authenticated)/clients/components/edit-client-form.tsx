@@ -199,190 +199,199 @@ export function EditClientForm({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader className="pb-4 border-b">
-          <DialogTitle className="text-xl font-semibold tracking-tight flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-500" />
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="pb-3 border-b">
+          <DialogTitle className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <User className="h-4 w-4 text-blue-500" />
             Edit Client
           </DialogTitle>
         </DialogHeader>
         {isLoading && !client ? (
-          <div className="py-8 flex justify-center">
+          <div className="py-6 flex justify-center">
             <div className="animate-spin h-6 w-6 border-2 border-primary rounded-full border-t-transparent"></div>
           </div>
         ) : (
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="mt-6 space-y-5"
+              className="mt-4 space-y-4 max-h-[65vh] overflow-y-auto pr-1"
             >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium flex items-center gap-2">
-                      <User className="h-4 w-4 text-blue-500" />
-                      Name *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter client name"
-                        disabled={isLoading}
-                        className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-purple-500" />
-                      Client Type
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isLoading}
-                    >
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium flex items-center gap-2">
+                        <User className="h-3 w-3 text-blue-500" />
+                        Name *
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger className="h-10 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors">
-                          <SelectValue placeholder="Select client type" />
-                        </SelectTrigger>
+                        <Input
+                          {...field}
+                          placeholder="Enter client name"
+                          disabled={isLoading}
+                          className="h-9 px-3 text-sm bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="INDIVIDUAL">Individual</SelectItem>
-                        <SelectItem value="BUSINESS">Business</SelectItem>
-                        <SelectItem value="GOVERNMENT">Government</SelectItem>
-                        <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-indigo-500" />
-                      Email (optional)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        placeholder="client@example.com"
-                        disabled={isLoading}
-                        className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-green-500" />
-                      Phone (optional)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="+1 (555) 000-0000"
-                        disabled={isLoading}
-                        className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium flex items-center gap-2">
-                      <Home className="h-4 w-4 text-orange-500" />
-                      Address (optional)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter address"
-                        disabled={isLoading}
-                        className="h-10 px-3 bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background/50 transition-colors">
-                    <div className="space-y-0.5 flex items-center gap-2">
-                      <ToggleRight className="h-4 w-4 text-cyan-500" />
-                      <div>
-                        <FormLabel className="text-sm font-medium">
-                          Active Status
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium flex items-center gap-2">
+                          <Building2 className="h-3 w-3 text-purple-500" />
+                          Client Type
                         </FormLabel>
-                        <div className="text-xs text-muted-foreground">
-                          Client will be marked as{" "}
-                          {field.value === "active" ? "active" : "inactive"}
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-9 text-sm bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="INDIVIDUAL">Individual</SelectItem>
+                            <SelectItem value="BUSINESS">Business</SelectItem>
+                            <SelectItem value="GOVERNMENT">Government</SelectItem>
+                            <SelectItem value="NON_PROFIT">Non-Profit</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col justify-between">
+                        <FormLabel className="text-xs font-medium flex items-center gap-2 mb-0.5">
+                          <ToggleRight className="h-3 w-3 text-cyan-500" />
+                          Status
+                        </FormLabel>
+                        <div className="flex items-center justify-between h-9 px-3 rounded-lg border bg-background/50">
+                          <span className="text-xs">
+                            {field.value === "active" ? "Active" : "Inactive"}
+                          </span>
+                          <FormControl>
+                            <Switch
+                              checked={field.value === "active"}
+                              onCheckedChange={(checked) =>
+                                field.onChange(checked ? "active" : "inactive")
+                              }
+                              disabled={isLoading}
+                            />
+                          </FormControl>
                         </div>
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value === "active"}
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked ? "active" : "inactive")
-                        }
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end gap-3 pt-6 mt-6 border-t">
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium flex items-center gap-2">
+                          <Mail className="h-3 w-3 text-indigo-500" />
+                          Email (optional)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="client@example.com"
+                            disabled={isLoading}
+                            className="h-9 px-3 text-sm bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium flex items-center gap-2">
+                          <Phone className="h-3 w-3 text-green-500" />
+                          Phone (optional)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="+1 (555) 000-0000"
+                            disabled={isLoading}
+                            className="h-9 px-3 text-sm bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium flex items-center gap-2">
+                        <Home className="h-3 w-3 text-orange-500" />
+                        Address (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Enter address"
+                          disabled={isLoading}
+                          className="h-9 px-3 text-sm bg-background/50 border rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 mt-2 border-t">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
-                  className="h-10 px-4 py-2 text-sm font-medium rounded-lg hover:bg-background/80 transition-colors"
+                  className="h-8 px-3 py-1 text-xs font-medium rounded-lg hover:bg-background/80 transition-colors"
                   disabled={isLoading}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="h-10 px-4 py-2 text-sm font-medium rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors flex items-center gap-2"
+                  className="h-8 px-3 py-1 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors flex items-center gap-1"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3" />
                       Save Changes
                     </>
                   )}

@@ -36,21 +36,21 @@ async function getUserNames(userIds: string[]): Promise<Map<string, string>> {
     const users = await prisma.user.findMany({
         where: {
             id: {
-                in: userIds
-            }
+                in: userIds,
+            },
         },
         select: {
             id: true,
-            name: true
-        }
+            name: true,
+        },
     });
 
-    return new Map(users.map(user => [user.id, user.name]));
+    return new Map(users.map((user) => [user.id, user.name]));
 }
 
-// Get a client by ID - doesn't require authentication
-export async function GET(
-    request: Request,
+// Get a client by ID
+async function getClient(
+    request: NextRequest,
     context: { params: { id: string } }
 ) {
     try {
@@ -61,9 +61,9 @@ export async function GET(
             where: { id },
             include: {
                 _count: {
-                    select: { policies: true }
-                }
-            }
+                    select: { policies: true },
+                },
+            },
         });
 
         if (!client) {
@@ -71,26 +71,32 @@ export async function GET(
         }
 
         // Get user names for creator and updater if they exist
-        const userIds = [client.createdBy, client.updatedBy].filter(Boolean) as string[];
+        const userIds = [client.createdBy, client.updatedBy].filter(
+            Boolean
+        ) as string[];
         const userMap = await getUserNames(userIds);
 
         // Get the creator/updater names
-        const creatorName = client.createdBy ? userMap.get(client.createdBy) || "Unknown User" : "system";
-        const updaterName = client.updatedBy ? userMap.get(client.updatedBy) || "system" : "system";
+        const creatorName = client.createdBy
+            ? userMap.get(client.createdBy) || "Unknown User"
+            : "system";
+        const updaterName = client.updatedBy
+            ? userMap.get(client.updatedBy) || "system"
+            : "system";
 
         // Format the client data
         const formattedClient = {
             id: client.id,
             name: client.name,
-            email: client.email || '',
-            phone: client.phone || '',
-            address: client.address || '',
+            email: client.email || "",
+            phone: client.phone || "",
+            address: client.address || "",
             type: client.type,
-            status: client.isActive ? 'active' : 'inactive',
+            status: client.isActive ? "active" : "inactive",
             policies: client._count.policies,
-            joinedDate: client.createdAt.toISOString().split('T')[0],
+            joinedDate: client.createdAt.toISOString().split("T")[0],
             createdBy: creatorName,
-            updatedBy: updaterName
+            updatedBy: updaterName,
         };
 
         return NextResponse.json(formattedClient);
@@ -112,10 +118,7 @@ async function updateClient(
         // Get authenticated user from the request
         const session = await auth(request);
         if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const user = session.user as SessionUser;
@@ -125,15 +128,12 @@ async function updateClient(
 
         // Validate required fields
         if (!name) {
-            return NextResponse.json(
-                { error: "Name is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 
         // Check if client exists
         const existingClient = await prisma.client.findUnique({
-            where: { id }
+            where: { id },
         });
 
         if (!existingClient) {
@@ -149,39 +149,45 @@ async function updateClient(
                 phone: phone || null,
                 address: address || null,
                 type,
-                isActive: status === 'active',
-                updatedBy: user.id // Use user ID from JWT
+                isActive: status === "active",
+                updatedBy: user.id, // Use user ID from JWT
             },
             include: {
                 _count: {
                     select: {
-                        policies: true
-                    }
-                }
-            }
+                        policies: true,
+                    },
+                },
+            },
         });
 
         // Get user names for creator and updater
-        const userIds = [updatedClient.createdBy, updatedClient.updatedBy].filter(Boolean) as string[];
+        const userIds = [updatedClient.createdBy, updatedClient.updatedBy].filter(
+            Boolean
+        ) as string[];
         const userMap = await getUserNames(userIds);
 
         // Get the creator/updater names
-        const creatorName = updatedClient.createdBy ? userMap.get(updatedClient.createdBy) || "Unknown User" : "system";
-        const updaterName = updatedClient.updatedBy ? userMap.get(updatedClient.updatedBy) || "Unknown User" : "system";
+        const creatorName = updatedClient.createdBy
+            ? userMap.get(updatedClient.createdBy) || "Unknown User"
+            : "system";
+        const updaterName = updatedClient.updatedBy
+            ? userMap.get(updatedClient.updatedBy) || "Unknown User"
+            : "system";
 
         // Format the response to match the expected format
         const formattedClient = {
             id: updatedClient.id,
             name: updatedClient.name,
-            email: updatedClient.email || '',
-            phone: updatedClient.phone || '',
-            address: updatedClient.address || '',
+            email: updatedClient.email || "",
+            phone: updatedClient.phone || "",
+            address: updatedClient.address || "",
             type: updatedClient.type,
-            status: updatedClient.isActive ? 'active' : 'inactive',
+            status: updatedClient.isActive ? "active" : "inactive",
             policies: updatedClient._count.policies,
-            joinedDate: updatedClient.createdAt.toISOString().split('T')[0],
+            joinedDate: updatedClient.createdAt.toISOString().split("T")[0],
             createdBy: creatorName,
-            updatedBy: updaterName
+            updatedBy: updaterName,
         };
 
         return NextResponse.json(formattedClient);
@@ -203,10 +209,7 @@ async function deleteClient(
         // Get authenticated user from the request
         const session = await auth(request);
         if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         // Properly await context.params as per Next.js recommendation
@@ -217,9 +220,9 @@ async function deleteClient(
             where: { id },
             include: {
                 _count: {
-                    select: { policies: true }
-                }
-            }
+                    select: { policies: true },
+                },
+            },
         });
 
         if (!existingClient) {
@@ -236,7 +239,7 @@ async function deleteClient(
 
         // Delete client
         await prisma.client.delete({
-            where: { id }
+            where: { id },
         });
 
         return NextResponse.json({ success: true });
@@ -250,5 +253,6 @@ async function deleteClient(
 }
 
 // Export the handlers with authentication middleware
+export const GET = createAuthenticatedHandler(getClient);
 export const PATCH = createAuthenticatedHandler(updateClient);
-export const DELETE = createAuthenticatedHandler(deleteClient); 
+export const DELETE = createAuthenticatedHandler(deleteClient);

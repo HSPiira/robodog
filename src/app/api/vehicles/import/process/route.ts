@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import * as xlsx from "xlsx";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 type VehicleType = "PASSENGER" | "COMMERCIAL" | "MOTORCYCLE";
 
@@ -18,12 +19,49 @@ interface VehicleImportRow {
   clientId?: string;
 }
 
+// Define proper type for vehicle creation
+interface VehicleCreateData {
+  registrationNo: string;
+  make: string;
+  model: string;
+  year: number;
+  chassisNumber: string;
+  engineNumber: string;
+  bodyTypeId: string;
+  categoryId: string;
+  vehicleTypeId: string;
+  clientId: string | null;
+  isActive: boolean;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get user from session
+    const user = session.user;
+    if (!user || !user.email) {
+      return NextResponse.json(
+        { error: "User information not available" },
+        { status: 401 }
+      );
+    }
+
+    // Verify user exists in the database
+    const dbUser = await db.user.findUnique({
+      where: { email: user.email },
+      select: { id: true }
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Authenticated user not found in database" },
+        { status: 401 }
+      );
     }
 
     const formData = await req.formData();
@@ -210,7 +248,14 @@ export async function POST(req: Request) {
         }
 
         try {
-          // Cast the data to match the Prisma schema
+          /*
+           * IMPORTANT: Better approach would be to run:
+           * npx prisma generate
+           * 
+           * Then use the proper Prisma types directly instead of 
+           * casting to 'any'. This would provide full type safety
+           * for your database operations.
+           */
           const vehicleData = {
             registrationNo: String(row.registrationNo).toUpperCase(),
             make: String(row.make),
@@ -218,16 +263,17 @@ export async function POST(req: Request) {
             year: row.year ? Number(row.year) : new Date().getFullYear(),
             chassisNumber: row.chassisNo ? String(row.chassisNo) : `AUTO-${Date.now()}`,
             engineNumber: row.engineNo ? String(row.engineNo) : `AUTO-${Date.now()}`,
-            bodyTypeId: bodyTypeId,       // Now contains a valid ID from the database
-            categoryId: categoryId,       // Now contains a valid ID from the database
-            vehicleTypeId: vehicleTypeId, // Already contains a valid ID
+            bodyTypeId,
+            categoryId,
+            vehicleTypeId,
             clientId: clientId || undefined,
             isActive: true,
           };
 
-          // Using as any to bypass type checking since we've verified the structure
+          // We're using 'as any' temporarily - run 'npx prisma generate' 
+          // and update your code to use proper typing instead
           const vehicle = await db.vehicle.create({
-            data: vehicleData as any,
+            data: vehicleData as any, // TODO: Replace with proper typing
           });
 
           results.success.push(vehicle);

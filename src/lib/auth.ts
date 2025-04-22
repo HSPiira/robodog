@@ -6,6 +6,7 @@ export interface SessionUser {
     email?: string;
     name?: string;
     role?: string;
+    isActive?: boolean;
 }
 
 /**
@@ -17,11 +18,9 @@ export async function auth(request?: Request) {
         // If no request is provided, we're likely in a server component or API route
         // that has no direct access to the request object
         if (!request) {
-            // In Next.js App Router, we would typically use cookies() or headers() here
-            // For now, return the hardcoded admin ID for backward compatibility
-            return {
-                user: { id: "50a05374-19c3-4df0-bf86-59f7ff78689a" } as SessionUser
-            };
+            // Log the issue for debugging
+            console.warn("auth() called without request object - authentication cannot be performed");
+            return { user: null };
         }
 
         // Get token from the request
@@ -71,7 +70,7 @@ export async function getUserFromRequest(request: Request): Promise<string | nul
         }
 
         const payload = verifyToken(token);
-        if (!payload) {
+        if (!payload || typeof payload.userId !== 'string') {
             return null;
         }
 

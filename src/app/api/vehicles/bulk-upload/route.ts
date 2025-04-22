@@ -26,7 +26,10 @@ export async function POST(request: Request) {
     });
 
     if (!dbUser) {
-      console.error(`User ${user.email} not found in database`);
+      return NextResponse.json(
+        { error: "Authenticated user not found in database" },
+        { status: 401 }
+      );
     }
 
     const formData = await request.formData();
@@ -35,6 +38,23 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    // Validate file type
+    const fileType = file.type;
+    const validTypes = ["text/csv", "application/csv", "application/vnd.ms-excel"];
+    if (!validTypes.includes(fileType)) {
+      return NextResponse.json({
+        error: "Invalid file type. Only CSV files are accepted."
+      }, { status: 400 });
+    }
+
+    // Validate file size (limit to 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      return NextResponse.json({
+        error: "File size exceeds the limit of 5MB."
+      }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();

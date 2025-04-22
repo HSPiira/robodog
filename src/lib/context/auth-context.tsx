@@ -37,8 +37,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const storedToken = localStorage.getItem("token");
 
                 if (storedUser && storedToken) {
-                    setUser(JSON.parse(storedUser));
-                    setToken(storedToken);
+                    try {
+                        // Optionally add client-side token validation if needed
+                        // For example, check token expiration using a library or simple JWT parsing
+                        const tokenData = JSON.parse(atob(storedToken.split('.')[1]));
+                        const isExpired = tokenData.exp * 1000 < Date.now();
+
+                        if (isExpired) {
+                            console.warn("Token expired on load, clearing authentication");
+                            localStorage.removeItem("user");
+                            localStorage.removeItem("token");
+                            return;
+                        }
+
+                        setUser(JSON.parse(storedUser));
+                        setToken(storedToken);
+                    } catch (error) {
+                        console.error("Error validating stored token:", error);
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                    }
                 }
             } catch (error) {
                 console.error("Error checking authentication:", error);

@@ -1,17 +1,58 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Edit2, Plus, Trash2, Save, X, ChevronDown, ChevronUp, MoreHorizontal, Database, Code } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState } from "react";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+    Edit2,
+    Plus,
+    Trash2,
+    Save,
+    X,
+    ChevronDown,
+    ChevronUp,
+    MoreHorizontal,
+    Database,
+    Code,
+} from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,8 +60,15 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { AllEnums, enumCategories, isDatabaseEnum, getRelatedTables, validateEnumValue, updateDatabaseEnumValue } from '@/lib/services/enums';
+} from "@/components/ui/dropdown-menu";
+import {
+    AllEnums,
+    enumCategories,
+    isDatabaseEnum,
+    getRelatedTables,
+    validateEnumValue,
+    updateDatabaseEnumValue,
+} from "@/lib/services/enums";
 
 type EnumType = {
     [key: string]: string;
@@ -28,16 +76,20 @@ type EnumType = {
 
 export default function EnumsManagementPage() {
     const { toast } = useToast();
-    const [selectedGroup, setSelectedGroup] = useState<string>(Object.keys(AllEnums)[0]);
+    const [selectedGroup, setSelectedGroup] = useState<string>(
+        Object.keys(AllEnums)[0]
+    );
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [editingEnum, setEditingEnum] = useState<{
         key: string;
         value: string;
     } | null>(null);
-    const [newEnumKey, setNewEnumKey] = useState('');
-    const [newEnumValue, setNewEnumValue] = useState('');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-    const [searchTerm, setSearchTerm] = useState('');
+    const [newEnumKey, setNewEnumKey] = useState("");
+    const [newEnumValue, setNewEnumValue] = useState("");
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [deletingKey, setDeletingKey] = useState<string | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const handleSave = async () => {
         if (!editingEnum) return;
@@ -51,7 +103,7 @@ export default function EnumsManagementPage() {
                 );
 
                 if (!validation.isValid) {
-                    throw new Error(validation.error || 'Invalid enum value');
+                    throw new Error(validation.error || "Invalid enum value");
                 }
 
                 const result = await updateDatabaseEnumValue(
@@ -61,15 +113,15 @@ export default function EnumsManagementPage() {
                 );
 
                 if (!result.success) {
-                    throw new Error(result.error || 'Failed to update database enum');
+                    throw new Error(result.error || "Failed to update database enum");
                 }
             }
 
             // Update the enum in the application
-            const response = await fetch('/api/settings/enums', {
-                method: 'PUT',
+            const response = await fetch("/api/settings/enums", {
+                method: "PUT",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     enumGroup: selectedGroup,
@@ -78,7 +130,7 @@ export default function EnumsManagementPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to update enum');
+            if (!response.ok) throw new Error("Failed to update enum");
 
             toast({
                 title: "Enum Updated",
@@ -89,7 +141,10 @@ export default function EnumsManagementPage() {
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update enum value",
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to update enum value",
                 variant: "destructive",
             });
         }
@@ -107,14 +162,14 @@ export default function EnumsManagementPage() {
                 );
 
                 if (!validation.isValid) {
-                    throw new Error(validation.error || 'Invalid enum value');
+                    throw new Error(validation.error || "Invalid enum value");
                 }
             }
 
-            const response = await fetch('/api/settings/enums', {
-                method: 'POST',
+            const response = await fetch("/api/settings/enums", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     enumGroup: selectedGroup,
@@ -123,7 +178,7 @@ export default function EnumsManagementPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to add enum');
+            if (!response.ok) throw new Error("Failed to add enum");
 
             toast({
                 title: "Success",
@@ -131,38 +186,63 @@ export default function EnumsManagementPage() {
             });
 
             setIsAddingNew(false);
-            setNewEnumKey('');
-            setNewEnumValue('');
+            setNewEnumKey("");
+            setNewEnumValue("");
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to add enum value",
+                description:
+                    error instanceof Error ? error.message : "Failed to add enum value",
                 variant: "destructive",
             });
         }
     };
 
     const handleDelete = async (key: string) => {
-        // Implement delete functionality
-        toast({
-            title: "Not Implemented",
-            description: "Delete functionality will be added soon.",
-            variant: "destructive",
-        });
+        setDeletingKey(key);
+        setIsDeleteDialogOpen(true);
     };
 
-    const currentEnum = AllEnums[selectedGroup as keyof typeof AllEnums] as EnumType;
+    const confirmDelete = async () => {
+        if (!deletingKey) return;
+
+        try {
+            // Implement delete functionality
+            // For now, just show the toast
+            toast({
+                title: "Not Implemented",
+                description: "Delete functionality will be added soon.",
+                variant: "destructive",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to delete enum value",
+                variant: "destructive",
+            });
+        } finally {
+            setDeletingKey(null);
+            setIsDeleteDialogOpen(false);
+        }
+    };
+
+    const currentEnum = AllEnums[
+        selectedGroup as keyof typeof AllEnums
+    ] as EnumType;
     const isDatabase = isDatabaseEnum(selectedGroup as keyof typeof AllEnums);
-    const relatedTables = getRelatedTables(selectedGroup as keyof typeof AllEnums);
+    const relatedTables = getRelatedTables(
+        selectedGroup as keyof typeof AllEnums
+    );
 
     // Filter and sort enum entries
     const filteredEntries = Object.entries(currentEnum)
-        .filter(([key, value]) =>
-            key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            value.toLowerCase().includes(searchTerm.toLowerCase())
+        .filter(
+            ([key, value]) =>
+                key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                value.toLowerCase().includes(searchTerm.toLowerCase())
         )
         .sort(([keyA], [keyB]) => {
-            if (sortDirection === 'asc') {
+            if (sortDirection === "asc") {
                 return keyA.localeCompare(keyB);
             } else {
                 return keyB.localeCompare(keyA);
@@ -181,7 +261,7 @@ export default function EnumsManagementPage() {
                             {Object.entries(enumCategories).map(([name, category]) => (
                                 <SelectItem key={name} value={name}>
                                     <div className="flex items-center gap-2">
-                                        {category === 'DATABASE' ? (
+                                        {category === "DATABASE" ? (
                                             <Database className="h-3.5 w-3.5" />
                                         ) : (
                                             <Code className="h-3.5 w-3.5" />
@@ -199,7 +279,7 @@ export default function EnumsManagementPage() {
 
                     {isDatabase && (
                         <Badge variant="secondary" className="text-xs">
-                            {relatedTables.join(', ')}
+                            {relatedTables.join(", ")}
                         </Badge>
                     )}
                 </div>
@@ -222,7 +302,9 @@ export default function EnumsManagementPage() {
                                             <Label>Key</Label>
                                             <Input
                                                 value={newEnumKey}
-                                                onChange={(e) => setNewEnumKey(e.target.value.toUpperCase())}
+                                                onChange={(e) =>
+                                                    setNewEnumKey(e.target.value.toUpperCase())
+                                                }
                                                 placeholder="Enter enum key (e.g., NEW_VALUE)"
                                             />
                                         </div>
@@ -255,8 +337,9 @@ export default function EnumsManagementPage() {
                             <CardTitle>{selectedGroup}</CardTitle>
                             <CardDescription>
                                 {isDatabase
-                                    ? `Database enum used in ${relatedTables.join(', ')} ${relatedTables.length === 1 ? 'table' : 'tables'}`
-                                    : 'Application enum used in frontend components'}
+                                    ? `Database enum used in ${relatedTables.join(", ")} ${relatedTables.length === 1 ? "table" : "tables"
+                                    }`
+                                    : "Application enum used in frontend components"}
                             </CardDescription>
                         </div>
                         {isDatabase && (
@@ -280,9 +363,16 @@ export default function EnumsManagementPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 text-xs"
-                                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                                onClick={() =>
+                                    setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+                                }
                             >
-                                Sort {sortDirection === 'asc' ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+                                Sort{" "}
+                                {sortDirection === "asc" ? (
+                                    <ChevronUp className="h-3 w-3 ml-1" />
+                                ) : (
+                                    <ChevronDown className="h-3 w-3 ml-1" />
+                                )}
                             </Button>
                         </div>
 
@@ -291,15 +381,24 @@ export default function EnumsManagementPage() {
                                 <Table>
                                     <TableHeader className="bg-primary/5">
                                         <TableRow>
-                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2 w-[200px]">Key</TableHead>
-                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2">Value</TableHead>
-                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2 text-right w-[100px]">Actions</TableHead>
+                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2 w-[200px]">
+                                                Key
+                                            </TableHead>
+                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2">
+                                                Value
+                                            </TableHead>
+                                            <TableHead className="text-xs py-2 h-8 border-b border-border/40 px-2 text-right w-[100px]">
+                                                Actions
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {filteredEntries.length > 0 ? (
                                             filteredEntries.map(([key, value]) => (
-                                                <TableRow key={key} className="border-0 hover:bg-muted/50 text-xs h-5">
+                                                <TableRow
+                                                    key={key}
+                                                    className="border-0 hover:bg-muted/50 text-xs h-5"
+                                                >
                                                     <TableCell className="py-0.5 px-2 border-b border-border/40">
                                                         <span className="text-xs font-medium">{key}</span>
                                                     </TableCell>
@@ -307,11 +406,18 @@ export default function EnumsManagementPage() {
                                                         {editingEnum?.key === key ? (
                                                             <Input
                                                                 value={editingEnum.value}
-                                                                onChange={(e) => setEditingEnum({ ...editingEnum, value: e.target.value })}
+                                                                onChange={(e) =>
+                                                                    setEditingEnum({
+                                                                        ...editingEnum,
+                                                                        value: e.target.value,
+                                                                    })
+                                                                }
                                                                 className="max-w-md text-xs"
                                                             />
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground">{value}</span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {value}
+                                                            </span>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="py-0.5 px-2 border-b border-border/40">
@@ -321,7 +427,11 @@ export default function EnumsManagementPage() {
                                                                     <TooltipProvider>
                                                                         <Tooltip>
                                                                             <TooltipTrigger asChild>
-                                                                                <Button size="icon" variant="ghost" onClick={handleSave}>
+                                                                                <Button
+                                                                                    size="icon"
+                                                                                    variant="ghost"
+                                                                                    onClick={handleSave}
+                                                                                >
                                                                                     <Save className="h-3.5 w-3.5 text-green-500" />
                                                                                 </Button>
                                                                             </TooltipTrigger>
@@ -334,7 +444,11 @@ export default function EnumsManagementPage() {
                                                                     <TooltipProvider>
                                                                         <Tooltip>
                                                                             <TooltipTrigger asChild>
-                                                                                <Button size="icon" variant="ghost" onClick={() => setEditingEnum(null)}>
+                                                                                <Button
+                                                                                    size="icon"
+                                                                                    variant="ghost"
+                                                                                    onClick={() => setEditingEnum(null)}
+                                                                                >
                                                                                     <X className="h-3.5 w-3.5 text-muted-foreground" />
                                                                                 </Button>
                                                                             </TooltipTrigger>
@@ -347,17 +461,28 @@ export default function EnumsManagementPage() {
                                                             ) : (
                                                                 <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
-                                                                        <Button size="icon" variant="ghost" className="h-6 w-6 p-0">
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            className="h-6 w-6 p-0"
+                                                                        >
                                                                             <span className="sr-only">Open menu</span>
                                                                             <MoreHorizontal className="h-3.5 w-3.5" />
                                                                         </Button>
                                                                     </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end" className="text-xs">
-                                                                        <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                                                                    <DropdownMenuContent
+                                                                        align="end"
+                                                                        className="text-xs"
+                                                                    >
+                                                                        <DropdownMenuLabel className="text-xs">
+                                                                            Actions
+                                                                        </DropdownMenuLabel>
                                                                         <DropdownMenuSeparator />
                                                                         <DropdownMenuItem
                                                                             className="text-xs"
-                                                                            onClick={() => setEditingEnum({ key, value })}
+                                                                            onClick={() =>
+                                                                                setEditingEnum({ key, value })
+                                                                            }
                                                                         >
                                                                             Edit value
                                                                         </DropdownMenuItem>
@@ -391,6 +516,26 @@ export default function EnumsManagementPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Confirmation Dialog for Delete */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Deletion</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                        <p>Are you sure you want to delete this enum value? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={confirmDelete}>
+                                Delete
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
-} 
+}

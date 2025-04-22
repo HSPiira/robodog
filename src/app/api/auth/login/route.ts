@@ -75,7 +75,6 @@ export async function POST(request: NextRequest) {
         // Set CORS headers and create response with token
         const response = NextResponse.json({
             user: userWithoutPassword,
-            token: token,
             message: "Login successful",
         });
 
@@ -84,6 +83,7 @@ export async function POST(request: NextRequest) {
             name: 'auth-token',
             value: token,
             httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
             path: '/',
             maxAge: 60 * 60 * 24 * 7, // 7 days
             sameSite: 'strict'
