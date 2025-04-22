@@ -3,7 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Users, FileText, Car, Settings, BarChart } from "lucide-react";
+import {
+  Home,
+  Users,
+  FileText,
+  Car,
+  Settings,
+  BarChart,
+  Sticker,
+  BookOpen,
+  ListFilter,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -23,28 +33,29 @@ function SidebarItem({ icon, tooltip, href }: SidebarItemProps) {
   const searchParams = useSearchParams();
 
   // Extract the main section from the path
-  const mainSection = pathname.split('/')[1];
+  const mainSection = pathname.split("/")[1];
 
   // Get client ID from search params if it exists
-  const clientId = searchParams.get('clientId');
+  const clientId = searchParams.get("clientId");
 
   // Different page type detections
-  const isClientDetailsPage = pathname.startsWith('/clients/') && pathname.split('/').length >= 3;
-  const isClientVehiclesPage = pathname === '/vehicles' && clientId !== null;
+  const isClientDetailsPage =
+    pathname.startsWith("/clients/") && pathname.split("/").length >= 3;
+  const isClientVehiclesPage = pathname === "/vehicles" && clientId !== null;
   const isClientContext = isClientDetailsPage || isClientVehiclesPage;
 
   // Determine active state based on the URL context
   let isActive;
 
-  if (href === '/clients') {
+  if (href === "/clients") {
     // Keep clients sidebar active when in any client context
-    isActive = mainSection === 'clients' || isClientVehiclesPage;
-  } else if (href === '/vehicles') {
+    isActive = mainSection === "clients" || isClientVehiclesPage;
+  } else if (href === "/vehicles") {
     // Only highlight vehicles when not in a client-specific context
-    isActive = mainSection === 'vehicles' && !isClientVehiclesPage;
+    isActive = mainSection === "vehicles" && !isClientVehiclesPage;
   } else {
     // Default behavior for other links
-    isActive = mainSection === href.split('/')[1];
+    isActive = mainSection === href.split("/")[1];
   }
 
   return (
@@ -78,6 +89,7 @@ const navigation = [
   { name: "Dashboard", href: "/home", icon: Home },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Vehicles", href: "/vehicles", icon: Car },
+  { name: "Stickers", href: "/stickers", icon: Sticker },
   { name: "Policies", href: "/policies", icon: FileText },
   { name: "Analytics", href: "/analytics", icon: BarChart },
 ];

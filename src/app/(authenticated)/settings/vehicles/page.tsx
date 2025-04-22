@@ -68,6 +68,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface VehicleEntity {
     id: string;
@@ -104,11 +105,13 @@ export default function VehicleSettingsPage() {
     const [editingEntity, setEditingEntity] = useState<VehicleEntity | null>(null);
     const [entityName, setEntityName] = useState("");
     const [entityDescription, setEntityDescription] = useState("");
+    const [nameError, setNameError] = useState("");
 
     // Add new state
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [newEntityName, setNewEntityName] = useState("");
     const [newEntityDescription, setNewEntityDescription] = useState("");
+    const [newNameError, setNewNameError] = useState("");
 
     // Delete state
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -121,22 +124,37 @@ export default function VehicleSettingsPage() {
         vehicleCategories: "/api/vehicle-categories",
     };
 
-    // Tab labels
+    // Tab labels with color definitions
     const tabLabels = {
         vehicleTypes: {
             title: "Vehicle Types",
             description: "Types of vehicles in the system",
             icon: Car,
+            color: "text-blue-500",
+            bgColor: "bg-blue-50/70 dark:bg-blue-950/20",
+            accentColor: "bg-blue-500",
+            hoverColor: "hover:text-blue-600 hover:bg-blue-50",
+            activeText: "text-blue-700 dark:text-blue-300",
         },
         bodyTypes: {
             title: "Body Types",
             description: "Physical body types of vehicles",
             icon: Truck,
+            color: "text-emerald-500",
+            bgColor: "bg-emerald-50/70 dark:bg-emerald-950/20",
+            accentColor: "bg-emerald-500",
+            hoverColor: "hover:text-emerald-600 hover:bg-emerald-50",
+            activeText: "text-emerald-700 dark:text-emerald-300",
         },
         vehicleCategories: {
             title: "Vehicle Categories",
             description: "Categories for classifying vehicles",
             icon: Tag,
+            color: "text-amber-500",
+            bgColor: "bg-amber-50/70 dark:bg-amber-950/20",
+            accentColor: "bg-amber-500",
+            hoverColor: "hover:text-amber-600 hover:bg-amber-50",
+            activeText: "text-amber-700 dark:text-amber-300",
         },
     };
 
@@ -165,13 +183,36 @@ export default function VehicleSettingsPage() {
         setEditingEntity(entity);
         setEntityName(entity.name);
         setEntityDescription(entity.description || "");
+        setNameError("");
         setIsEditing(true);
+    };
+
+    const validateEntityName = (name: string, currentId?: string): boolean => {
+        const trimmedName = name.trim();
+
+        if (!trimmedName) {
+            return false;
+        }
+
+        // Check for duplicates, excluding the current entity if editing
+        const duplicate = entities.find(
+            entity => entity.name.toLowerCase() === trimmedName.toLowerCase() && entity.id !== currentId
+        );
+
+        return !duplicate;
     };
 
     const handleEditSubmit = async () => {
         if (!editingEntity || !entityName.trim()) return;
 
+        // Check for duplicate names
+        if (!validateEntityName(entityName, editingEntity.id)) {
+            setNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+            return;
+        }
+
         setIsLoading(true);
+        setNameError("");
         try {
             const response = await fetch(`${apiEndpoints[activeTab]}/${editingEntity.id}`, {
                 method: "PATCH",
@@ -185,7 +226,13 @@ export default function VehicleSettingsPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update");
+                const errorData = await response.json();
+                if (errorData.error === "DUPLICATE_NAME") {
+                    setNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+                    setIsLoading(false);
+                    return;
+                }
+                throw new Error(errorData.message || "Failed to update");
             }
 
             toast({
@@ -209,13 +256,21 @@ export default function VehicleSettingsPage() {
     const handleAddNewOpen = () => {
         setNewEntityName("");
         setNewEntityDescription("");
+        setNewNameError("");
         setIsAddingNew(true);
     };
 
     const handleAddNewSubmit = async () => {
         if (!newEntityName.trim()) return;
 
+        // Check for duplicate names
+        if (!validateEntityName(newEntityName)) {
+            setNewNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+            return;
+        }
+
         setIsLoading(true);
+        setNewNameError("");
         try {
             const response = await fetch(apiEndpoints[activeTab], {
                 method: "POST",
@@ -229,7 +284,13 @@ export default function VehicleSettingsPage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create");
+                const errorData = await response.json();
+                if (errorData.error === "DUPLICATE_NAME") {
+                    setNewNameError(`A ${tabLabels[activeTab].title.slice(0, -1).toLowerCase()} with this name already exists`);
+                    setIsLoading(false);
+                    return;
+                }
+                throw new Error(errorData.message || "Failed to create");
             }
 
             toast({
@@ -347,20 +408,12 @@ export default function VehicleSettingsPage() {
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Car className="h-5 w-5 text-primary" />
-                            <CardTitle>Vehicle Settings</CardTitle>
-                        </div>
-                        <Button size="sm" onClick={handleAddNewOpen} className="gap-1">
-                            <Plus className="h-4 w-4" />
-                            Add New
-                        </Button>
+                        <CardDescription>
+                            Manage vehicle types, body types, and categories used throughout the system
+                        </CardDescription>
                     </div>
-                    <CardDescription>
-                        Manage vehicle types, body types, and categories used throughout the system
-                    </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-2">
                     <Tabs
                         defaultValue="vehicleTypes"
                         value={activeTab}
@@ -368,33 +421,47 @@ export default function VehicleSettingsPage() {
                             setActiveTab(value as EntityType);
                             setSelectedEntity(null); // Clear selection when changing tabs
                         }}
-                        className="space-y-4"
+                        className="space-y-0"
                     >
-                        <TabsList className="grid grid-cols-3 lg:w-[400px] md:w-[350px] w-full">
-                            <TabsTrigger value="vehicleTypes" className="flex items-center gap-2">
-                                <Car className="h-4 w-4" />
-                                <span className="hidden sm:inline">Vehicle Types</span>
-                                <span className="sm:hidden">Types</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="bodyTypes" className="flex items-center gap-2">
-                                <Truck className="h-4 w-4" />
-                                <span className="hidden sm:inline">Body Types</span>
-                                <span className="sm:hidden">Body</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="vehicleCategories" className="flex items-center gap-2">
-                                <Tag className="h-4 w-4" />
-                                <span className="hidden sm:inline">Categories</span>
-                                <span className="sm:hidden">Categories</span>
-                            </TabsTrigger>
-                        </TabsList>
+                        <div className="w-[420px] mb-4">
+                            <TabsList className="grid grid-cols-3 p-0 bg-transparent h-9">
+                                <TabsTrigger
+                                    value="vehicleTypes"
+                                    className="rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground"
+                                >
+                                    <div className="flex items-center space-x-1.5">
+                                        <Car className="h-3.5 w-3.5" />
+                                        <span className="text-xs font-medium">Vehicle Types</span>
+                                    </div>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="bodyTypes"
+                                    className="rounded-full data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground"
+                                >
+                                    <div className="flex items-center space-x-1.5">
+                                        <Truck className="h-3.5 w-3.5" />
+                                        <span className="text-xs font-medium">Body Types</span>
+                                    </div>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="vehicleCategories"
+                                    className="rounded-full data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground"
+                                >
+                                    <div className="flex items-center space-x-1.5">
+                                        <Tag className="h-3.5 w-3.5" />
+                                        <span className="text-xs font-medium">Categories</span>
+                                    </div>
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
 
                         {/* Content for all tabs - same UI with different data */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                                <div className="flex items-center px-2 border rounded-md h-8 w-full sm:w-[250px] text-xs bg-background">
-                                    <SearchIcon className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                                <div className="relative flex-1 sm:w-[250px] w-full max-w-full sm:max-w-[250px]">
+                                    <SearchIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 ${tabLabels[activeTab].color}`} />
                                     <input
-                                        className="flex-1 h-full bg-transparent outline-none"
+                                        className="w-full h-9 rounded-full pl-9 pr-4 text-xs bg-muted/50 hover:bg-muted focus:bg-background border border-transparent focus:border-input focus:ring-0 focus:ring-offset-0 outline-none transition-all"
                                         placeholder={`Search ${tabLabels[activeTab].title.toLowerCase()}...`}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -404,19 +471,25 @@ export default function VehicleSettingsPage() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 text-xs"
+                                        className="h-8 text-xs rounded-full hover:bg-muted"
                                         onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
                                     >
                                         Sort{" "}
                                         {sortDirection === "asc" ? (
-                                            <ChevronUp className="h-3 w-3 ml-1" />
+                                            <ChevronUp className={`h-3 w-3 ml-1 ${tabLabels[activeTab].color}`} />
                                         ) : (
-                                            <ChevronDown className="h-3 w-3 ml-1" />
+                                            <ChevronDown className={`h-3 w-3 ml-1 ${tabLabels[activeTab].color}`} />
                                         )}
                                     </Button>
-                                    <Badge variant="outline">
-                                        {filteredEntities.length} {filteredEntities.length === 1 ? "item" : "items"}
-                                    </Badge>
+                                    <Button
+                                        size="icon"
+                                        onClick={handleAddNewOpen}
+                                        className="h-8 w-8 rounded-full"
+                                        variant="outline"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        <span className="sr-only">Add New</span>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -424,7 +497,7 @@ export default function VehicleSettingsPage() {
                                 {/* Table section - left side */}
                                 <div className={`${selectedEntity ? 'lg:col-span-7 md:col-span-6 col-span-12' : 'col-span-12'} transition-all duration-200 rounded-md border`}>
                                     <Table className="text-xs">
-                                        <TableHeader className="bg-primary/5">
+                                        <TableHeader className={`${tabLabels[activeTab].bgColor}`}>
                                             <TableRow>
                                                 <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 w-[160px] sm:w-[200px]">Name</TableHead>
                                                 <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2">Description</TableHead>
@@ -436,7 +509,7 @@ export default function VehicleSettingsPage() {
                                                 <TableRow>
                                                     <TableCell colSpan={3} className="h-[200px] text-center">
                                                         <div className="flex flex-col items-center justify-center h-full">
-                                                            <Loader2 className="h-8 w-8 animate-spin mb-2 text-primary/70" />
+                                                            <Loader2 className={`h-8 w-8 animate-spin mb-2 ${tabLabels[activeTab].color}`} />
                                                             <p className="text-sm text-muted-foreground">Loading data...</p>
                                                         </div>
                                                     </TableCell>
@@ -452,7 +525,7 @@ export default function VehicleSettingsPage() {
                                                                     variant="link"
                                                                     size="sm"
                                                                     onClick={() => setSearchTerm("")}
-                                                                    className="mt-2"
+                                                                    className={`mt-2 ${tabLabels[activeTab].color}`}
                                                                 >
                                                                     Clear search
                                                                 </Button>
@@ -464,12 +537,12 @@ export default function VehicleSettingsPage() {
                                                 paginatedEntities.map((entity) => (
                                                     <TableRow
                                                         key={entity.id}
-                                                        className={`hover:bg-muted/50 cursor-pointer ${selectedEntity?.id === entity.id ? 'bg-muted' : ''}`}
+                                                        className={`hover:${tabLabels[activeTab].bgColor} cursor-pointer ${selectedEntity?.id === entity.id ? tabLabels[activeTab].bgColor : ''}`}
                                                         onClick={() => handleRowClick(entity)}
                                                     >
                                                         <TableCell className="py-1 px-2 h-7 text-xs font-medium whitespace-nowrap">
                                                             <div className="flex items-center gap-2 max-w-[180px]">
-                                                                <TabIcon className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                                                                <TabIcon className={`h-3.5 w-3.5 ${tabLabels[activeTab].color} flex-shrink-0`} />
                                                                 <span className="truncate">{entity.name}</span>
                                                             </div>
                                                         </TableCell>
@@ -478,7 +551,7 @@ export default function VehicleSettingsPage() {
                                                                 {entity.description || "—"}
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="py-1 px-2 h-7 text-right">
+                                                        <TableCell className="py-1 px-2 h-7 text-right w-[50px]">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
                                                                     <Button
@@ -501,7 +574,7 @@ export default function VehicleSettingsPage() {
                                                                             handleEditOpen(entity);
                                                                         }}
                                                                     >
-                                                                        <Edit2 className="h-3.5 w-3.5 mr-2" /> Edit
+                                                                        <Edit2 className={`h-3.5 w-3.5 mr-2 ${tabLabels[activeTab].color}`} /> Edit
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem
                                                                         className="text-xs text-red-600"
@@ -535,7 +608,7 @@ export default function VehicleSettingsPage() {
                                                     disabled={currentPage === 0}
                                                     className="h-7 w-7 rounded-full"
                                                 >
-                                                    <ChevronLeft className="h-3.5 w-3.5" />
+                                                    <ChevronLeft className={`h-3.5 w-3.5 ${currentPage === 0 ? 'text-muted-foreground' : tabLabels[activeTab].color}`} />
                                                     <span className="sr-only">Previous</span>
                                                 </Button>
                                                 <div className="text-xs">
@@ -548,7 +621,7 @@ export default function VehicleSettingsPage() {
                                                     disabled={currentPage >= totalPages - 1}
                                                     className="h-7 w-7 rounded-full"
                                                 >
-                                                    <ChevronRight className="h-3.5 w-3.5" />
+                                                    <ChevronRight className={`h-3.5 w-3.5 ${currentPage >= totalPages - 1 ? 'text-muted-foreground' : tabLabels[activeTab].color}`} />
                                                     <span className="sr-only">Next</span>
                                                 </Button>
                                             </div>
@@ -559,23 +632,23 @@ export default function VehicleSettingsPage() {
                                 {/* Details Card - right side */}
                                 {selectedEntity && (
                                     <div className="lg:col-span-5 md:col-span-6 col-span-12 transition-all duration-200">
-                                        <Card className="h-full border-primary/20">
+                                        <Card className="h-full">
                                             <CardHeader className="pb-2">
                                                 <div className="flex justify-between items-start">
                                                     <CardTitle className="text-sm flex items-center gap-2">
-                                                        <TabIcon className="h-4 w-4 text-primary" />
+                                                        <TabIcon className={`h-4 w-4 ${tabLabels[activeTab].color}`} />
                                                         {selectedEntity.name}
                                                     </CardTitle>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-7 w-7 p-0"
+                                                        className="h-7 w-7 p-0 rounded-full"
                                                         onClick={() => setSelectedEntity(null)}
                                                     >
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 </div>
-                                                <Badge variant="outline" className="mt-1 text-[10px] py-0 px-2 h-4 w-fit">
+                                                <Badge variant="outline" className={`mt-1 text-[10px] py-0 px-2 h-4 w-fit ${tabLabels[activeTab].color} bg-muted/50`}>
                                                     {activeTab === "vehicleTypes"
                                                         ? "Vehicle Type"
                                                         : activeTab === "bodyTypes"
@@ -586,29 +659,29 @@ export default function VehicleSettingsPage() {
                                             <CardContent className="pt-0">
                                                 <div className="space-y-4 text-xs">
                                                     <div>
-                                                        <h4 className="font-semibold text-muted-foreground">Description</h4>
+                                                        <h4 className={`font-semibold text-muted-foreground`}>Description</h4>
                                                         <p className="mt-1">{selectedEntity.description || "No description provided"}</p>
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-muted-foreground">ID</h4>
-                                                        <p className="font-mono text-[10px] bg-muted p-1 rounded mt-1">{selectedEntity.id}</p>
+                                                        <h4 className={`font-semibold text-muted-foreground`}>ID</h4>
+                                                        <p className={`font-mono text-[10px] ${tabLabels[activeTab].bgColor} p-1 rounded mt-1`}>{selectedEntity.id}</p>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div>
-                                                            <h4 className="font-semibold text-muted-foreground">Created</h4>
+                                                            <h4 className={`font-semibold text-muted-foreground`}>Created</h4>
                                                             <p className="mt-1">{selectedEntity.createdAt
                                                                 ? new Date(selectedEntity.createdAt).toLocaleDateString()
                                                                 : "Unknown"}</p>
                                                         </div>
                                                         <div>
-                                                            <h4 className="font-semibold text-muted-foreground">Last Updated</h4>
+                                                            <h4 className={`font-semibold text-muted-foreground`}>Last Updated</h4>
                                                             <p className="mt-1">{selectedEntity.updatedAt
                                                                 ? new Date(selectedEntity.updatedAt).toLocaleDateString()
                                                                 : "Unknown"}</p>
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-muted-foreground">Usage</h4>
+                                                        <h4 className={`font-semibold text-muted-foreground`}>Usage</h4>
                                                         <p className="mt-1">
                                                             {selectedEntity._count?.vehicles !== undefined
                                                                 ? `Used by ${selectedEntity._count.vehicles} vehicle${selectedEntity._count.vehicles !== 1 ? 's' : ''}`
@@ -619,15 +692,15 @@ export default function VehicleSettingsPage() {
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-7 text-xs"
+                                                            className="h-7 text-xs rounded-full"
                                                             onClick={() => handleEditOpen(selectedEntity)}
                                                         >
-                                                            <Edit2 className="h-3 w-3 mr-1" /> Edit
+                                                            <Edit2 className={`h-3 w-3 mr-1 ${tabLabels[activeTab].color}`} /> Edit
                                                         </Button>
                                                         <Button
                                                             size="sm"
                                                             variant="destructive"
-                                                            className="h-7 text-xs"
+                                                            className="h-7 text-xs rounded-full"
                                                             onClick={() => handleDeleteOpen(selectedEntity.id)}
                                                             disabled={selectedEntity._count?.vehicles ? selectedEntity._count.vehicles > 0 : false}
                                                         >
@@ -647,43 +720,57 @@ export default function VehicleSettingsPage() {
 
             {/* Edit Dialog */}
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit {tabLabels[activeTab].title.slice(0, -1)}</DialogTitle>
+                <DialogContent className="rounded-lg max-h-[90vh]">
+                    <DialogHeader className="pb-2">
+                        <DialogTitle className="flex items-center gap-2">
+                            <TabIcon className={`h-4 w-4 ${tabLabels[activeTab].color}`} />
+                            Edit {tabLabels[activeTab].title.slice(0, -1)}
+                        </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
+                    <div className="space-y-6 pt-4">
+                        <div className="space-y-3">
+                            <Label htmlFor="name" className="text-sm font-medium">Name</Label>
                             <Input
                                 id="name"
                                 value={entityName}
-                                onChange={(e) => setEntityName(e.target.value)}
+                                onChange={(e) => {
+                                    setEntityName(e.target.value);
+                                    setNameError("");
+                                }}
                                 placeholder={`Enter ${tabLabels[activeTab].title.toLowerCase()} name`}
+                                className={`rounded-md focus-visible:ring-0 focus-visible:ring-offset-0 h-9 ${nameError ? 'border-red-500 focus:border-red-500' : ''}`}
                             />
+                            {nameError && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center">
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    {nameError}
+                                </p>
+                            )}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
-                            <Input
+                        <div className="space-y-3">
+                            <Label htmlFor="description" className="text-sm font-medium">Description (Optional)</Label>
+                            <Textarea
                                 id="description"
                                 value={entityDescription}
                                 onChange={(e) => setEntityDescription(e.target.value)}
                                 placeholder="Enter description"
+                                className="rounded-md min-h-[120px] text-xs resize-y focus-visible:ring-0 focus-visible:ring-offset-0"
                             />
                         </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button onClick={handleEditSubmit} disabled={isLoading || !entityName.trim()}>
+                            <Button onClick={handleEditSubmit} disabled={isLoading || !entityName.trim()} className="rounded-full h-6 text-xs px-3">
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Saving...
                                     </>
                                 ) : (
                                     <>
-                                        <Save className="h-4 w-4 mr-2" />
-                                        Save Changes
+                                        <Save className={`h-3 w-3 mr-1 ${tabLabels[activeTab].color}`} />
+                                        Save
                                     </>
                                 )}
                             </Button>
@@ -694,42 +781,56 @@ export default function VehicleSettingsPage() {
 
             {/* Add New Dialog */}
             <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New {tabLabels[activeTab].title.slice(0, -1)}</DialogTitle>
+                <DialogContent className="rounded-lg max-h-[90vh]">
+                    <DialogHeader className="pb-2">
+                        <DialogTitle className="flex items-center gap-2">
+                            <TabIcon className={`h-4 w-4 ${tabLabels[activeTab].color}`} />
+                            Add New {tabLabels[activeTab].title.slice(0, -1)}
+                        </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-name">Name</Label>
+                    <div className="space-y-6 pt-4">
+                        <div className="space-y-3">
+                            <Label htmlFor="new-name" className="text-sm font-medium">Name</Label>
                             <Input
                                 id="new-name"
                                 value={newEntityName}
-                                onChange={(e) => setNewEntityName(e.target.value)}
+                                onChange={(e) => {
+                                    setNewEntityName(e.target.value);
+                                    setNewNameError("");
+                                }}
                                 placeholder={`Enter ${tabLabels[activeTab].title.toLowerCase()} name`}
+                                className={`rounded-md focus-visible:ring-0 focus-visible:ring-offset-0 h-9 ${newNameError ? 'border-red-500 focus:border-red-500' : ''}`}
                             />
+                            {newNameError && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center">
+                                    <AlertCircle className="h-3 w-3 mr-1" />
+                                    {newNameError}
+                                </p>
+                            )}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="new-description">Description (Optional)</Label>
-                            <Input
+                        <div className="space-y-3">
+                            <Label htmlFor="new-description" className="text-sm font-medium">Description (Optional)</Label>
+                            <Textarea
                                 id="new-description"
                                 value={newEntityDescription}
                                 onChange={(e) => setNewEntityDescription(e.target.value)}
                                 placeholder="Enter description"
+                                className="rounded-md min-h-[120px] text-xs resize-y focus-visible:ring-0 focus-visible:ring-offset-0"
                             />
                         </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsAddingNew(false)} disabled={isLoading}>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" onClick={() => setIsAddingNew(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button onClick={handleAddNewSubmit} disabled={isLoading || !newEntityName.trim()}>
+                            <Button onClick={handleAddNewSubmit} disabled={isLoading || !newEntityName.trim()} className="rounded-full h-6 text-xs px-3">
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Creating...
                                     </>
                                 ) : (
                                     <>
-                                        <Plus className="h-4 w-4 mr-2" />
+                                        <Plus className={`h-3 w-3 mr-1 ${tabLabels[activeTab].color}`} />
                                         Create
                                     </>
                                 )}
@@ -741,28 +842,31 @@ export default function VehicleSettingsPage() {
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent className="rounded-lg">
+                    <DialogHeader className="pb-2">
+                        <DialogTitle className="flex items-center gap-2 text-red-500">
+                            <Trash2 className="h-4 w-4" />
+                            Confirm Deletion
+                        </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 pt-4">
+                    <div className="space-y-5 pt-4">
                         <p className="text-sm">
                             Are you sure you want to delete this {tabLabels[activeTab].title.slice(0, -1).toLowerCase()}?
                             This action cannot be undone.
                         </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isLoading}>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
                                 Cancel
                             </Button>
-                            <Button variant="destructive" onClick={handleDeleteSubmit} disabled={isLoading}>
+                            <Button variant="destructive" onClick={handleDeleteSubmit} disabled={isLoading} className="rounded-full h-6 text-xs px-3">
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                         Deleting...
                                     </>
                                 ) : (
                                     <>
-                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        <Trash2 className="h-3 w-3 mr-1" />
                                         Delete
                                     </>
                                 )}

@@ -1,12 +1,23 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, Calendar, User, CheckCircle, XCircle, Shield, ExternalLink, Car, Eye } from "lucide-react";
+import { Mail, Phone, Calendar, User, CheckCircle, XCircle, Shield, ExternalLink, Car, Eye, MoreHorizontal, Edit, Copy, Trash2, Home } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EditClientForm } from "./edit-client-form";
+import { DeleteClientDialog } from "./delete-client-dialog";
+import { toast } from "@/components/ui/use-toast";
 
 interface ClientDetailProps {
   client?: {
@@ -14,6 +25,7 @@ interface ClientDetailProps {
     name: string;
     email: string;
     phone: string;
+    address: string;
     status: "active" | "inactive";
     type: string;
     policies: number;
@@ -21,12 +33,15 @@ interface ClientDetailProps {
     createdBy?: string | null;
     updatedBy?: string | null;
   };
+  onRefresh?: () => void;
 }
 
-export function ClientDetail({ client }: ClientDetailProps) {
+export function ClientDetail({ client, onRefresh }: ClientDetailProps) {
   const router = useRouter();
   const [vehicleCount, setVehicleCount] = useState<number>(0);
   const [isLoadingVehicles, setIsLoadingVehicles] = useState<boolean>(true);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get color based on client type
   const getTypeColor = (type: string) => {
@@ -56,6 +71,17 @@ export function ClientDetail({ client }: ClientDetailProps) {
   const handleViewVehicles = () => {
     if (client) {
       router.push(`/vehicles?clientId=${client.id}`);
+    }
+  };
+
+  // Copy client ID to clipboard
+  const copyClientId = () => {
+    if (client) {
+      navigator.clipboard.writeText(client.id);
+      toast({
+        title: "Client ID copied",
+        description: "The client ID has been copied to your clipboard."
+      });
     }
   };
 
@@ -113,17 +139,70 @@ export function ClientDetail({ client }: ClientDetailProps) {
               </Badge>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={handleViewDetails}
-            title="View Details"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleViewDetails}
+              title="View Details"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="text-xs">Client Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 text-xs cursor-pointer"
+                  onClick={copyClientId}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy client ID
+                </DropdownMenuItem>
+                <EditClientForm
+                  clientId={client.id}
+                  trigger={
+                    <DropdownMenuItem className="gap-2 text-xs cursor-pointer" onSelect={(e) => e.preventDefault()}>
+                      <Edit className="h-3.5 w-3.5" />
+                      Edit client
+                    </DropdownMenuItem>
+                  }
+                  onClientUpdated={() => {
+                    if (onRefresh) onRefresh();
+                  }}
+                />
+                <DropdownMenuItem
+                  className="gap-2 text-xs text-destructive cursor-pointer"
+                  onClick={() => setShowDeleteDialog(true)}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete client
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
+
+      {/* Delete Dialog */}
+      {showDeleteDialog && (
+        <DeleteClientDialog
+          clientId={client.id}
+          clientName={client.name}
+          onClientDeleted={() => {
+            setShowDeleteDialog(false);
+            if (onRefresh) onRefresh();
+          }}
+        />
+      )}
 
       <CardContent className="p-4">
         <div className="space-y-6">
@@ -141,6 +220,10 @@ export function ClientDetail({ client }: ClientDetailProps) {
               <div className="flex items-center space-x-2">
                 <Phone className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
                 <span className="text-xs">{client.phone || "—"}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Home className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                <span className="text-xs">{client.address || "—"}</span>
               </div>
             </div>
           </div>

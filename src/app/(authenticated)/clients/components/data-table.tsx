@@ -39,6 +39,7 @@ interface DataTableProps<TData, TValue> {
   fetchData?: () => void;
   navigateOnDoubleClick?: boolean;
   navigateToClientDetails?: (clientId: string) => void;
+  selectedRow?: TData | null;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +51,7 @@ export function DataTable<TData, TValue>({
   fetchData,
   navigateOnDoubleClick = true,
   navigateToClientDetails: externalNavigate,
+  selectedRow,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -59,7 +61,6 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [selectedRow, setSelectedRow] = React.useState<TData | null>(null);
 
   // Function to navigate to client details page
   const navigateToClientDetails =
@@ -114,14 +115,14 @@ export function DataTable<TData, TValue>({
                     return (
                       <TableHead
                         key={header.id}
-                        className="text-xs py-2 h-8 border-b border-border/40 px-2"
+                        className="text-xs py-2 h-10 border-b border-border/40 px-4"
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}
@@ -134,11 +135,9 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-5 ${
-                      selectedRow === row.original ? "bg-muted" : ""
-                    }`}
+                    className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-5 ${selectedRow === row.original ? "bg-muted" : ""
+                      }`}
                     onClick={() => {
-                      setSelectedRow(row.original as TData);
                       onRowClick?.(row.original as TData);
                     }}
                     onDoubleClick={() => {
@@ -150,7 +149,7 @@ export function DataTable<TData, TValue>({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="py-0.5 px-2 border-b border-border/40"
+                        className="py-1.5 px-4 border-b border-border/40"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -176,8 +175,7 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 mt-2">
         <div className="flex-1 text-xs text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredRowModel().rows.length} row(s)
         </div>
         <div className="space-x-2">
           <Button

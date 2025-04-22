@@ -1,18 +1,7 @@
 "use client";
 
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Mail, Phone, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { EditClientForm } from "./edit-client-form";
-import { DeleteClientDialog } from "./delete-client-dialog";
+import { CheckCircle, AlertCircle, Home } from "lucide-react";
 
 // Define meta types for the table
 type TableMeta = {
@@ -25,6 +14,7 @@ interface Client {
     name: string;
     email: string;
     phone: string;
+    address: string;
     type: "INDIVIDUAL" | "BUSINESS" | "GOVERNMENT" | "NON_PROFIT";
     status: "active" | "inactive";
     policies: number;
@@ -67,6 +57,17 @@ export const columns: ColumnDef<Client>[] = [
         },
     },
     {
+        accessorKey: "address",
+        header: "Address",
+        cell: ({ row }: { row: Row<Client> }) => {
+            return (
+                <div className="text-muted-foreground max-w-[200px] truncate">
+                    <span>{row.original.address || "—"}</span>
+                </div>
+            );
+        },
+    },
+    {
         accessorKey: "type",
         header: "Type",
         cell: ({ row }: { row: Row<Client> }) => {
@@ -102,75 +103,6 @@ export const columns: ColumnDef<Client>[] = [
             return (
                 <div className="text-center font-medium w-[50px]">
                     {row.getValue("policies")}
-                </div>
-            );
-        },
-    },
-    {
-        id: "actions",
-        cell: ({ row, table }) => {
-            const client = row.original;
-
-            // Access table refresh callback from meta
-            const meta = table.options.meta as TableMeta | undefined;
-            const fetchClients = meta?.fetchClients;
-            const navigate = meta?.navigateToClientDetails;
-
-            return (
-                <div className="text-right w-[40px]">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-6 w-6 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="text-xs">
-                            <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-xs"
-                                onClick={() => navigator.clipboard.writeText(client.id)}
-                            >
-                                Copy client ID
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-xs"
-                                onClick={() => {
-                                    if (navigate) {
-                                        navigate(client.id);
-                                    }
-                                }}
-                            >
-                                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                                View details
-                            </DropdownMenuItem>
-                            <EditClientForm
-                                clientId={client.id}
-                                trigger={
-                                    <DropdownMenuItem className="text-xs" onSelect={(e) => e.preventDefault()}>
-                                        Edit
-                                    </DropdownMenuItem>
-                                }
-                                onClientUpdated={() => {
-                                    // Refresh the table data
-                                    if (fetchClients) {
-                                        fetchClients();
-                                    }
-                                }}
-                            />
-                            <DeleteClientDialog
-                                clientId={client.id}
-                                clientName={client.name}
-                                onClientDeleted={() => {
-                                    // Refresh the table data
-                                    if (fetchClients) {
-                                        fetchClients();
-                                    }
-                                }}
-                            />
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             );
         },
