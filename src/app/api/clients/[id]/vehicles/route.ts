@@ -6,6 +6,7 @@ export async function GET(
     context: { params: { id: string } }
 ) {
     try {
+        // Extract id from context.params (no need to await in Next.js 14+)
         const { id } = context.params;
 
         // Check if client exists
@@ -56,8 +57,8 @@ export async function GET(
             make: vehicle.make,
             model: vehicle.model,
             year: vehicle.year,
-            chassisNo: vehicle.chassisNo || vehicle.chassisNumber,
-            engineNo: vehicle.engineNo || vehicle.engineNumber,
+            chassisNo: vehicle.chassisNumber,
+            engineNo: vehicle.engineNumber,
             bodyType: vehicle.bodyType,
             vehicleCategory: vehicle.vehicleCategory,
             vehicleType: vehicle.vehicleType,

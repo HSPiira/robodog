@@ -55,7 +55,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VehicleType } from "@prisma/client";
+import { VehicleType as DbVehicleType } from "@prisma/client";
 
 // Define the form schema
 const formSchema = z.object({
@@ -78,15 +78,10 @@ const formSchema = z.object({
     ),
   bodyTypeId: z.string().min(1, "Body type is required"),
   categoryId: z.string().min(1, "Vehicle category is required"),
-  vehicleType: z.enum([
-    "PASSENGER",
-    "COMMERCIAL",
-    "MOTORCYCLE",
-    "OTHER",
-  ] as const),
+  vehicleTypeId: z.string().min(1, "Vehicle type is required"),
   clientId: z.string().min(1, "Owner is required"),
-  chassisNo: z.string().min(1, "Chassis number is required"),
-  engineNo: z.string().min(1, "Engine number is required"),
+  chassisNumber: z.string().min(1, "Chassis number is required"),
+  engineNumber: z.string().min(1, "Engine number is required"),
   seatingCapacity: z.coerce.number().int().positive().optional(),
   cubicCapacity: z.coerce.number().int().positive().optional(),
   grossWeight: z.coerce.number().positive().optional(),
@@ -102,6 +97,12 @@ interface BodyType {
 interface VehicleCategory {
   id: string;
   name: string;
+}
+
+interface VehicleTypeData {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 interface Client {
@@ -126,15 +127,9 @@ export function CreateVehicleForm({
   const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>(
     []
   );
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleTypeData[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
-
-  const vehicleTypes = [
-    "PASSENGER",
-    "COMMERCIAL",
-    "MOTORCYCLE",
-    "OTHER",
-  ] as const;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -145,10 +140,10 @@ export function CreateVehicleForm({
       year: new Date().getFullYear(),
       bodyTypeId: "",
       categoryId: "",
-      vehicleType: "PASSENGER",
+      vehicleTypeId: "",
       clientId: clientId || "",
-      chassisNo: "",
-      engineNo: "",
+      chassisNumber: "",
+      engineNumber: "",
       seatingCapacity: undefined,
       cubicCapacity: undefined,
       grossWeight: undefined,
@@ -162,25 +157,28 @@ export function CreateVehicleForm({
         setIsLoadingOptions(true);
         try {
           // Fetch all reference data in parallel
-          const [bodyResponse, categoryResponse, clientResponse] =
+          const [bodyResponse, categoryResponse, vehicleTypeResponse, clientResponse] =
             await Promise.all([
               fetch("/api/body-types"),
               fetch("/api/vehicle-categories"),
+              fetch("/api/vehicle-types"),
               !clientId ? fetch("/api/clients") : Promise.resolve(null),
             ]);
 
-          const [bodyData, categoryData] = await Promise.all([
+          const [bodyData, categoryData, vehicleTypeData] = await Promise.all([
             parse(bodyResponse),
             parse(categoryResponse),
+            parse(vehicleTypeResponse),
           ]);
 
           setBodyTypes(bodyData);
           setVehicleCategories(categoryData);
+          setVehicleTypes(vehicleTypeData);
 
           // Only fetch clients if clientId is not provided
           if (!clientId && clientResponse) {
             const clientData = await parse(clientResponse);
-            setClients(clientData);
+            setClients(Array.isArray(clientData) ? clientData : (clientData?.data || []));
           }
         } catch (error) {
           console.error("Error fetching reference data:", error);
@@ -400,7 +398,7 @@ export function CreateVehicleForm({
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="vehicleType"
+                      name="vehicleTypeId"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-medium flex items-center gap-1.5">
@@ -410,7 +408,7 @@ export function CreateVehicleForm({
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            value={field.value}
+                            disabled={isLoading}
                           >
                             <FormControl>
                               <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
@@ -419,8 +417,8 @@ export function CreateVehicleForm({
                             </FormControl>
                             <SelectContent>
                               {vehicleTypes.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type.charAt(0) + type.slice(1).toLowerCase()}
+                                <SelectItem key={type.id} value={type.id}>
+                                  {type.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -519,7 +517,7 @@ export function CreateVehicleForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {clients.map((client) => (
+                              {Array.isArray(clients) && clients.map((client) => (
                                 <SelectItem key={client.id} value={client.id}>
                                   {client.name}
                                 </SelectItem>
@@ -545,7 +543,7 @@ export function CreateVehicleForm({
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="chassisNo"
+                      name="chassisNumber"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-medium flex items-center gap-1.5">
@@ -567,7 +565,7 @@ export function CreateVehicleForm({
 
                     <FormField
                       control={form.control}
-                      name="engineNo"
+                      name="engineNumber"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-medium flex items-center gap-1.5">

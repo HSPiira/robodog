@@ -119,29 +119,14 @@ export async function POST(request: Request) {
     }
 
     // Process the validated records
-// at the top of src/app/api/vehicles/bulk-upload/route.ts
-import pMap from "p-map";
-
-    // … inside your async handler …
-    const results = await pMap(
-      records,
-      async (record, index) => {
+    const results = await Promise.all(
+      records.map(async (record, index) => {
         try {
           // Validate required fields
           const requiredFields = [
             "registration_no",
             "make",
             "model",
-            // …
-          ];
-          // … rest of your processing logic …
-        } catch (error) {
-          // … your error handling …
-        }
-      },
-      { concurrency: 15 }
-    );
-    // … continue with handling `results` …
             "year",
             "chassis_no",
             "engine_no",
@@ -308,10 +293,10 @@ import pMap from "p-map";
 
     // Collect error messages
     results.forEach((result) => {
-      if (result.status === "fulfilled") {
-        successCount++;
+      if (result instanceof Error) {
+        errors.push(result.message);
       } else {
-        errors.push(result.reason.message);
+        successCount++;
       }
     });
 

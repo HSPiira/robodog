@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
-export async function GET() {
+// GET all active vehicle types
+export async function GET(request: NextRequest) {
     try {
+        const includeStats = request.nextUrl.searchParams.get('include') === 'stats';
+
         const vehicleTypes = await prisma.vehicleType.findMany({
             where: {
                 isActive: true
@@ -12,7 +16,16 @@ export async function GET() {
             },
             select: {
                 id: true,
-                name: true
+                name: true,
+                description: true,
+                isActive: true,
+                createdAt: includeStats ? true : false,
+                updatedAt: includeStats ? true : false,
+                _count: includeStats ? {
+                    select: {
+                        vehicles: true
+                    }
+                } : undefined
             }
         });
 
@@ -21,6 +34,63 @@ export async function GET() {
         console.error("Error fetching vehicle types:", error);
         return NextResponse.json(
             { error: "Failed to fetch vehicle types" },
+            { status: 500 }
+        );
+    }
+}
+
+// POST create a new vehicle type
+export async function POST(request: NextRequest) {
+    try {
+        // Authenticate the user
+        const session = await auth(request);
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Extract user ID from session
+        const userId = session.user.id;
+
+        // Parse request body
+        const body = await request.json();
+        const { name, description } = body;
+
+        // Validate input
+        if (!name || typeof name !== 'string') {
+            return NextResponse.json({ error: "Name is required" }, { status: 400 });
+        }
+
+        // Check if vehicle type with the same name already exists
+        const existingVehicleType = await prisma.vehicleType.findFirst({
+            where: {
+                name: { equals: name, mode: 'insensitive' },
+                isActive: true
+            }
+        });
+
+        if (existingVehicleType) {
+            return NextResponse.json(
+                { error: "A vehicle type with this name already exists" },
+                { status: 409 }
+            );
+        }
+
+        // Create new vehicle type
+        const vehicleType = await prisma.vehicleType.create({
+            data: {
+                name,
+                description: description || null,
+                isActive: true,
+                createdBy: userId,
+                updatedBy: userId
+            }
+        });
+
+        return NextResponse.json(vehicleType, { status: 201 });
+    } catch (error) {
+        console.error("Error creating vehicle type:", error);
+        return NextResponse.json(
+            { error: "Failed to create vehicle type" },
             { status: 500 }
         );
     }

@@ -169,7 +169,7 @@ export function EditVehicleForm({
           setVehicleTypes(typesData);
           setBodyTypes(bodyData);
           setVehicleCategories(categoryData);
-          setClients(clientData);
+          setClients(Array.isArray(clientData) ? clientData : (clientData?.data || []));
         } catch (error) {
           console.error("Error fetching reference data:", error);
           toast.error("Failed to load form data");
@@ -527,7 +527,7 @@ export function EditVehicleForm({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {clients.map((client) => (
+                                {Array.isArray(clients) && clients.map((client) => (
                                   <SelectItem key={client.id} value={client.id}>
                                     {client.name}
                                   </SelectItem>

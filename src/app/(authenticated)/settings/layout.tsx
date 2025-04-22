@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, Users, Shield, Bell, Database } from 'lucide-react';
+import { Settings, Users, Shield, Bell, Database, Car } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,12 @@ export const settingsSections = [
     description: 'Manage system enums and configurations',
     icon: Database,
     href: '/settings/enums',
+  },
+  {
+    title: 'Vehicle Settings',
+    description: 'Manage vehicle types, body types, and categories',
+    icon: Car,
+    href: '/settings/vehicles',
   },
   {
     title: 'User Management',

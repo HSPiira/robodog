@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Home, Users, FileText, Car, Settings, BarChart } from "lucide-react";
 import {
   Tooltip,
@@ -20,7 +20,32 @@ interface SidebarItemProps {
 
 function SidebarItem({ icon, tooltip, href }: SidebarItemProps) {
   const pathname = usePathname();
-  const isActive = pathname.split('/')[1] === href.split('/')[1];
+  const searchParams = useSearchParams();
+
+  // Extract the main section from the path
+  const mainSection = pathname.split('/')[1];
+
+  // Get client ID from search params if it exists
+  const clientId = searchParams.get('clientId');
+
+  // Different page type detections
+  const isClientDetailsPage = pathname.startsWith('/clients/') && pathname.split('/').length >= 3;
+  const isClientVehiclesPage = pathname === '/vehicles' && clientId !== null;
+  const isClientContext = isClientDetailsPage || isClientVehiclesPage;
+
+  // Determine active state based on the URL context
+  let isActive;
+
+  if (href === '/clients') {
+    // Keep clients sidebar active when in any client context
+    isActive = mainSection === 'clients' || isClientVehiclesPage;
+  } else if (href === '/vehicles') {
+    // Only highlight vehicles when not in a client-specific context
+    isActive = mainSection === 'vehicles' && !isClientVehiclesPage;
+  } else {
+    // Default behavior for other links
+    isActive = mainSection === href.split('/')[1];
+  }
 
   return (
     <TooltipProvider>
