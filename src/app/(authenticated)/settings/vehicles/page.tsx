@@ -208,15 +208,15 @@ export default function VehicleSettingsPage() {
     };
 
     const validateEntityName = (name: string, currentId?: string): boolean => {
-        const trimmedName = name.trim();
+        const normalizedName = name.trim().replace(/\s+/g, ' ');
 
-        if (!trimmedName) {
+        if (!normalizedName) {
             return false;
         }
 
         // Check for duplicates, excluding the current entity if editing
         const duplicate = entities.find(
-            entity => entity.name.toLowerCase() === trimmedName.toLowerCase() && entity.id !== currentId
+            entity => entity.name.toLowerCase().trim().replace(/\s+/g, ' ') === normalizedName.toLowerCase() && entity.id !== currentId
         );
 
         return !duplicate;
