@@ -110,15 +110,15 @@ export async function POST(request: NextRequest) {
                 stickerNo,
                 policy: {
                     connect: {
-                        id: policyId
-                    }
+                        id: policyId,
+                    },
                 },
                 Vehicle: {
                     connect: {
-                        id: policy.vehicleId
-                    }
+                        id: policy.vehicleId,
+                    },
                 },
-                isActive: true
+                isActive: true,
             },
             include: {
                 policy: {
@@ -145,5 +145,7 @@ export async function POST(request: NextRequest) {
             { error: "Failed to create sticker" },
             { status: 500 }
         );
+    } finally {
+        await prisma.$disconnect();
     }
-} 
+}
