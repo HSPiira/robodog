@@ -45,6 +45,8 @@ import {
   Users,
   Weight,
   Ruler,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +58,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VehicleType as DbVehicleType } from "@prisma/client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 // Define the form schema
 const formSchema = z.object({
@@ -411,24 +426,73 @@ export function CreateVehicleForm({
                             <LayoutGrid className="h-3.5 w-3.5 text-purple-500" />
                             Vehicle Type *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select vehicle type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vehicleTypes.map((type) => (
-                                <SelectItem key={type.id} value={type.id}>
-                                  {type.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? vehicleTypes.find(
+                                      (type) => type.id === field.value
+                                    )?.name
+                                    : "Select vehicle type"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                              <Command className="w-full">
+                                <CommandInput
+                                  placeholder="Search types..."
+                                  className="h-9"
+                                />
+                                <div className="max-h-[200px] overflow-y-auto">
+                                  <CommandEmpty>No type found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {vehicleTypes.map((type) => (
+                                      <CommandItem
+                                        key={type.id}
+                                        value={type.name}
+                                        onSelect={() => {
+                                          form.setValue("vehicleTypeId", type.id);
+                                        }}
+                                        className="flex items-center gap-2 text-sm py-2"
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4 flex-shrink-0",
+                                            type.id === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        <span className="truncate">
+                                          {type.name}
+                                          {type.description && (
+                                            <span className="text-muted-foreground">
+                                              {" "}
+                                              {type.description.length > 50
+                                                ? type.description.substring(
+                                                  0,
+                                                  50
+                                                ) + "..."
+                                                : type.description}
+                                            </span>
+                                          )}
+                                        </span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </div>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
@@ -443,27 +507,64 @@ export function CreateVehicleForm({
                             <Tag className="h-3.5 w-3.5 text-orange-500" />
                             Category *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vehicleCategories.map((category) => (
-                                <SelectItem
-                                  key={category.id}
-                                  value={category.id}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
                                 >
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                                  {field.value
+                                    ? vehicleCategories.find(
+                                      (category) =>
+                                        category.id === field.value
+                                    )?.name
+                                    : "Select category"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                              <Command className="w-full">
+                                <CommandInput
+                                  placeholder="Search categories..."
+                                  className="h-9"
+                                />
+                                <div className="max-h-[200px] overflow-y-auto">
+                                  <CommandEmpty>No category found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {vehicleCategories.map((category) => (
+                                      <CommandItem
+                                        key={category.id}
+                                        value={category.name}
+                                        onSelect={() => {
+                                          form.setValue(
+                                            "categoryId",
+                                            category.id
+                                          );
+                                        }}
+                                        className="flex items-center gap-2 text-sm py-2"
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4 flex-shrink-0",
+                                            category.id === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        {category.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </div>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
@@ -479,24 +580,60 @@ export function CreateVehicleForm({
                           <CarFront className="h-3.5 w-3.5 text-cyan-500" />
                           Body Type *
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                              <SelectValue placeholder="Select body type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {bodyTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? bodyTypes.find(
+                                    (type) => type.id === field.value
+                                  )?.name
+                                  : "Select body type"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command className="w-full">
+                              <CommandInput
+                                placeholder="Search body types..."
+                                className="h-9"
+                              />
+                              <div className="max-h-[200px] overflow-y-auto">
+                                <CommandEmpty>No body type found.</CommandEmpty>
+                                <CommandGroup>
+                                  {bodyTypes.map((type) => (
+                                    <CommandItem
+                                      key={type.id}
+                                      value={type.name}
+                                      onSelect={() => {
+                                        form.setValue("bodyTypeId", type.id);
+                                      }}
+                                      className="flex items-center gap-2 text-sm py-2"
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4 flex-shrink-0",
+                                          type.id === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {type.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </div>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
@@ -512,26 +649,60 @@ export function CreateVehicleForm({
                             <UserCheck className="h-3.5 w-3.5 text-pink-500" />
                             Owner *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select vehicle owner" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(Array.isArray(clients) ? clients : []).map(
-                                (client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {client.name}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? clients.find(
+                                      (client) => client.id === field.value
+                                    )?.name
+                                    : "Select vehicle owner"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                              <Command className="w-full">
+                                <CommandInput
+                                  placeholder="Search clients..."
+                                  className="h-9"
+                                />
+                                <div className="max-h-[200px] overflow-y-auto">
+                                  <CommandEmpty>No client found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {clients.map((client) => (
+                                      <CommandItem
+                                        key={client.id}
+                                        value={client.name}
+                                        onSelect={() => {
+                                          form.setValue("clientId", client.id);
+                                        }}
+                                        className="flex items-center gap-2 text-sm py-2"
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4 flex-shrink-0",
+                                            client.id === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        {client.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </div>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
