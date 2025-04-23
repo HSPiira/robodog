@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { getTokenFromRequest, verifyToken } from './jwt';
 
 export interface SessionUser {
@@ -36,7 +36,7 @@ export async function auth(request?: Request) {
         }
 
         // Get user from database to ensure they still exist and are active
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
             where: { id: payload.userId },
             select: {
                 id: true,

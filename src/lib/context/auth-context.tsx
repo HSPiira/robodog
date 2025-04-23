@@ -131,23 +131,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const responseText = await response.text();
             console.log('[Auth] Raw response:', responseText);
 
+            // Handle empty response
+            if (!responseText.trim()) {
+                console.error('[Auth] Empty response received');
+                throw new Error('Database connection error. Please try again later.');
+            }
+
             let data;
             try {
                 data = JSON.parse(responseText);
             } catch (e) {
                 console.error('[Auth] Failed to parse response as JSON:', e);
-                throw new Error('Invalid response format');
+                throw new Error('Server error. Please try again later.');
             }
 
+            // Handle error responses
             if (!response.ok) {
                 console.error('[Auth] Response not OK:', data);
+                // Handle specific error cases
+                if (response.status === 503) {
+                    throw new Error('Database connection error. Please try again later.');
+                }
+                if (response.status === 401) {
+                    throw new Error('Invalid email or password');
+                }
                 throw new Error(data.error || "Login failed");
+            }
+
+            // Handle missing or malformed data
+            if (!data || typeof data !== 'object') {
+                console.error('[Auth] Invalid response data:', data);
+                throw new Error('Invalid response from server');
             }
 
             // Validate token format before storing
             if (!data.token || typeof data.token !== 'string' || !data.token.includes('.')) {
                 console.error('[Auth] Invalid token format in response:', data.token ? `${data.token.substring(0, 20)}...` : 'null');
-                throw new Error('Invalid token format in response');
+                throw new Error('Authentication error. Please try again.');
+            }
+
+            // Validate user data
+            if (!data.user || !data.user.id || !data.user.email) {
+                console.error('[Auth] Invalid user data in response:', data.user);
+                throw new Error('Invalid user data received');
             }
 
             console.log('[Auth] Login successful, user data:', { ...data.user, password: undefined });
@@ -163,6 +189,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error('[Auth] Login error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+            // Clean up any partial state
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
             throw error;
         } finally {
             setLoading(false);
@@ -185,39 +216,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ name, email, password }),
+                credentials: 'include', // Include cookies in the request
             });
 
             console.log('[Auth] Response status:', response.status);
+            console.log('[Auth] Response headers:', Object.fromEntries(response.headers));
 
+            // Log the raw response text for debugging
             const responseText = await response.text();
             console.log('[Auth] Raw response:', responseText);
+
+            // Handle empty response
+            if (!responseText.trim()) {
+                console.error('[Auth] Empty response received');
+                throw new Error('Database connection error. Please try again later.');
+            }
+
+            // Check if response is HTML (error page)
+            if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+                console.error('[Auth] Received HTML response instead of JSON');
+                throw new Error('Registration service is unavailable. Please try again later.');
+            }
 
             let data;
             try {
                 data = JSON.parse(responseText);
             } catch (e) {
                 console.error('[Auth] Failed to parse response as JSON:', e);
-                throw new Error('Invalid response format');
+                throw new Error('Server error. Please try again later.');
             }
 
+            // Handle error responses
             if (!response.ok) {
                 console.error('[Auth] Response not OK:', data);
+                // Handle specific error cases
+                if (response.status === 503) {
+                    throw new Error('Database connection error. Please try again later.');
+                }
+                if (response.status === 409) {
+                    throw new Error('A user with this email already exists');
+                }
+                if (response.status === 400) {
+                    throw new Error(data.error || 'Invalid registration data');
+                }
                 throw new Error(data.error || "Registration failed");
+            }
+
+            // Handle missing or malformed data
+            if (!data || typeof data !== 'object') {
+                console.error('[Auth] Invalid response data:', data);
+                throw new Error('Invalid response from server');
+            }
+
+            // Validate token format before storing
+            if (!data.token || typeof data.token !== 'string' || !data.token.includes('.')) {
+                console.error('[Auth] Invalid token format in response:', data.token ? `${data.token.substring(0, 20)}...` : 'null');
+                throw new Error('Authentication error. Please try again.');
+            }
+
+            // Validate user data
+            if (!data.user || !data.user.id || !data.user.email) {
+                console.error('[Auth] Invalid user data in response:', data.user);
+                throw new Error('Invalid user data received');
             }
 
             console.log('[Auth] Registration successful, user data:', { ...data.user, password: undefined });
 
-            // Store user data and token and log in
+            // Store user data and token
             setUser(data.user);
             setToken(data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
 
             // Server sets the HttpOnly cookie via Set-Cookie header
-            console.log('[Auth] Login successful, cookie set by server');
+            console.log('[Auth] Registration successful, cookie set by server');
         } catch (error) {
             console.error('[Auth] Registration error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+            // Clean up any partial state
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
             throw error;
         } finally {
             setLoading(false);

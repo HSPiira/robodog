@@ -60,7 +60,20 @@ export default function LoginPage() {
             // await router.refresh();
         } catch (error) {
             console.error("Login error:", error);
-            toast.error(error instanceof Error ? error.message : "Login failed");
+            // Handle specific error messages
+            let errorMessage = "Login failed";
+            if (error instanceof Error) {
+                if (error.message.includes("ECONNREFUSED") || error.message.includes("connect")) {
+                    errorMessage = "Cannot connect to the database. Please try again later or contact support.";
+                } else if (error.message.includes("prisma")) {
+                    errorMessage = "Database error. Please try again later or contact support.";
+                } else if (error.message.includes("Invalid credentials")) {
+                    errorMessage = "Invalid email or password";
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
