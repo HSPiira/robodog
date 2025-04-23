@@ -53,8 +53,12 @@ export default function LoginPage() {
         try {
             setIsSubmitting(true);
             await login(data.email, data.password);
-            router.push("/");
             toast.success("Login successful");
+            // Add a small delay to ensure state is updated
+            setTimeout(() => {
+                router.push("/");
+                router.refresh(); // Force a refresh of the page
+            }, 100);
         } catch (error) {
             console.error("Login error:", error);
             toast.error(error instanceof Error ? error.message : "Login failed");

@@ -36,30 +36,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const storedUser = localStorage.getItem("user");
                 const storedToken = localStorage.getItem("token");
 
+                console.log('[Auth] Checking stored token:', storedToken ? `${storedToken.substring(0, 20)}...` : 'null');
+
                 if (storedUser && storedToken) {
                     try {
-                        // Optionally add client-side token validation if needed
-                        // For example, check token expiration using a library or simple JWT parsing
-                        const tokenData = JSON.parse(atob(storedToken.split('.')[1]));
-                        const isExpired = tokenData.exp * 1000 < Date.now();
-
-                        if (isExpired) {
-                            console.warn("Token expired on load, clearing authentication");
-                            localStorage.removeItem("user");
-                            localStorage.removeItem("token");
-                            return;
+                        // Basic token format validation
+                        if (!storedToken || typeof storedToken !== 'string') {
+                            console.error('[Auth] Invalid token type:', typeof storedToken);
+                            throw new Error('Invalid token type');
                         }
 
-                        setUser(JSON.parse(storedUser));
-                        setToken(storedToken);
+                        // Safely decode and validate JWT token
+                        const tokenParts = storedToken.split('.');
+                        console.log('[Auth] Token parts count:', tokenParts.length);
+
+                        if (tokenParts.length !== 3) {
+                            console.error('[Auth] Invalid token format - expected 3 parts, got:', tokenParts.length);
+                            throw new Error('Invalid token format');
+                        }
+
+                        try {
+                            // Add padding to base64 string if needed
+                            const base64Url = tokenParts[1];
+                            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                            const padding = base64.length % 4;
+                            const paddedBase64 = padding ? base64 + '='.repeat(4 - padding) : base64;
+
+                            const tokenData = JSON.parse(atob(paddedBase64));
+                            console.log('[Auth] Token payload:', { exp: tokenData.exp });
+
+                            const isExpired = tokenData.exp * 1000 < Date.now();
+                            if (isExpired) {
+                                console.warn("[Auth] Token expired on load, clearing authentication");
+                                localStorage.removeItem("user");
+                                localStorage.removeItem("token");
+                                return;
+                            }
+
+                            const parsedUser = JSON.parse(storedUser);
+                            console.log('[Auth] Restored user session:', {
+                                id: parsedUser.id,
+                                email: parsedUser.email,
+                                role: parsedUser.role
+                            });
+
+                            setUser(parsedUser);
+                            setToken(storedToken);
+                        } catch (decodeError) {
+                            console.error('[Auth] Token decode error:', decodeError);
+                            throw new Error('Token decode failed');
+                        }
                     } catch (error) {
-                        console.error("Error validating stored token:", error);
+                        console.error("[Auth] Error validating stored token:", error);
                         localStorage.removeItem("user");
                         localStorage.removeItem("token");
+                        document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
                     }
+                } else {
+                    console.log('[Auth] No stored credentials found');
                 }
             } catch (error) {
-                console.error("Error checking authentication:", error);
+                console.error("[Auth] Error checking authentication:", error);
             } finally {
                 setLoading(false);
             }
@@ -84,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     "Accept": "application/json",
                 },
                 body: JSON.stringify({ email, password }),
+                credentials: 'include', // Include cookies in the request
             });
 
             console.log('[Auth] Response status:', response.status);
@@ -106,6 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 throw new Error(data.error || "Login failed");
             }
 
+            // Validate token format before storing
+            if (!data.token || typeof data.token !== 'string' || !data.token.includes('.')) {
+                console.error('[Auth] Invalid token format in response:', data.token ? `${data.token.substring(0, 20)}...` : 'null');
+                throw new Error('Invalid token format in response');
+            }
+
             console.log('[Auth] Login successful, user data:', { ...data.user, password: undefined });
 
             // Store user data and token
@@ -113,6 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
+
+            // Set the auth cookie with proper attributes
+            document.cookie = `auth-token=${data.token}; path=/; samesite=strict; secure`;
+
+            console.log('[Auth] Auth cookie set:', document.cookie);
         } catch (error) {
             console.error('[Auth] Login error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -165,6 +214,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setToken(data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
+
+            // Set the auth cookie with proper attributes
+            document.cookie = `auth-token=${data.token}; path=/; samesite=strict; secure`;
+
+            console.log('[Auth] Auth cookie set:', document.cookie);
         } catch (error) {
             console.error('[Auth] Registration error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');

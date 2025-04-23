@@ -48,19 +48,14 @@ export async function POST(request: NextRequest) {
         }
 
         if (!user.isActive) {
-            return NextResponse.json({ error: "Account is inactive" }, { status: 401 });
-        }
-
-        console.log('[API] User authenticated successfully:', email);
-
-        // Check if user is active
-        if (!user.isActive) {
             console.log('[API] Inactive user attempted login:', email);
             return NextResponse.json(
                 { error: "Your account is inactive" },
                 { status: 403 }
             );
         }
+
+        console.log('[API] User authenticated successfully:', email);
 
         // Return user data (excluding password)
         const { password: _, ...userWithoutPassword } = user;
@@ -75,6 +70,7 @@ export async function POST(request: NextRequest) {
         // Set CORS headers and create response with token
         const response = NextResponse.json({
             user: userWithoutPassword,
+            token: token,
             message: "Login successful",
         });
 

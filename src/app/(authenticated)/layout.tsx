@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
+import { QueryProvider } from "@/lib/providers/query-provider";
 
 export default function AuthenticatedLayout({
   children,
@@ -34,14 +35,16 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="pl-16">
-        <Header />
-        <main className="pt-14">
-          <div className="container mx-auto p-6">{children}</div>
-        </main>
+    <QueryProvider>
+      <div className="min-h-screen bg-background">
+        <Sidebar />
+        <div className="pl-16">
+          <Header />
+          <main className="pt-14">
+            <div className="container mx-auto p-6">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </QueryProvider>
   );
 }

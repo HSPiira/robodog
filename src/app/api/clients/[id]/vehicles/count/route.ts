@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+type RouteContext = {
+    params: Promise<{
+        id: string;
+    }>;
+};
+
 export async function GET(
     request: Request,
-    context: { params: { id: string } }
+    { params }: RouteContext
 ) {
     try {
-        // Extract id from context.params (no need to await in Next.js 14+)
-        const { id } = context.params;
+        const { id } = await params;
 
         // Check if client exists
         const client = await prisma.client.findUnique({
