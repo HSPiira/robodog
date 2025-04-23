@@ -158,10 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
 
-            // Set the auth cookie with proper attributes
-            document.cookie = `auth-token=${data.token}; path=/; samesite=strict; secure`;
-
-            console.log('[Auth] Auth cookie set:', document.cookie);
+            // Server sets the HttpOnly cookie via Set-Cookie header
+            console.log('[Auth] Login successful, cookie set by server');
         } catch (error) {
             console.error('[Auth] Login error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -215,10 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
 
-            // Set the auth cookie with proper attributes
-            document.cookie = `auth-token=${data.token}; path=/; samesite=strict; secure`;
-
-            console.log('[Auth] Auth cookie set:', document.cookie);
+            // Server sets the HttpOnly cookie via Set-Cookie header
+            console.log('[Auth] Login successful, cookie set by server');
         } catch (error) {
             console.error('[Auth] Registration error:', error);
             console.error('[Auth] Error stack:', error instanceof Error ? error.stack : 'No stack trace');

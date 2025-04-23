@@ -97,10 +97,10 @@ export async function POST(request: NextRequest) {
             select: { vehicleId: true },
         });
 
-        if (!policy) {
+        if (!policy || !policy.vehicleId) {
             return NextResponse.json(
-                { error: "Policy not found" },
-                { status: 404 }
+                { error: "Policy not linked to a vehicle" },
+                { status: 400 }
             );
         }
 

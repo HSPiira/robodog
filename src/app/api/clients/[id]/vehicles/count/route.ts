@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
-    params: Promise<{
+    params: {
         id: string;
-    }>;
+    };
 };
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
     { params }: RouteContext
 ) {
     try {
-        const { id } = await params;
+        const { id } = params;
 
         // Check if client exists
         const client = await prisma.client.findUnique({

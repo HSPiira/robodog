@@ -38,7 +38,8 @@ export const columns: ColumnDef<Sticker>[] = [
         },
     },
     {
-        accessorKey: "policy.policyNo",
+        accessorFn: row => row.policy?.policyNo,
+        id: "policyNo",
         header: "Policy No.",
         cell: ({ row }) => {
             return (
@@ -49,7 +50,8 @@ export const columns: ColumnDef<Sticker>[] = [
         },
     },
     {
-        accessorKey: "policy.vehicle.registrationNo",
+        accessorFn: row => row.policy?.vehicle?.registrationNo,
+        id: "vehicleRegistrationNo",
         header: "Vehicle",
         cell: ({ row }) => {
             return (
@@ -60,7 +62,8 @@ export const columns: ColumnDef<Sticker>[] = [
         },
     },
     {
-        accessorKey: "policy.client.name",
+        accessorFn: row => row.policy?.client?.name,
+        id: "clientName",
         header: "Client",
         cell: ({ row }) => {
             return (
