@@ -3,6 +3,7 @@ import {
   UsageType,
   PolicyStatus,
   ClientType,
+  StickerStatus,
 } from "@prisma/client";
 import * as argon2 from "argon2";
 
@@ -114,11 +115,11 @@ async function main() {
     data: {
       stickerNo: "STK123",
       policyId: policy.id,
-      bureau: "Main Bureau",
-      fromComesa: new Date(),
-      toComesa: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
       vehicleId: vehicle.id,
       isActive: true,
+      status: StickerStatus.ISSUED,
+      issuedAt: new Date(),
+      issuedBy: user.id,
     },
   });
 

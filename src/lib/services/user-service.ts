@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import * as argon2 from "argon2";
+import { Prisma } from "@prisma/client";
 
 export interface UserCreateInput {
     email: string;
@@ -134,23 +135,37 @@ export class UserService {
      * Verify user credentials
      */
     static async verifyCredentials(email: string, password: string) {
-        const user = await this.getUserByEmail(email);
-
-        if (!user) {
-            return null;
-        }
-
         try {
-            const isPasswordValid = await argon2.verify(user.password, password);
+            const user = await this.getUserByEmail(email);
 
-            if (!isPasswordValid) {
+            if (!user) {
                 return null;
             }
 
-            return user;
+            try {
+                const isPasswordValid = await argon2.verify(user.password, password);
+
+                if (!isPasswordValid) {
+                    return null;
+                }
+
+                return user;
+            } catch (error) {
+                console.error('Password verification error:', error);
+                throw new Error('Password verification failed');
+            }
         } catch (error) {
-            console.error('Password verification error:', error);
-            return null;
+            console.error('Database error during credential verification:', error);
+            if (error instanceof Prisma.PrismaClientInitializationError) {
+                throw new Error('Database connection error');
+            }
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                throw new Error('Database error');
+            }
+            if (error instanceof Prisma.PrismaClientRustPanicError) {
+                throw new Error('Critical database error');
+            }
+            throw error;
         }
     }
 } 

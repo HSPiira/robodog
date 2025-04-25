@@ -61,6 +61,44 @@ interface ImportVehicleFormProps {
 // Define the steps for the import process
 type ImportStep = 'file-selection' | 'data-review';
 
+// Add this new component for circular progress
+const CircularProgress = ({ value }: { value: number }) => {
+    const circumference = 2 * Math.PI * 38; // radius = 38
+    const strokeDashoffset = circumference - (value / 100) * circumference;
+
+    return (
+        <div className="relative inline-flex items-center justify-center">
+            <svg className="w-24 h-24 transform -rotate-90">
+                <circle
+                    className="text-muted-foreground/20"
+                    strokeWidth="4"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="38"
+                    cx="48"
+                    cy="48"
+                />
+                <circle
+                    className="text-green-600 transition-all duration-300 ease-in-out"
+                    strokeWidth="4"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r="38"
+                    cx="48"
+                    cy="48"
+                />
+            </svg>
+            <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-xl font-semibold">{Math.round(value)}%</span>
+                <span className="text-[10px] text-muted-foreground mt-1">Uploading...</span>
+            </div>
+        </div>
+    );
+};
+
 export function ImportVehicleForm({ clientId, onImportComplete, compact = false }: ImportVehicleFormProps) {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
@@ -352,12 +390,13 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
         if (isProgressActive) {
             progressInterval = setInterval(() => {
                 setUploadProgress(prev => {
-                    if (prev >= 90) {
+                    // More gradual progress that leaves room for actual completion
+                    if (prev >= 75) {
                         return prev;
                     }
-                    return prev + 10;
+                    return prev + (75 - prev) * 0.1; // Exponential slowdown as we approach 75%
                 });
-            }, 500);
+            }, 200);
         }
 
         return () => {
@@ -405,6 +444,8 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                 formData.append('clientsMap', JSON.stringify(clients));
             }
 
+            setUploadProgress(80); // CSV conversion complete
+
             // Make the API call
             const response = await fetch('/api/vehicles/bulk-upload', {
                 method: 'POST',
@@ -415,8 +456,9 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                 },
             });
 
+            setUploadProgress(90); // Upload complete, processing response
+
             setIsProgressActive(false);
-            setUploadProgress(100);
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -424,6 +466,8 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
             }
 
             const result = await response.json();
+            setUploadProgress(100); // Processing complete
+
             setUploadResult({
                 success: result.success,
                 failed: result.failed,
@@ -718,7 +762,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                                                                     : "w-[70px]";
 
                                                                     return (
-                                                                        <th key={index} className="px-1.5 py-1.5 text-left font-medium whitespace-nowrap border-b bg-muted/80">
+                                                                        <th key={index} className="px-1.5 py-2 text-left font-medium whitespace-nowrap border-b bg-muted/80">
                                                                             <div className={`truncate ${width}`}>{header}</div>
                                                                         </th>
                                                                     );
@@ -741,7 +785,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                                                                         : "w-[70px]";
 
                                                                         return (
-                                                                            <td key={`${rowIndex}-${colIndex}`} className="px-1.5 py-1 border-b border-muted-foreground/10">
+                                                                            <td key={`${rowIndex}-${colIndex}`} className="px-1.5 py-1.5 border-b border-muted-foreground/10">
                                                                                 <div className={`truncate ${width}`} title={cellValue}>
                                                                                     {cellValue}
                                                                                 </div>
@@ -759,7 +803,7 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
                                                     </div>
                                                 )}
                                                 {previewData.length > 0 && (
-                                                    <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50">
+                                                    <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/50 sticky bottom-0">
                                                         <div className="text-[10px] text-muted-foreground">
                                                             Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalRecords)} of {totalRecords} records
                                                         </div>
@@ -836,13 +880,12 @@ export function ImportVehicleForm({ clientId, onImportComplete, compact = false 
 
                             {isUploading && (
                                 <div className="space-y-3">
-                                    <p className="text-xs font-medium text-center">Uploading vehicles...</p>
-                                    <div className="bg-green-100 dark:bg-green-950/40 rounded-full overflow-hidden">
-                                        <Progress value={uploadProgress} className="h-2 [&>div]:bg-green-600" />
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <CircularProgress value={uploadProgress} />
+                                        <p className="text-[10px] text-muted-foreground text-center">
+                                            This may take a few minutes for large files
+                                        </p>
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground text-center">
-                                        This may take a few minutes for large files
-                                    </p>
                                 </div>
                             )}
                         </div>

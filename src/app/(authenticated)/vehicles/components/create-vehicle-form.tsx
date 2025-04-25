@@ -45,6 +45,8 @@ import {
   Users,
   Weight,
   Ruler,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +58,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VehicleType as DbVehicleType } from "@prisma/client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { ComboboxSelect } from "@/components/form/combobox-select";
 
 // Define the form schema
 const formSchema = z.object({
@@ -411,24 +427,18 @@ export function CreateVehicleForm({
                             <LayoutGrid className="h-3.5 w-3.5 text-purple-500" />
                             Vehicle Type *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select vehicle type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vehicleTypes.map((type) => (
-                                <SelectItem key={type.id} value={type.id}>
-                                  {type.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <ComboboxSelect
+                            field={field}
+                            options={vehicleTypes}
+                            placeholder="Select vehicle type"
+                            icon={<LayoutGrid className="h-4 w-4 text-muted-foreground" />}
+                            description={(type) =>
+                              type.description && type.description.length > 50
+                                ? type.description.substring(0, 50) + "..."
+                                : type.description || ""
+                            }
+                            disabled={isLoadingOptions}
+                          />
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
@@ -443,27 +453,13 @@ export function CreateVehicleForm({
                             <Tag className="h-3.5 w-3.5 text-orange-500" />
                             Category *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vehicleCategories.map((category) => (
-                                <SelectItem
-                                  key={category.id}
-                                  value={category.id}
-                                >
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <ComboboxSelect
+                            field={field}
+                            options={vehicleCategories}
+                            placeholder="Select category"
+                            icon={<Tag className="h-4 w-4 text-muted-foreground" />}
+                            disabled={isLoadingOptions}
+                          />
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
@@ -479,24 +475,13 @@ export function CreateVehicleForm({
                           <CarFront className="h-3.5 w-3.5 text-cyan-500" />
                           Body Type *
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                              <SelectValue placeholder="Select body type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {bodyTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <ComboboxSelect
+                          field={field}
+                          options={bodyTypes}
+                          placeholder="Select body type"
+                          icon={<CarFront className="h-4 w-4 text-muted-foreground" />}
+                          disabled={isLoadingOptions}
+                        />
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
@@ -512,26 +497,13 @@ export function CreateVehicleForm({
                             <UserCheck className="h-3.5 w-3.5 text-pink-500" />
                             Owner *
                           </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-8 focus-visible:ring-1 focus-visible:ring-primary transition-colors">
-                                <SelectValue placeholder="Select vehicle owner" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(Array.isArray(clients) ? clients : []).map(
-                                (client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {client.name}
-                                  </SelectItem>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
+                          <ComboboxSelect
+                            field={field}
+                            options={clients}
+                            placeholder="Select vehicle owner"
+                            icon={<UserCheck className="h-4 w-4 text-muted-foreground" />}
+                            disabled={isLoadingOptions}
+                          />
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}

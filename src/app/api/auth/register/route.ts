@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UserService } from "@/lib/services/user-service";
-import { headers } from "next/headers";
 import { generateToken } from "@/lib/jwt";
 import { Prisma } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
-    console.log('[API] Login request received');
+    console.log('[API] Registration request received');
     try {
         // Log request details
         console.log('[API] Request URL:', request.url);
@@ -23,57 +22,53 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        console.log('[API] Request body:', { email: body.email, passwordReceived: !!body.password });
+        console.log('[API] Request body:', { email: body.email, name: body.name, passwordReceived: !!body.password });
 
-        const { email, password } = body;
+        const { email, name, password } = body;
 
         // Validate required fields
-        if (!email || !password) {
-            console.error('[API] Missing credentials');
+        if (!email || !name || !password) {
+            console.error('[API] Missing required fields');
             return NextResponse.json(
-                { error: "Email and password are required" },
+                { error: "Name, email, and password are required" },
                 { status: 400 }
             );
         }
 
-        // Verify credentials
-        console.log('[API] Attempting to verify credentials for:', email);
-        const user = await UserService.verifyCredentials(email, password);
+        // Check if user already exists
+        const existingUser = await UserService.getUserByEmail(email);
 
-        if (!user) {
-            console.log('[API] Invalid credentials for:', email);
+        if (existingUser) {
+            console.log('[API] User already exists:', email);
             return NextResponse.json(
-                { error: "Invalid email or password" },
-                { status: 401 }
+                { error: "A user with this email already exists" },
+                { status: 409 }
             );
         }
 
-        if (!user.isActive) {
-            console.log('[API] Inactive user attempted login:', email);
-            return NextResponse.json(
-                { error: "Your account is inactive" },
-                { status: 403 }
-            );
-        }
+        // Create the user with default role
+        const newUser = await UserService.createUser({
+            email,
+            name,
+            password,
+            role: "USER", // Default role for new registrations
+            isActive: true,
+        });
 
-        console.log('[API] User authenticated successfully:', email);
-
-        // Return user data (excluding password)
-        const { password: _, ...userWithoutPassword } = user;
+        console.log('[API] User created successfully:', email);
 
         // Generate JWT token
         const token = await generateToken({
-            userId: user.id,
-            email: user.email,
-            role: user.role,
-            isActive: user.isActive
+            userId: newUser.id,
+            email: newUser.email,
+            role: newUser.role
         });
 
         // Set CORS headers and create response with token
         const response = NextResponse.json({
-            user: userWithoutPassword,
+            user: newUser,
             token: token,
-            message: "Login successful",
+            message: "Registration successful",
         });
 
         // Set auth token cookie that expires in 7 days
@@ -91,10 +86,10 @@ export async function POST(request: NextRequest) {
         response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
         response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-        console.log('[API] Login successful, sending response with token');
+        console.log('[API] Registration successful, sending response with token');
         return response;
     } catch (error) {
-        console.error('[API] Login error:', error);
+        console.error('[API] Registration error:', error);
         if (error instanceof Prisma.PrismaClientInitializationError) {
             return NextResponse.json(
                 { error: "Database connection error" },
@@ -102,7 +97,7 @@ export async function POST(request: NextRequest) {
             );
         }
         return NextResponse.json(
-            { error: "Login failed" },
+            { error: "Registration failed" },
             { status: 500 }
         );
     }

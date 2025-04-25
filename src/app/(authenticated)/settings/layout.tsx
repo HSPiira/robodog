@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, Users, Shield, Bell, Database, Car } from 'lucide-react';
+import { Settings, Users, Shield, Bell, Database, Car, Building2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,12 @@ export const settingsSections = [
     description: 'Manage vehicle types, body types, and categories',
     icon: Car,
     href: '/settings/vehicles',
+  },
+  {
+    title: 'Insurers',
+    description: 'Manage insurance companies and their details',
+    icon: Building2,
+    href: '/settings/insurers',
   },
   {
     title: 'User Management',

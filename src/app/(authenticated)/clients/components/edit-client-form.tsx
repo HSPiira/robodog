@@ -54,7 +54,9 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z
     .string()
-    .min(10, "Phone number must be at least 10 characters")
+    .regex(/^\+?[0-9]{10,15}$/, {
+      message: "Enter a valid phone number (digits only, 10-15 chars).",
+    })
     .optional()
     .or(z.literal("")),
   address: z

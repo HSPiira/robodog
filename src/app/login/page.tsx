@@ -53,11 +53,27 @@ export default function LoginPage() {
         try {
             setIsSubmitting(true);
             await login(data.email, data.password);
-            router.push("/");
             toast.success("Login successful");
+            // Navigate to home page
+            router.push("/");
+            // Call refresh only if server data really needs re-fetching
+            // await router.refresh();
         } catch (error) {
             console.error("Login error:", error);
-            toast.error(error instanceof Error ? error.message : "Login failed");
+            // Handle specific error messages
+            let errorMessage = "Login failed";
+            if (error instanceof Error) {
+                if (error.message.includes("ECONNREFUSED") || error.message.includes("connect")) {
+                    errorMessage = "Cannot connect to the database. Please try again later or contact support.";
+                } else if (error.message.includes("prisma")) {
+                    errorMessage = "Database error. Please try again later or contact support.";
+                } else if (error.message.includes("Invalid credentials")) {
+                    errorMessage = "Invalid email or password";
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
