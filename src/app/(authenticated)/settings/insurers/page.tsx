@@ -120,13 +120,9 @@ export default function InsurersPage() {
     const fetchInsurers = async () => {
         setIsFetching(true);
         try {
-            // Get the token from localStorage
-            const token = localStorage.getItem("token");
-
+            // With HttpOnly cookies, no manual token extraction needed
             const response = await fetch("/api/insurers", {
-                headers: {
-                    "Authorization": token ? `Bearer ${token}` : "",
-                },
+                credentials: "include", // This sends cookies with the request
             });
 
             if (!response.ok) {
