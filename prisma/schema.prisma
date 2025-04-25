@@ -7,50 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN   @map("Admin")
+  USER    @map("User")
+  MANAGER @map("Manager")
+}
+
 model User {
-  id                       String            @id @default(uuid())
-  email                    String            @unique
-  name                     String
-  password                 String
-  role                     String
+  id                       String            @id @default(cuid())
+  name                     String?
+  email                    String?           @unique
+  emailVerified            DateTime?
+  image                    String?
+  password                 String?
+  role                     Role              @default(USER)
+  isActive                 Boolean           @default(true)
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
-  isActive                 Boolean           @default(true)
   createdBy                String?
   updatedBy                String?
   deletedAt                DateTime?
-  createdBodyTypes         BodyType[]        @relation("BodyTypeCreatedBy")
-  updatedBodyTypes         BodyType[]        @relation("BodyTypeUpdatedBy")
-  createdClients           Client[]          @relation("ClientCreatedBy")
-  updatedClients           Client[]          @relation("ClientUpdatedBy")
-  createdComesaCards       ComesaCard[]      @relation("ComesaCardCreatedBy")
-  updatedComesaCards       ComesaCard[]      @relation("ComesaCardUpdatedBy")
-  createdComesaItems       ComesaItem[]      @relation("ComesaItemCreatedBy")
-  updatedComesaItems       ComesaItem[]      @relation("ComesaItemUpdatedBy")
-  createdCountries         Country[]         @relation("CountryCreatedBy")
-  updatedCountries         Country[]         @relation("CountryUpdatedBy")
-  createdCountriesCleared  CountryCleared[]  @relation("CountryClearedCreatedBy")
-  updatedCountriesCleared  CountryCleared[]  @relation("CountryClearedUpdatedBy")
-  createdIssuingCompanies  IssuingCompany[]  @relation("IssuingCompanyCreatedBy")
-  updatedIssuingCompanies  IssuingCompany[]  @relation("IssuingCompanyUpdatedBy")
-  createdPolicies          Policy[]          @relation("PolicyCreatedBy")
+  clientsCreated           Client[]          @relation("ClientCreatedBy")
+  clientsUpdated           Client[]          @relation("ClientUpdatedBy")
+  vehiclesCreated          Vehicle[]         @relation("VehicleCreatedBy")
+  vehiclesUpdated          Vehicle[]         @relation("VehicleUpdatedBy")
+  policiesCreated          Policy[]          @relation("PolicyCreatedBy")
+  policiesUpdated          Policy[]          @relation("PolicyUpdatedBy")
   issuedPolicies           Policy[]          @relation("IssuedPolicies")
-  updatedPolicies          Policy[]          @relation("PolicyUpdatedBy")
-  createdPolicyCountries   PolicyCountry[]   @relation("PolicyCountryCreatedBy")
-  updatedPolicyCountries   PolicyCountry[]   @relation("PolicyCountryUpdatedBy")
-  createdStickers          Sticker[]         @relation("StickerCreatedBy")
-  issuedStickers           Sticker[]         @relation("StickerIssuedBy")
-  updatedStickers          Sticker[]         @relation("StickerUpdatedBy")
-  createdVehicles          Vehicle[]         @relation("VehicleCreatedBy")
-  updatedVehicles          Vehicle[]         @relation("VehicleUpdatedBy")
-  createdVehicleBodyTypes  VehicleBodyType[] @relation("VehicleBodyTypeCreatedBy")
-  updatedVehicleBodyTypes  VehicleBodyType[] @relation("VehicleBodyTypeUpdatedBy")
-  createdVehicleCategories VehicleCategory[] @relation("VehicleCategoryCreatedBy")
-  updatedVehicleCategories VehicleCategory[] @relation("VehicleCategoryUpdatedBy")
-  createdVehicleTypes      VehicleType[]     @relation("VehicleTypeCreatedBy")
-  updatedVehicleTypes      VehicleType[]     @relation("VehicleTypeUpdatedBy")
-  createdInsurers          Insurer[]         @relation("InsurerCreatedBy")
-  updatedInsurers          Insurer[]         @relation("InsurerUpdatedBy")
+  stickersCreated          StickerIssuance[] @relation("StickerCreatedBy")
+  stickersUpdated          StickerIssuance[] @relation("StickerUpdatedBy")
+  stickersIssued           StickerIssuance[] @relation("StickerIssuedBy")
+  stickerStockCreated      StickerStock[]    @relation("StickerStockCreatedBy")
+  stickerStockUpdated      StickerStock[]    @relation("StickerStockUpdatedBy")
+  vehicleTypesCreated      VehicleType[]     @relation("VehicleTypeCreatedBy")
+  vehicleTypesUpdated      VehicleType[]     @relation("VehicleTypeUpdatedBy")
+  bodyTypesCreated         BodyType[]        @relation("BodyTypeCreatedBy")
+  bodyTypesUpdated         BodyType[]        @relation("BodyTypeUpdatedBy")
+  vehicleBodyTypesCreated  VehicleBodyType[] @relation("VehicleBodyTypeCreatedBy")
+  vehicleBodyTypesUpdated  VehicleBodyType[] @relation("VehicleBodyTypeUpdatedBy")
+  vehicleCategoriesCreated VehicleCategory[] @relation("VehicleCategoryCreatedBy")
+  vehicleCategoriesUpdated VehicleCategory[] @relation("VehicleCategoryUpdatedBy")
+  stickerTypesCreated      StickerType[]     @relation("StickerTypeCreatedBy")
+  stickerTypesUpdated      StickerType[]     @relation("StickerTypeUpdatedBy")
+  comesaCardsCreated       ComesaCard[]      @relation("ComesaCardCreatedBy")
+  comesaCardsUpdated       ComesaCard[]      @relation("ComesaCardUpdatedBy")
+  comesaItemsCreated       ComesaItem[]      @relation("ComesaItemCreatedBy")
+  comesaItemsUpdated       ComesaItem[]      @relation("ComesaItemUpdatedBy")
+  countriesCreated         Country[]         @relation("CountryCreatedBy")
+  countriesUpdated         Country[]         @relation("CountryUpdatedBy")
+  countriesClearedCreated  CountryCleared[]  @relation("CountryClearedCreatedBy")
+  countriesClearedUpdated  CountryCleared[]  @relation("CountryClearedUpdatedBy")
+  insurersCreated          Insurer[]         @relation("InsurerCreatedBy")
+  insurersUpdated          Insurer[]         @relation("InsurerUpdatedBy")
+  policyCountriesCreated   PolicyCountry[]   @relation("PolicyCountryCreatedBy")
+  policyCountriesUpdated   PolicyCountry[]   @relation("PolicyCountryUpdatedBy")
 }
 
 model Client {
@@ -73,19 +83,19 @@ model Client {
 }
 
 model Vehicle {
-  id                String           @id @default(uuid())
-  registrationNo    String           @unique
+  id                String            @id @default(uuid())
+  registrationNo    String            @unique
   make              String
   model             String
   year              Int
-  chassisNumber     String           @unique
-  engineNumber      String           @unique
+  chassisNumber     String            @unique
+  engineNumber      String            @unique
   bodyTypeId        String
   categoryId        String
   clientId          String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  isActive          Boolean          @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  isActive          Boolean           @default(true)
   createdBy         String?
   updatedBy         String?
   deletedAt         DateTime?
@@ -95,14 +105,14 @@ model Vehicle {
   vehicleTypeId     String
   vehicleBodyTypeId String?
   policies          Policy[]
-  stickers          Sticker[]
-  bodyType          BodyType         @relation(fields: [bodyTypeId], references: [id])
-  vehicleCategory   VehicleCategory  @relation(fields: [categoryId], references: [id])
-  client            Client           @relation(fields: [clientId], references: [id])
-  createdByUser     User?            @relation("VehicleCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser     User?            @relation("VehicleUpdatedBy", fields: [updatedBy], references: [id])
-  VehicleBodyType   VehicleBodyType? @relation(fields: [vehicleBodyTypeId], references: [id])
-  vehicleType       VehicleType      @relation(fields: [vehicleTypeId], references: [id])
+  stickers          StickerIssuance[]
+  bodyType          BodyType          @relation(fields: [bodyTypeId], references: [id])
+  vehicleCategory   VehicleCategory   @relation(fields: [categoryId], references: [id])
+  client            Client            @relation(fields: [clientId], references: [id])
+  createdByUser     User?             @relation("VehicleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?             @relation("VehicleUpdatedBy", fields: [updatedBy], references: [id])
+  VehicleBodyType   VehicleBodyType?  @relation(fields: [vehicleBodyTypeId], references: [id])
+  vehicleType       VehicleType       @relation(fields: [vehicleTypeId], references: [id])
 }
 
 model VehicleType {
@@ -166,14 +176,14 @@ model VehicleCategory {
 }
 
 model Policy {
-  id               String          @id @default(cuid())
-  certificateNo    String          @unique
-  policyNo         String          @unique
+  id               String            @id @default(uuid())
+  certificateNo    String            @unique
+  policyNo         String            @unique
   clientId         String
   vehicleId        String
   usage            UsageType
   status           PolicyStatus
-  issuingCompanyId String
+  insurerId        String
   issuingOfficerId String
   issuedAt         DateTime
   validFrom        DateTime
@@ -184,26 +194,25 @@ model Policy {
   stickerFee       Float?
   receiptNumber    String?
   remarks          String?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   createdBy        String?
   updatedBy        String?
-  isActive         Boolean         @default(true)
+  isActive         Boolean           @default(true)
   deletedAt        DateTime?
   ComesaCard       ComesaCard[]
-  client           Client          @relation(fields: [clientId], references: [id])
-  createdByUser    User?           @relation("PolicyCreatedBy", fields: [createdBy], references: [id])
-  issuingCompany   IssuingCompany  @relation(fields: [issuingCompanyId], references: [id])
-  issuingOfficer   User            @relation("IssuedPolicies", fields: [issuingOfficerId], references: [id])
-  updatedByUser    User?           @relation("PolicyUpdatedBy", fields: [updatedBy], references: [id])
-  vehicle          Vehicle         @relation(fields: [vehicleId], references: [id])
+  client           Client            @relation(fields: [clientId], references: [id])
+  createdByUser    User?             @relation("PolicyCreatedBy", fields: [createdBy], references: [id])
+  insurer          Insurer           @relation(fields: [insurerId], references: [id])
+  issuingOfficer   User              @relation("IssuedPolicies", fields: [issuingOfficerId], references: [id])
+  updatedByUser    User?             @relation("PolicyUpdatedBy", fields: [updatedBy], references: [id])
+  vehicle          Vehicle           @relation(fields: [vehicleId], references: [id])
   countries        PolicyCountry[]
-  stickers         Sticker[]
+  stickers         StickerIssuance[]
 }
 
-model Sticker {
+model StickerIssuance {
   id            String        @id @default(uuid())
-  stickerNo     String        @unique
   policyId      String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -213,25 +222,53 @@ model Sticker {
   updatedByUser User?         @relation("StickerUpdatedBy", fields: [updatedBy], references: [id])
   isActive      Boolean       @default(true)
   deletedAt     DateTime?
-  status        StickerStatus @default(AVAILABLE)
   issuedAt      DateTime?
   issuedBy      String?
   issuedByUser  User?         @relation("StickerIssuedBy", fields: [issuedBy], references: [id])
   policy        Policy?       @relation(fields: [policyId], references: [id])
-  Vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
   vehicleId     String?
-  stock         StickerStock?
+  stockId       String?       @unique
+  stock         StickerStock? @relation(fields: [stockId], references: [id])
+  StickerType   StickerType?  @relation(fields: [stickerTypeId], references: [id])
+  stickerTypeId String?
+}
+
+model StickerType {
+  id            String            @id @default(uuid())
+  name          String            @unique
+  description   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  isActive      Boolean           @default(true)
+  createdBy     String?
+  updatedBy     String?
+  deletedAt     DateTime?
+  stickers      StickerIssuance[]
+  createdByUser User?             @relation("StickerTypeCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?             @relation("StickerTypeUpdatedBy", fields: [updatedBy], references: [id])
+  StickerStock  StickerStock[]
 }
 
 model StickerStock {
-  id         String         @id @default(uuid())
-  stickerNo  String         @unique
-  receivedAt DateTime       @default(now())
-  insurerId  String
-  isIssued   Boolean        @default(false)
-  insurer    IssuingCompany @relation(fields: [insurerId], references: [id])
-  sticker    Sticker?       @relation(fields: [stickerId], references: [id])
-  stickerId  String?        @unique
+  id            String           @id @default(uuid())
+  serialNumber  String           @unique
+  stickerType   StickerType      @relation(fields: [stickerTypeId], references: [id])
+  stickerTypeId String
+  stickerStatus StickerStatus    @default(AVAILABLE)
+  receivedAt    DateTime         @default(now())
+  insurerId     String
+  isIssued      Boolean          @default(false)
+  insurer       Insurer          @relation(fields: [insurerId], references: [id])
+  sticker       StickerIssuance?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  deletedAt     DateTime?
+  isActive      Boolean          @default(true)
+  createdByUser User?            @relation("StickerStockCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?            @relation("StickerStockUpdatedBy", fields: [updatedBy], references: [id])
 }
 
 model ComesaCard {
@@ -300,22 +337,6 @@ model CountryCleared {
   updatedByUser User?     @relation("CountryClearedUpdatedBy", fields: [updatedBy], references: [id])
 }
 
-model IssuingCompany {
-  id            String         @id @default(uuid())
-  name          String         @unique
-  code          String         @unique
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  deletedAt     DateTime?
-  policies      Policy[]
-  stickerStock  StickerStock[]
-  createdByUser User?          @relation("IssuingCompanyCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?          @relation("IssuingCompanyUpdatedBy", fields: [updatedBy], references: [id])
-}
-
 model PolicyCountry {
   id            String   @id @default(uuid())
   policyId      String
@@ -332,19 +353,21 @@ model PolicyCountry {
 }
 
 model Insurer {
-  id            String    @id @default(uuid())
-  name          String    @unique
+  id            String         @id @default(uuid())
+  name          String         @unique
   email         String?
   address       String?
   phone         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  isActive      Boolean        @default(true)
   createdBy     String?
   updatedBy     String?
   deletedAt     DateTime?
-  createdByUser User?     @relation("InsurerCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?     @relation("InsurerUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User?          @relation("InsurerCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?          @relation("InsurerUpdatedBy", fields: [updatedBy], references: [id])
+  stickerStock  StickerStock[]
+  policies      Policy[]
 }
 
 enum PolicyStatus {

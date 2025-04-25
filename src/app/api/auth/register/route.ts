@@ -57,11 +57,17 @@ export async function POST(request: NextRequest) {
 
         console.log('[API] User created successfully:', email);
 
-        // Generate JWT token
+        if (!newUser || !newUser.email) {
+            return NextResponse.json(
+                { error: "Failed to create user" },
+                { status: 500 }
+            );
+        }
+
         const token = await generateToken({
-            userId: newUser.id,
+            sub: newUser.id,
             email: newUser.email,
-            role: newUser.role
+            role: newUser.role,
         });
 
         // Set CORS headers and create response with token

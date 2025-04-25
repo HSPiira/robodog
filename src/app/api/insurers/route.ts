@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 // Validation schema for insurer creation
 const insurerSchema = z.object({
@@ -11,23 +12,33 @@ const insurerSchema = z.object({
     phone: z.string().optional().nullable(),
 });
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        const session = await auth(req);
-        if (!session?.user) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
-
-        const insurers = await db.insurer.findMany({
+        const insurers = await prisma.insurer.findMany({
+            where: {
+                isActive: true,
+                deletedAt: null,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+            },
             orderBy: {
-                createdAt: "desc",
+                name: 'asc',
             },
         });
 
         return NextResponse.json(insurers);
     } catch (error) {
-        console.error("[INSURERS_GET]", error);
-        return new NextResponse("Internal Error", { status: 500 });
+        console.error("Error fetching insurers:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch insurers" },
+            { status: 500 }
+        );
+    } finally {
+        await prisma.$disconnect();
     }
 }
 

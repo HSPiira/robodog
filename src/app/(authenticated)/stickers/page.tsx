@@ -1,161 +1,150 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Sticker } from "@/types";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ColumnDef } from "@tanstack/react-table";
-import { StickerDetail } from "./components/sticker-detail";
-import { useQuery } from "@tanstack/react-query";
-import { columns } from "./components/columns";
-import { stockColumns } from "./components/stock-columns";
+import { useEffect, useState } from "react";
 import { DataTable } from "./components/stickers-table";
+import { columns } from "./components/columns";
+import { stockColumns, StickerStockWithRelations } from "./components/stock-columns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreateStockForm } from "./components/create-stock-form";
+import { StickerStockDetail } from "./components/stock-detail";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
-interface StickerStock {
+// Define StickerIssuance type since it's not yet available in @prisma/client
+type StickerIssuance = {
     id: string;
-    stickerNo: string;
-    receivedAt: string;
-    insurerId: string;
-    isIssued: boolean;
-    insurer: {
-        id: string;
-        name: string;
-        code: string;
-    };
-    sticker?: Sticker;
-}
+    policyId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    createdBy: string | null;
+    updatedBy: string | null;
+    isActive: boolean;
+    deletedAt: Date | null;
+    issuedAt: Date | null;
+    issuedBy: string | null;
+    vehicleId: string | null;
+    stockId: string | null;
+    stickerTypeId: string | null;
+};
 
-const selectionColumn: ColumnDef<Sticker, any> = {
-    id: "select",
-    header: ({ table }) => (
-        <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-        />
-    ),
-    cell: ({ row }) => (
-        <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-        />
-    ),
-    enableSorting: false,
-    enableHiding: false,
+type StickerWithRelations = StickerIssuance & {
+    policy?: {
+        id: string;
+        policyNo: string;
+        vehicle?: {
+            id: string;
+            registrationNo: string;
+            make?: string;
+            model?: string;
+        };
+        client?: {
+            id: string;
+            name: string;
+            email?: string;
+            phone?: string;
+        };
+    };
 };
 
 export default function StickersPage() {
-    const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
-    const [showDetails, setShowDetails] = useState(false);
-    const [activeTab, setActiveTab] = useState("stickers");
+    const [stickers, setStickers] = useState<StickerWithRelations[]>([]);
+    const [stock, setStock] = useState<StickerStockWithRelations[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedStock, setSelectedStock] = useState<StickerStockWithRelations | null>(null);
 
-    // Fetch stickers
-    const fetchStickers = useCallback(async () => {
-        const response = await fetch("/api/stickers");
-        if (!response.ok) {
-            throw new Error("Failed to fetch stickers");
-        }
-        const data = await response.json();
-        return data as Sticker[];
-    }, []);
-
-    // Fetch sticker stock
-    const fetchStickerStock = useCallback(async () => {
-        const response = await fetch("/api/stickers/stock");
-        if (!response.ok) {
-            throw new Error("Failed to fetch sticker stock");
-        }
-        const data = await response.json();
-        return data as StickerStock[];
-    }, []);
-
-    const {
-        data: stickers = [],
-        isLoading: isLoadingStickers,
-        refetch: refetchStickers
-    } = useQuery<Sticker[]>({
-        queryKey: ["stickers"],
-        queryFn: fetchStickers
-    });
-
-    const {
-        data: stickerStock = [],
-        isLoading: isLoadingStickerStock,
-        refetch: refetchStickerStock
-    } = useQuery<StickerStock[]>({
-        queryKey: ["stickerStock"],
-        queryFn: fetchStickerStock
-    });
-
-    const handleStickerSelect = (sticker: Sticker) => {
-        if (selectedSticker?.id === sticker.id) {
-            setShowDetails(prev => !prev);
-        } else {
-            setSelectedSticker(sticker);
-            setShowDetails(true);
+    const fetchStickers = async () => {
+        try {
+            const response = await fetch("/api/stickers");
+            if (!response.ok) {
+                throw new Error("Failed to fetch stickers");
+            }
+            const data = await response.json();
+            setStickers(data);
+        } catch (error) {
+            console.error("Error fetching stickers:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Animation classes for the detail panel
-    const detailPanelClasses = showDetails && selectedSticker
-        ? "w-[320px] opacity-100 visible"
-        : "w-0 opacity-0 invisible";
+    const fetchStock = async () => {
+        try {
+            const response = await fetch("/api/stickers/stock");
+            if (!response.ok) {
+                throw new Error("Failed to fetch sticker stock");
+            }
+            const data = await response.json();
+            setStock(data);
+        } catch (error) {
+            console.error("Error fetching sticker stock:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const isLoading = isLoadingStickers || isLoadingStickerStock;
+    useEffect(() => {
+        fetchStickers();
+        fetchStock();
+    }, []);
+
+    const handleStockSelect = (stock: StickerStockWithRelations) => {
+        setSelectedStock(current => current?.id === stock.id ? null : stock);
+    };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
-        <div className="p-6 space-y-6">
-            <Tabs defaultValue="stickers" className="w-full" onValueChange={setActiveTab}>
+        <div className="container mx-auto py-10">
+            <Tabs defaultValue="stickers" className="w-full">
                 <TabsList>
                     <TabsTrigger value="stickers">Stickers</TabsTrigger>
-                    <TabsTrigger value="stock">Stock Management</TabsTrigger>
+                    <TabsTrigger value="stock">Stock</TabsTrigger>
                 </TabsList>
-
-                {isLoading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <TabsContent value="stickers">
+                    <DataTable
+                        columns={columns}
+                        data={stickers}
+                        onRefresh={fetchStickers}
+                    />
+                </TabsContent>
+                <TabsContent value="stock">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className={selectedStock ? "md:col-span-2" : "md:col-span-3"}>
+                            <DataTable
+                                columns={stockColumns}
+                                data={stock}
+                                onRefresh={fetchStock}
+                                onRowClick={handleStockSelect}
+                                selectedRow={selectedStock}
+                                searchKey="stickerNo"
+                                customButton={
+                                    <CreateStockForm
+                                        trigger={
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8 rounded-full flex-shrink-0 border-blue-500/20 hover:border-blue-500 hover:bg-blue-500/10 text-blue-500"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        }
+                                        onStockCreated={fetchStock}
+                                    />
+                                }
+                            />
+                        </div>
+                        {selectedStock && (
+                            <div className="md:col-span-1">
+                                <StickerStockDetail
+                                    stock={selectedStock}
+                                    onClose={() => setSelectedStock(null)}
+                                />
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <>
-                        <TabsContent value="stickers" className="m-0">
-                            <div className="flex flex-wrap md:flex-nowrap gap-6 w-full overflow-hidden">
-                                <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[calc(100%-352px)]' : 'w-full'}`}>
-                                    <DataTable
-                                        columns={columns}
-                                        data={stickers}
-                                        searchKey="stickerNo"
-                                        onRowClick={handleStickerSelect}
-                                        selectedRow={selectedSticker}
-                                        showDetails={showDetails}
-                                        onRefresh={refetchStickers}
-                                    />
-                                </div>
-                                <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${detailPanelClasses}`}>
-                                    {selectedSticker && (
-                                        <StickerDetail sticker={selectedSticker} onRefresh={refetchStickers} />
-                                    )}
-                                </div>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="stock" className="m-0">
-                            <div className="flex flex-wrap md:flex-nowrap gap-6 w-full overflow-hidden">
-                                <div className="flex-1 min-w-0">
-                                    <DataTable
-                                        columns={stockColumns}
-                                        data={stickerStock}
-                                        searchKey="stickerNo"
-                                        onRefresh={refetchStickerStock}
-                                    />
-                                </div>
-                            </div>
-                        </TabsContent>
-                    </>
-                )}
+                </TabsContent>
             </Tabs>
         </div>
     );
