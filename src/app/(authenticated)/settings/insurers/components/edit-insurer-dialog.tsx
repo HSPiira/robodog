@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,11 +19,13 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
-import { Building2, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { Building2, Mail, Phone, MapPin, Loader2, Edit2 } from "lucide-react";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -34,21 +36,33 @@ const formSchema = z.object({
     }).optional().or(z.literal("")),
     phone: z.string().optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
+    isActive: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface AddInsurerDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSuccess?: () => void;
+interface Insurer {
+    id: string;
+    name: string;
+    email?: string;
+    address?: string;
+    phone?: string;
+    isActive: boolean;
 }
 
-export function AddInsurerDialog({
+interface EditInsurerDialogProps {
+    insurer: Insurer | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSuccess: () => void;
+}
+
+export function EditInsurerDialog({
+    insurer,
     open,
     onOpenChange,
-    onSuccess,
-}: AddInsurerDialogProps) {
+    onSuccess
+}: EditInsurerDialogProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const form = useForm<FormValues>({
@@ -58,42 +72,58 @@ export function AddInsurerDialog({
             email: "",
             phone: "",
             address: "",
+            isActive: true,
         },
     });
 
+    // Update form values when insurer changes
+    useEffect(() => {
+        if (insurer) {
+            form.reset({
+                name: insurer.name,
+                email: insurer.email || "",
+                phone: insurer.phone || "",
+                address: insurer.address || "",
+                isActive: insurer.isActive,
+            });
+        }
+    }, [insurer, form]);
+
     const onSubmit = async (data: FormValues) => {
+        if (!insurer) return;
+
         setIsLoading(true);
         try {
-            const response = await fetch("/api/insurers", {
-                method: "POST",
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/insurers/${insurer.id}`, {
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify({
                     ...data,
                     email: data.email || null,
                     phone: data.phone || null,
                     address: data.address || null,
-                    isActive: true,
                 }),
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create insurer");
+                throw new Error("Failed to update insurer");
             }
 
             toast({
                 title: "Success",
-                description: "Insurer created successfully",
+                description: "Insurer updated successfully",
             });
 
-            form.reset();
+            onSuccess();
             onOpenChange(false);
-            onSuccess?.();
         } catch (error) {
             toast({
                 title: "Error",
-                description: "Failed to create insurer",
+                description: "Failed to update insurer",
                 variant: "destructive",
             });
         } finally {
@@ -107,10 +137,10 @@ export function AddInsurerDialog({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-blue-500" />
-                        Add New Insurer
+                        Edit Insurer
                     </DialogTitle>
                     <DialogDescription>
-                        Add a new insurer to the system. Fill in the required information below.
+                        Update the insurer information below.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -200,6 +230,26 @@ export function AddInsurerDialog({
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="isActive"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Status</FormLabel>
+                                        <FormDescription className="text-xs text-muted-foreground">
+                                            {field.value ? "Active" : "Inactive"}
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
                         <DialogFooter>
                             <Button
                                 type="button"
@@ -210,7 +260,7 @@ export function AddInsurerDialog({
                             </Button>
                             <Button type="submit" disabled={isLoading}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Add Insurer
+                                Save Changes
                             </Button>
                         </DialogFooter>
                     </form>

@@ -1,13 +1,15 @@
-import { Building2, Mail, Phone, X, Edit2, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Building2, Mail, Phone, MapPin, X, Edit2, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface Insurer {
     id: string;
     name: string;
-    email: string;
-    phone: string;
+    email?: string;
+    address?: string;
+    phone?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -22,88 +24,77 @@ interface InsurerDetailProps {
 
 export function InsurerDetail({ insurer, onClose, onEdit, onDelete }: InsurerDetailProps) {
     return (
-        <Card className="h-full">
-            <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                        <span className="break-all">{insurer.name}</span>
-                    </CardTitle>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 rounded-full hover:bg-muted"
-                        onClick={onClose}
-                    >
+        <Card className="w-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-2xl font-bold">Insurer Details</CardTitle>
+                <div className="flex items-center space-x-2">
+                    <Button variant="ghost" size="icon" onClick={onEdit}>
+                        <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onDelete(insurer.id)}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={onClose}>
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
-                <Badge variant="outline" className="mt-1 text-[10px] py-0 px-2 h-4 w-fit text-blue-500 dark:text-blue-400">
-                    Insurance Provider
-                </Badge>
             </CardHeader>
-            <CardContent className="pt-0">
-                <div className="space-y-4 text-xs">
-                    <div>
-                        <h4 className="font-semibold text-blue-500 dark:text-blue-400">Contact Information</h4>
-                        <div className="mt-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Mail className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
-                                <span className="truncate">{insurer.email}</span>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Name:</span>
+                        </div>
+                        <span>{insurer.name}</span>
+                    </div>
+                    {insurer.email && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">Email:</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Phone className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
-                                <span>{insurer.phone}</span>
+                            <span>{insurer.email}</span>
+                        </div>
+                    )}
+                    {insurer.phone && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">Phone:</span>
                             </div>
+                            <span>{insurer.phone}</span>
                         </div>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-blue-500 dark:text-blue-400">ID</h4>
-                        <p className="font-mono text-[10px] bg-muted p-1 rounded mt-1">{insurer.id}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <h4 className="font-semibold text-blue-500 dark:text-blue-400">Created</h4>
-                            <p className="mt-1">{new Date(insurer.createdAt).toLocaleDateString()}</p>
+                    )}
+                    {insurer.address && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">Address:</span>
+                            </div>
+                            <span>{insurer.address}</span>
                         </div>
-                        <div>
-                            <h4 className="font-semibold text-blue-500 dark:text-blue-400">Last Updated</h4>
-                            <p className="mt-1">{new Date(insurer.updatedAt).toLocaleDateString()}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-blue-500 dark:text-blue-400">Status</h4>
-                        <Badge
-                            variant={insurer.isActive ? "default" : "secondary"}
-                            className="mt-1 text-[0.7rem] flex items-center gap-1.5"
-                        >
+                    )}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
                             {insurer.isActive ? (
-                                <CheckCircle className="h-3 w-3" />
+                                <CheckCircle className="h-4 w-4 text-green-500" />
                             ) : (
-                                <XCircle className="h-3 w-3" />
+                                <XCircle className="h-4 w-4 text-red-500" />
                             )}
+                            <span className="font-medium">Status:</span>
+                        </div>
+                        <Badge variant={insurer.isActive ? "default" : "destructive"}>
                             {insurer.isActive ? "Active" : "Inactive"}
                         </Badge>
                     </div>
-                    <div className="flex gap-2 pt-2 border-t">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs rounded-full hover:bg-muted"
-                            onClick={onEdit}
-                        >
-                            <Edit2 className="h-3 w-3 mr-1 text-blue-500 dark:text-blue-400" />
-                            Edit
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            className="h-7 text-xs rounded-full"
-                            onClick={() => onDelete(insurer.id)}
-                        >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            Delete
-                        </Button>
+                    <div className="flex items-center justify-between">
+                        <span className="font-medium">Created:</span>
+                        <span>{format(new Date(insurer.createdAt), "PPP")}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="font-medium">Last Updated:</span>
+                        <span>{format(new Date(insurer.updatedAt), "PPP")}</span>
                     </div>
                 </div>
             </CardContent>

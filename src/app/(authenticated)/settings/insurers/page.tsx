@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -39,6 +39,7 @@ import {
     X,
     CheckCircle,
     XCircle,
+    MapPin,
 } from "lucide-react";
 import {
     Tooltip,
@@ -59,19 +60,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { InsurerDetail } from "./components/insurer-detail";
+import { AddInsurerDialog } from "./components/add-insurer-dialog";
+import { EditInsurerDialog } from "./components/edit-insurer-dialog";
+import { format } from "date-fns";
 
 interface Insurer {
     id: string;
     name: string;
-    email: string;
-    phone: string;
+    email?: string;
+    address?: string;
+    phone?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
+    description?: string;
+}
+
+interface FormData {
+    name: string;
+    email?: string;
+    address?: string;
+    phone?: string;
+    isActive: boolean;
+}
+
+interface FormErrors {
+    name?: string;
+    email?: string;
+    address?: string;
+    phone?: string;
 }
 
 // Add constants for pagination
 const ITEMS_PER_PAGE = 10;
+
+// Define the styling constants
+const tabStyles = {
+    color: "text-blue-500",
+    bgColor: "bg-blue-50/70 dark:bg-blue-950/20",
+    accentColor: "bg-blue-500",
+    hoverColor: "hover:text-blue-600 hover:bg-blue-50",
+    activeText: "text-blue-700 dark:text-blue-300",
+};
 
 export default function InsurersPage() {
     const { toast } = useToast();
@@ -90,29 +120,17 @@ export default function InsurersPage() {
     // Edit state
     const [isEditing, setIsEditing] = useState(false);
     const [editingInsurer, setEditingInsurer] = useState<Insurer | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         name: "",
         email: "",
+        address: "",
         phone: "",
+        isActive: true,
     });
-    const [formErrors, setFormErrors] = useState({
-        name: "",
-        email: "",
-        phone: "",
-    });
+    const [formErrors, setFormErrors] = useState<FormErrors>({});
 
     // Add new state
     const [isAddingNew, setIsAddingNew] = useState(false);
-    const [newInsurerData, setNewInsurerData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-    });
-    const [newInsurerErrors, setNewInsurerErrors] = useState({
-        name: "",
-        email: "",
-        phone: "",
-    });
 
     // Delete state
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -125,7 +143,27 @@ export default function InsurersPage() {
     const fetchInsurers = async () => {
         setIsFetching(true);
         try {
-            const response = await fetch("/api/insurers");
+            // Get the token from localStorage
+            const token = localStorage.getItem("token");
+
+            const response = await fetch("/api/insurers", {
+                headers: {
+                    "Authorization": token ? `Bearer ${token}` : "",
+                },
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    toast({
+                        title: "Authentication Error",
+                        description: "Please log in again",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+                throw new Error("Failed to fetch insurers");
+            }
+
             const data = await response.json();
             setInsurers(data);
 
@@ -154,8 +192,9 @@ export default function InsurersPage() {
         return insurers
             .filter(insurer =>
                 insurer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                insurer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                insurer.phone.toLowerCase().includes(searchTerm.toLowerCase())
+                (insurer.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                (insurer.phone?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                (insurer.address?.toLowerCase() || "").includes(searchTerm.toLowerCase())
             )
             .sort((a, b) => {
                 const compareValue = sortDirection === "asc" ? 1 : -1;
@@ -186,71 +225,83 @@ export default function InsurersPage() {
         setIsDeleteDialogOpen(true);
     };
 
-    const handleEditSubmit = async () => {
-        if (!editingInsurer || !formData.name.trim()) return;
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        setFormErrors((prev) => ({
+            ...prev,
+            [name]: "",
+        }));
+    };
 
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         setIsSaving(true);
+
+        // Validate form data
+        const errors: FormErrors = {};
+        if (!formData.name.trim()) {
+            errors.name = "Name is required";
+        }
+        if (formData.email && formData.email.length > 255) {
+            errors.email = "Email must be less than 255 characters";
+        }
+        if (formData.address && formData.address.length > 255) {
+            errors.address = "Address must be less than 255 characters";
+        }
+        if (formData.phone && formData.phone.length > 15) {
+            errors.phone = "Phone must be less than 15 characters";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            setIsSaving(false);
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/insurers/${editingInsurer.id}`, {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/insurers/${editingInsurer?.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify(formData),
             });
+
+            if (response.status === 401) {
+                toast({
+                    title: "Authentication Error",
+                    description: "Please log in again to continue.",
+                    variant: "destructive",
+                });
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error("Failed to update insurer");
             }
 
+            const updatedInsurer = await response.json();
+            setInsurers((prev) =>
+                prev.map((insurer) =>
+                    insurer.id === updatedInsurer.id ? updatedInsurer : insurer
+                )
+            );
+            setEditingInsurer(null);
             toast({
-                title: "Updated Successfully",
-                description: "Insurer has been updated",
+                title: "Success",
+                description: "Insurer updated successfully",
             });
-
-            await fetchInsurers();
-            setIsEditing(false);
         } catch (error) {
+            console.error("Error updating insurer:", error);
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to update",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleAddNewSubmit = async () => {
-        if (!newInsurerData.name.trim()) return;
-
-        setIsSaving(true);
-        try {
-            const response = await fetch("/api/insurers", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newInsurerData),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to create insurer");
-            }
-
-            const newInsurer = await response.json();
-            toast({
-                title: "Created Successfully",
-                description: "New insurer has been created",
-            });
-
-            await fetchInsurers();
-            setSelectedInsurer(newInsurer);
-            setIsAddingNew(false);
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: error instanceof Error ? error.message : "Failed to create",
+                description: "Failed to update insurer. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -263,17 +314,31 @@ export default function InsurersPage() {
 
         setIsDeleting(true);
         try {
+            const token = localStorage.getItem("token");
+
             const response = await fetch(`/api/insurers/${deletingInsurerId}`, {
                 method: "DELETE",
+                headers: {
+                    "Authorization": token ? `Bearer ${token}` : "",
+                },
             });
+
+            if (response.status === 401) {
+                toast({
+                    title: "Authentication Error",
+                    description: "Please log in again to continue.",
+                    variant: "destructive",
+                });
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error("Failed to delete insurer");
             }
 
             toast({
-                title: "Deleted Successfully",
-                description: "The insurer has been deleted",
+                title: "Success",
+                description: "Insurer deleted successfully",
             });
 
             if (selectedInsurer?.id === deletingInsurerId) {
@@ -283,9 +348,10 @@ export default function InsurersPage() {
             await fetchInsurers();
             setIsDeleteDialogOpen(false);
         } catch (error) {
+            console.error("Error deleting insurer:", error);
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : "Failed to delete",
+                description: "Failed to delete insurer. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -294,391 +360,362 @@ export default function InsurersPage() {
         }
     };
 
+    const formatDate = (date: string) => {
+        return format(new Date(date), "MMM d, yyyy");
+    };
+
+    const handleEdit = (insurer: Insurer) => {
+        setEditingInsurer(insurer);
+        setIsEditing(true);
+    };
+
+    const handleDelete = (id: string) => {
+        setSelectedInsurer(null);
+        handleDeleteOpen(id);
+    };
+
     return (
-        <Card className="p-6">
-            <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold tracking-tight">Insurers</h2>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-                Manage insurance companies in the system
-            </p>
-
-            <div className="mt-6 flex items-center gap-4">
-                <div className="flex-1 flex items-center gap-4">
-                    <div className="relative w-[280px] bg-muted rounded-full">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
-                        <Input
-                            placeholder="Search insurers..."
-                            className="w-full pl-9 h-9 text-xs border-0 bg-transparent focus-visible:ring-0 rounded-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+        <div className="space-y-6 px-1 sm:px-2 md:px-0">
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        <h2 className="text-lg font-semibold tracking-tight">Insurers</h2>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs rounded-full hover:bg-muted"
-                        onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-                    >
-                        Sort{" "}
-                        {sortDirection === "asc" ? (
-                            <ChevronUp className="h-3 w-3 ml-1" />
-                        ) : (
-                            <ChevronDown className="h-3 w-3 ml-1" />
-                        )}
-                    </Button>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full bg-muted hover:bg-muted/80"
-                                    variant="ghost"
-                                    onClick={() => setIsAddingNew(true)}
-                                >
-                                    <Plus className="h-3 w-3 text-blue-500 dark:text-blue-400" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Add Insurer</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
-            </div>
-
-            <div className="mt-4 flex gap-4">
-                <div className={cn(
-                    "flex-1 min-w-0",
-                    selectedInsurer && "max-w-[calc(100%-336px)]"
-                )}>
-                    <div className="rounded-lg border bg-card overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted hover:bg-muted">
-                                    <TableHead className="text-[0.8rem] font-medium">Name</TableHead>
-                                    {!selectedInsurer && (
-                                        <>
-                                            <TableHead className="text-[0.8rem] font-medium">Email</TableHead>
-                                            <TableHead className="text-[0.8rem] font-medium">Phone</TableHead>
-                                        </>
-                                    )}
-                                    <TableHead className="text-[0.8rem] font-medium w-[100px]">Status</TableHead>
-                                    <TableHead className="text-[0.8rem] font-medium w-[50px] text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isFetching ? (
-                                    <TableRow>
-                                        <TableCell colSpan={selectedInsurer ? 3 : 5} className="h-24 text-center">
-                                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-500 dark:text-blue-400" />
-                                        </TableCell>
-                                    </TableRow>
-                                ) : paginatedInsurers.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={selectedInsurer ? 3 : 5}
-                                            className="h-24 text-center text-[0.8rem] text-muted-foreground"
-                                        >
-                                            No insurers found
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    paginatedInsurers.map((insurer) => (
-                                        <TableRow
-                                            key={insurer.id}
-                                            className={cn(
-                                                "cursor-pointer transition-colors hover:bg-muted",
-                                                selectedInsurer?.id === insurer.id && "bg-muted"
-                                            )}
-                                            onClick={() => handleRowClick(insurer)}
-                                        >
-                                            <TableCell className="py-1 px-2 h-7 text-xs font-medium whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <Building2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                                                    <span>{insurer.name}</span>
-                                                </div>
-                                            </TableCell>
-                                            {!selectedInsurer && (
-                                                <>
-                                                    <TableCell className="py-1 px-2 h-7 text-xs text-muted-foreground whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                                            <span className="truncate">{insurer.email}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-1 px-2 h-7 text-xs text-muted-foreground whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                                            <span>{insurer.phone}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                </>
-                                            )}
-                                            <TableCell className="py-1 px-2 h-7">
-                                                <Badge
-                                                    variant={insurer.isActive ? "default" : "secondary"}
-                                                    className="text-[0.7rem] font-medium flex items-center gap-1.5"
-                                                >
-                                                    {insurer.isActive ? (
-                                                        <CheckCircle className="h-3 w-3" />
-                                                    ) : (
-                                                        <XCircle className="h-3 w-3" />
-                                                    )}
-                                                    {insurer.isActive ? "Active" : "Inactive"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="py-1 px-2 h-7 text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="h-5 w-5 p-0"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <MoreHorizontal className="h-3 w-3" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-[160px]">
-                                                        <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className="text-xs cursor-pointer"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setIsEditing(true);
-                                                            }}
-                                                        >
-                                                            <Edit2 className="h-3.5 w-3.5 mr-2 text-primary" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-xs text-destructive cursor-pointer"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteOpen(insurer.id);
-                                                            }}
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                        <div className="flex items-center justify-between px-2 py-2 border-t">
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                Showing {currentPage * ITEMS_PER_PAGE + 1} to{" "}
-                                {Math.min(
-                                    (currentPage + 1) * ITEMS_PER_PAGE,
-                                    filteredInsurers.length
-                                )}{" "}
-                                of {filteredInsurers.length} items
-                            </p>
+                    <CardDescription>
+                        Manage insurance companies in the system
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="space-y-4 p-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                            <div className="relative flex-1 sm:w-[280px] w-full max-w-full sm:max-w-[280px]">
+                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-500" />
+                                <Input
+                                    placeholder="Search insurers..."
+                                    className="w-full pl-9 h-9 text-xs border-0 bg-muted/50 hover:bg-muted focus:bg-background rounded-full"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                             <div className="flex items-center gap-2">
                                 <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full hover:bg-muted"
-                                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                                    disabled={currentPage === 0}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-xs rounded-full hover:bg-muted"
+                                    onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
                                 >
-                                    <ChevronLeft className="h-3.5 w-3.5" />
+                                    Sort{" "}
+                                    {sortDirection === "asc" ? (
+                                        <ChevronUp className="h-3 w-3 ml-1 text-blue-500" />
+                                    ) : (
+                                        <ChevronDown className="h-3 w-3 ml-1 text-blue-500" />
+                                    )}
                                 </Button>
-                                <p className="text-[0.8rem]">
-                                    Page {currentPage + 1} of{" "}
-                                    {Math.max(1, Math.ceil(filteredInsurers.length / ITEMS_PER_PAGE))}
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full hover:bg-muted"
-                                    onClick={() =>
-                                        setCurrentPage(
-                                            Math.min(
-                                                Math.ceil(filteredInsurers.length / ITEMS_PER_PAGE) - 1,
-                                                currentPage + 1
-                                            )
-                                        )
-                                    }
-                                    disabled={
-                                        currentPage >=
-                                        Math.ceil(filteredInsurers.length / ITEMS_PER_PAGE) - 1
-                                    }
-                                >
-                                    <ChevronRight className="h-3.5 w-3.5" />
-                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                size="icon"
+                                                className="h-8 w-8 rounded-full bg-muted hover:bg-muted/80"
+                                                variant="ghost"
+                                                onClick={() => setIsAddingNew(true)}
+                                            >
+                                                <Plus className="h-3 w-3 text-blue-500" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Add Insurer</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {selectedInsurer && (
-                    <div className="w-[320px]">
-                        <InsurerDetail
-                            insurer={selectedInsurer}
-                            onClose={() => setSelectedInsurer(null)}
-                            onEdit={() => setIsEditing(true)}
-                            onDelete={handleDeleteOpen}
-                        />
-                    </div>
-                )}
-            </div>
+                        <div className="grid grid-cols-12 gap-4">
+                            <div className={cn(
+                                "transition-all duration-200 rounded-md border",
+                                selectedInsurer ? "lg:col-span-7 md:col-span-6 col-span-12" : "col-span-12"
+                            )}>
+                                <Table className="text-xs">
+                                    <TableHeader className={tabStyles.bgColor}>
+                                        <TableRow>
+                                            <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 w-[160px] sm:w-[200px]">Name</TableHead>
+                                            <TableHead className={cn(
+                                                "text-xs font-medium py-1 h-6 border-b border-border/40 px-2",
+                                                selectedInsurer && "hidden md:hidden"
+                                            )}>Email</TableHead>
+                                            <TableHead className={cn(
+                                                "text-xs font-medium py-1 h-6 border-b border-border/40 px-2",
+                                                selectedInsurer && "hidden md:hidden"
+                                            )}>Phone</TableHead>
+                                            <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 w-[100px]">Status</TableHead>
+                                            <TableHead className={cn(
+                                                "text-xs font-medium py-1 h-6 border-b border-border/40 px-2",
+                                                selectedInsurer && "hidden md:hidden"
+                                            )}>Updated</TableHead>
+                                            <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 text-right w-[50px] sm:w-[60px]">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isFetching ? (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="h-[200px] text-center">
+                                                    <div className="flex flex-col items-center justify-center h-full">
+                                                        <Loader2 className="h-8 w-8 animate-spin mb-2 text-blue-500" />
+                                                        <p className="text-sm text-muted-foreground">Loading data...</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : paginatedInsurers.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="h-[200px] text-center">
+                                                    <div className="flex flex-col items-center justify-center h-full">
+                                                        <AlertCircle className="h-8 w-8 mb-2 text-muted-foreground" />
+                                                        <p className="text-sm text-muted-foreground">No insurers found</p>
+                                                        {searchTerm && (
+                                                            <Button
+                                                                variant="link"
+                                                                size="sm"
+                                                                onClick={() => setSearchTerm("")}
+                                                                className="mt-2 text-blue-500"
+                                                            >
+                                                                Clear search
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            paginatedInsurers.map((insurer) => (
+                                                <TableRow
+                                                    key={insurer.id}
+                                                    className={cn(
+                                                        "cursor-pointer",
+                                                        tabStyles.hoverColor,
+                                                        selectedInsurer?.id === insurer.id && tabStyles.bgColor
+                                                    )}
+                                                    onClick={() => handleRowClick(insurer)}
+                                                >
+                                                    <TableCell className="py-1 px-2 h-7 text-xs font-medium whitespace-nowrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                                                            <span>{insurer.name}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className={cn(
+                                                        "py-1 px-2 h-7 text-xs text-muted-foreground",
+                                                        selectedInsurer && "hidden md:hidden"
+                                                    )}>
+                                                        {insurer.email || "—"}
+                                                    </TableCell>
+                                                    <TableCell className={cn(
+                                                        "py-1 px-2 h-7 text-xs text-muted-foreground",
+                                                        selectedInsurer && "hidden md:hidden"
+                                                    )}>
+                                                        {insurer.phone || "—"}
+                                                    </TableCell>
+                                                    <TableCell className="py-1 px-2 h-7 text-xs">
+                                                        <div className="flex items-center gap-2">
+                                                            {insurer.isActive ? (
+                                                                <>
+                                                                    <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                                                                    <span className="text-green-600 dark:text-green-400">Active</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <XCircle className="h-3.5 w-3.5 text-red-500" />
+                                                                    <span className="text-red-600 dark:text-red-400">Inactive</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className={cn(
+                                                        "py-1 px-2 h-7 text-xs text-muted-foreground",
+                                                        selectedInsurer && "hidden md:hidden"
+                                                    )}>
+                                                        {format(new Date(insurer.updatedAt), "MMM d, yyyy")}
+                                                    </TableCell>
+                                                    <TableCell className="py-1 px-2 h-7 text-xs text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-muted">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="text-xs">
+                                                                <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    className="text-xs"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleEdit(insurer);
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="h-3.5 w-3.5 mr-2 text-blue-500" /> Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="text-xs text-red-600"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDelete(insurer.id);
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
 
-            {/* Edit Dialog */}
-            <Dialog open={isEditing} onOpenChange={setIsEditing}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Insurer</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-name">Name</Label>
-                            <Input
-                                id="edit-name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {formErrors.name && (
-                                <p className="text-xs text-destructive">{formErrors.name}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-email">Email</Label>
-                            <Input
-                                id="edit-email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {formErrors.email && (
-                                <p className="text-xs text-destructive">{formErrors.email}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-phone">Phone</Label>
-                            <Input
-                                id="edit-phone"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {formErrors.phone && (
-                                <p className="text-xs text-destructive">{formErrors.phone}</p>
-                            )}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                className="h-9 text-xs"
-                                onClick={() => setIsEditing(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                className="h-9 text-xs"
-                                onClick={() => handleEditSubmit()}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="h-3.5 w-3.5 mr-2" />
-                                        Save Changes
-                                    </>
+                                {/* Pagination controls */}
+                                {filteredInsurers.length > 0 && (
+                                    <div className="flex items-center justify-between px-2 py-2 border-t border-border/40">
+                                        <div className="text-xs text-muted-foreground">
+                                            Showing {Math.min(filteredInsurers.length, currentPage * ITEMS_PER_PAGE + 1)} to {Math.min(filteredInsurers.length, (currentPage + 1) * ITEMS_PER_PAGE)} of {filteredInsurers.length} items
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => setCurrentPage(Math.max(currentPage - 1, 0))}
+                                                disabled={currentPage === 0}
+                                                className="h-7 w-7 rounded-full"
+                                            >
+                                                <ChevronLeft className={cn("h-3.5 w-3.5", currentPage === 0 ? "text-muted-foreground" : "text-blue-500")} />
+                                                <span className="sr-only">Previous</span>
+                                            </Button>
+                                            <div className="text-xs">
+                                                Page {currentPage + 1} of {totalPages || 1}
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages - 1))}
+                                                disabled={currentPage >= totalPages - 1}
+                                                className="h-7 w-7 rounded-full"
+                                            >
+                                                <ChevronRight className={cn("h-3.5 w-3.5", currentPage >= totalPages - 1 ? "text-muted-foreground" : "text-blue-500")} />
+                                                <span className="sr-only">Next</span>
+                                            </Button>
+                                        </div>
+                                    </div>
                                 )}
-                            </Button>
+                            </div>
+
+                            {/* Details Card */}
+                            {selectedInsurer && (
+                                <div className="lg:col-span-5 md:col-span-6 col-span-12">
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                    <Building2 className="h-5 w-5 text-blue-500" />
+                                                    <CardTitle className="text-base font-semibold">{selectedInsurer.name}</CardTitle>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 rounded-full"
+                                                    onClick={() => setSelectedInsurer(null)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="pt-0">
+                                            <div className="space-y-4 text-xs">
+                                                <div>
+                                                    <h4 className="font-semibold text-muted-foreground">Contact Information</h4>
+                                                    <div className="mt-2 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Mail className="h-3.5 w-3.5 text-blue-500" />
+                                                            <span>{selectedInsurer.email || "No email provided"}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Phone className="h-3.5 w-3.5 text-blue-500" />
+                                                            <span>{selectedInsurer.phone || "No phone provided"}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                                                            <span>{selectedInsurer.address || "No address provided"}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-muted-foreground">Status</h4>
+                                                    <div className="mt-2 flex items-center gap-2">
+                                                        {selectedInsurer.isActive ? (
+                                                            <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                                                        ) : (
+                                                            <XCircle className="h-3.5 w-3.5 text-red-500" />
+                                                        )}
+                                                        <span>
+                                                            {selectedInsurer.isActive ? "Active" : "Inactive"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-muted-foreground">ID</h4>
+                                                    <p className="font-mono text-[10px] bg-blue-50/70 dark:bg-blue-950/20 p-1 rounded mt-1">{selectedInsurer.id}</p>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <h4 className="font-semibold text-muted-foreground">Created</h4>
+                                                        <p className="mt-1">{format(new Date(selectedInsurer.createdAt), "MMM d, yyyy")}</p>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-muted-foreground">Last Updated</h4>
+                                                        <p className="mt-1">{format(new Date(selectedInsurer.updatedAt), "MMM d, yyyy")}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 pt-2 border-t">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs rounded-full"
+                                                        onClick={() => handleEdit(selectedInsurer)}
+                                                    >
+                                                        <Edit2 className="h-3 w-3 mr-1 text-blue-500" /> Edit
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        className="h-7 text-xs rounded-full"
+                                                        onClick={() => handleDelete(selectedInsurer.id)}
+                                                    >
+                                                        <Trash2 className="h-3 w-3 mr-1" /> Delete
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
+                </CardContent>
+            </Card>
 
             {/* Add New Dialog */}
-            <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Insurer</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-name">Name</Label>
-                            <Input
-                                id="new-name"
-                                value={newInsurerData.name}
-                                onChange={(e) => setNewInsurerData({ ...newInsurerData, name: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {newInsurerErrors.name && (
-                                <p className="text-xs text-destructive">{newInsurerErrors.name}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="new-email">Email</Label>
-                            <Input
-                                id="new-email"
-                                type="email"
-                                value={newInsurerData.email}
-                                onChange={(e) => setNewInsurerData({ ...newInsurerData, email: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {newInsurerErrors.email && (
-                                <p className="text-xs text-destructive">{newInsurerErrors.email}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="new-phone">Phone</Label>
-                            <Input
-                                id="new-phone"
-                                type="tel"
-                                value={newInsurerData.phone}
-                                onChange={(e) => setNewInsurerData({ ...newInsurerData, phone: e.target.value })}
-                                className="h-9 text-sm"
-                            />
-                            {newInsurerErrors.phone && (
-                                <p className="text-xs text-destructive">{newInsurerErrors.phone}</p>
-                            )}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                className="h-9 text-xs"
-                                onClick={() => setIsAddingNew(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                className="h-9 text-xs"
-                                onClick={() => handleAddNewSubmit()}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                                        Creating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Plus className="h-3.5 w-3.5 mr-2" />
-                                        Create Insurer
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <AddInsurerDialog
+                open={isAddingNew}
+                onOpenChange={setIsAddingNew}
+                onSuccess={fetchInsurers}
+            />
+
+            {/* Edit Dialog */}
+            <EditInsurerDialog
+                insurer={editingInsurer}
+                open={isEditing}
+                onOpenChange={setIsEditing}
+                onSuccess={fetchInsurers}
+            />
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -704,7 +741,7 @@ export default function InsurersPage() {
                             <Button
                                 variant="destructive"
                                 className="h-9 text-xs"
-                                onClick={() => handleDeleteSubmit()}
+                                onClick={handleDeleteSubmit}
                                 disabled={isDeleting}
                             >
                                 {isDeleting ? (
@@ -723,6 +760,6 @@ export default function InsurersPage() {
                     </div>
                 </DialogContent>
             </Dialog>
-        </Card>
+        </div>
     );
 } 

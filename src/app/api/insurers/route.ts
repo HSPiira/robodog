@@ -6,8 +6,9 @@ import { z } from "zod";
 // Validation schema for insurer creation
 const insurerSchema = z.object({
     name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email format"),
-    phone: z.string().min(1, "Phone is required"),
+    email: z.string().email("Invalid email format").optional().nullable(),
+    address: z.string().optional().nullable(),
+    phone: z.string().optional().nullable(),
 });
 
 export async function GET(req: Request) {
@@ -50,8 +51,10 @@ export async function POST(req: Request) {
             data: {
                 name: body.name,
                 email: body.email,
+                address: body.address,
                 phone: body.phone,
                 isActive: true,
+                createdBy: session.user.id,
             },
         });
 

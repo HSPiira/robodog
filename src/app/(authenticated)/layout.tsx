@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/context/auth-context";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function AuthenticatedLayout({
   children,
@@ -35,16 +36,18 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <QueryProvider>
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <div className="pl-16">
-          <Header />
-          <main className="pt-14">
-            <div className="container mx-auto p-6">{children}</div>
-          </main>
+    <AuthGuard>
+      <QueryProvider>
+        <div className="min-h-screen bg-background">
+          <Sidebar />
+          <div className="pl-16">
+            <Header />
+            <main className="pt-14">
+              <div className="container mx-auto p-6">{children}</div>
+            </main>
+          </div>
         </div>
-      </div>
-    </QueryProvider>
+      </QueryProvider>
+    </AuthGuard>
   );
 }

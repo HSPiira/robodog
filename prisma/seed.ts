@@ -117,7 +117,7 @@ async function main() {
       policyId: policy.id,
       vehicleId: vehicle.id,
       isActive: true,
-      status: "Issued",
+      status: StickerStatus.ISSUED,
       issuedAt: new Date(),
       issuedBy: user.id,
     },

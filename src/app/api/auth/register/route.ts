@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         console.log('[API] User created successfully:', email);
 
         // Generate JWT token
-        const token = generateToken({
+        const token = await generateToken({
             userId: newUser.id,
             email: newUser.email,
             role: newUser.role
@@ -90,32 +90,14 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('[API] Registration error:', error);
-        if (error instanceof Error) {
-            console.error('[API] Error stack:', error.stack);
-        }
-
-        // Handle specific database errors
         if (error instanceof Prisma.PrismaClientInitializationError) {
             return NextResponse.json(
-                { error: "Database connection error. Please try again later." },
+                { error: "Database connection error" },
                 { status: 503 }
             );
         }
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            return NextResponse.json(
-                { error: "Database error. Please try again later." },
-                { status: 500 }
-            );
-        }
-        if (error instanceof Prisma.PrismaClientRustPanicError) {
-            return NextResponse.json(
-                { error: "Critical database error. Please contact support." },
-                { status: 500 }
-            );
-        }
-
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Registration failed" },
+            { error: "Registration failed" },
             { status: 500 }
         );
     }

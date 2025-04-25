@@ -62,10 +62,11 @@ export async function POST(request: NextRequest) {
         const { password: _, ...userWithoutPassword } = user;
 
         // Generate JWT token
-        const token = generateToken({
+        const token = await generateToken({
             userId: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            isActive: user.isActive
         });
 
         // Set CORS headers and create response with token
@@ -94,32 +95,14 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error('[API] Login error:', error);
-        if (error instanceof Error) {
-            console.error('[API] Error stack:', error.stack);
-        }
-
-        // Handle specific database errors
         if (error instanceof Prisma.PrismaClientInitializationError) {
             return NextResponse.json(
-                { error: "Database connection error. Please try again later." },
+                { error: "Database connection error" },
                 { status: 503 }
             );
         }
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            return NextResponse.json(
-                { error: "Database error. Please try again later." },
-                { status: 500 }
-            );
-        }
-        if (error instanceof Prisma.PrismaClientRustPanicError) {
-            return NextResponse.json(
-                { error: "Critical database error. Please contact support." },
-                { status: 500 }
-            );
-        }
-
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Authentication failed" },
+            { error: "Login failed" },
             { status: 500 }
         );
     }

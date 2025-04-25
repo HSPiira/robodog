@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 interface RouteContext {
     params: {
@@ -8,24 +9,43 @@ interface RouteContext {
     };
 }
 
+// Validation schema for insurer update
+const insurerUpdateSchema = z.object({
+    name: z.string().min(1, "Name is required").optional(),
+    email: z.string().email("Invalid email format").optional().nullable(),
+    address: z.string().optional().nullable(),
+    phone: z.string().optional().nullable(),
+    isActive: z.boolean().optional(),
+});
+
 export async function PATCH(req: Request, context: RouteContext) {
     try {
-        const session = await auth();
-        if (!session) {
+        const session = await auth(req);
+        if (!session?.user) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         const { id } = context.params;
         const body = await req.json();
-        const { isActive } = body;
 
-        if (typeof isActive !== "boolean") {
-            return new NextResponse("Invalid request body", { status: 400 });
+        // Validate request body
+        const validationResult = insurerUpdateSchema.safeParse(body);
+        if (!validationResult.success) {
+            const errors = validationResult.error.errors.map(err => `${err.path}: ${err.message}`).join(", ");
+            return new NextResponse(`Validation failed: ${errors}`, { status: 400 });
         }
+
+        const data = validationResult.data;
+
+        // Add updatedBy field
+        const updateData = {
+            ...data,
+            updatedBy: session.user.id,
+        };
 
         const insurer = await db.insurer.update({
             where: { id },
-            data: { isActive },
+            data: updateData,
         });
 
         return NextResponse.json(insurer);
@@ -35,10 +55,10 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 }
 
-export async function DELETE(_req: Request, context: RouteContext) {
+export async function DELETE(req: Request, context: RouteContext) {
     try {
-        const session = await auth();
-        if (!session) {
+        const session = await auth(req);
+        if (!session?.user) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 

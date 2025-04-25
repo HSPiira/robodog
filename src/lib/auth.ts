@@ -30,7 +30,7 @@ export async function auth(request?: Request) {
         }
 
         // Verify the token
-        const payload = verifyToken(token);
+        const payload = await verifyToken(token);
         if (!payload) {
             return { user: null };
         }
@@ -69,7 +69,7 @@ export async function getUserFromRequest(request: Request): Promise<string | nul
             return null;
         }
 
-        const payload = verifyToken(token);
+        const payload = await verifyToken(token);
         if (!payload || typeof payload.userId !== 'string') {
             return null;
         }

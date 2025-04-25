@@ -49,6 +49,8 @@ model User {
   updatedVehicleCategories VehicleCategory[] @relation("VehicleCategoryUpdatedBy")
   createdVehicleTypes      VehicleType[]     @relation("VehicleTypeCreatedBy")
   updatedVehicleTypes      VehicleType[]     @relation("VehicleTypeUpdatedBy")
+  createdInsurers          Insurer[]         @relation("InsurerCreatedBy")
+  updatedInsurers          Insurer[]         @relation("InsurerUpdatedBy")
 }
 
 model Client {
@@ -330,14 +332,19 @@ model PolicyCountry {
 }
 
 model Insurer {
-  id        String    @id @default(uuid())
-  name      String
-  email     String
-  phone     String
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id            String    @id @default(uuid())
+  name          String    @unique
+  email         String?
+  address       String?
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isActive      Boolean   @default(true)
+  createdBy     String?
+  updatedBy     String?
+  deletedAt     DateTime?
+  createdByUser User?     @relation("InsurerCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?     @relation("InsurerUpdatedBy", fields: [updatedBy], references: [id])
 }
 
 enum PolicyStatus {
