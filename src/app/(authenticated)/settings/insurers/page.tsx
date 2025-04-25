@@ -266,15 +266,6 @@ export default function InsurersPage() {
     return (
         <div className="space-y-6 px-1 sm:px-2 md:px-0">
             <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" />
-                        <h2 className="text-lg font-semibold tracking-tight">Insurers</h2>
-                    </div>
-                    <CardDescription>
-                        Manage insurance companies in the system
-                    </CardDescription>
-                </CardHeader>
                 <CardContent className="p-0">
                     <div className="space-y-4 p-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">

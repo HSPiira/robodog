@@ -543,9 +543,9 @@ export default function VehicleSettingsPage() {
                                     <Table className="text-xs">
                                         <TableHeader className={`${tabLabels[activeTab].bgColor}`}>
                                             <TableRow>
-                                                <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 w-[160px] sm:w-[200px]">Name</TableHead>
+                                                <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2">Name</TableHead>
                                                 <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2">Description</TableHead>
-                                                <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 text-right w-[50px] sm:w-[60px]">Actions</TableHead>
+                                                <TableHead className="text-xs font-medium py-1 h-6 border-b border-border/40 px-2 text-right w-[60px]">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
