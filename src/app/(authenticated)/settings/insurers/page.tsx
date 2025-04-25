@@ -76,21 +76,6 @@ interface Insurer {
     description?: string;
 }
 
-interface FormData {
-    name: string;
-    email?: string;
-    address?: string;
-    phone?: string;
-    isActive: boolean;
-}
-
-interface FormErrors {
-    name?: string;
-    email?: string;
-    address?: string;
-    phone?: string;
-}
-
 // Add constants for pagination
 const ITEMS_PER_PAGE = 10;
 
@@ -120,14 +105,6 @@ export default function InsurersPage() {
     // Edit state
     const [isEditing, setIsEditing] = useState(false);
     const [editingInsurer, setEditingInsurer] = useState<Insurer | null>(null);
-    const [formData, setFormData] = useState<FormData>({
-        name: "",
-        email: "",
-        address: "",
-        phone: "",
-        isActive: true,
-    });
-    const [formErrors, setFormErrors] = useState<FormErrors>({});
 
     // Add new state
     const [isAddingNew, setIsAddingNew] = useState(false);
@@ -223,90 +200,6 @@ export default function InsurersPage() {
     const handleDeleteOpen = (id: string) => {
         setDeletingInsurerId(id);
         setIsDeleteDialogOpen(true);
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-        setFormErrors((prev) => ({
-            ...prev,
-            [name]: "",
-        }));
-    };
-
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSaving(true);
-
-        // Validate form data
-        const errors: FormErrors = {};
-        if (!formData.name.trim()) {
-            errors.name = "Name is required";
-        }
-        if (formData.email && formData.email.length > 255) {
-            errors.email = "Email must be less than 255 characters";
-        }
-        if (formData.address && formData.address.length > 255) {
-            errors.address = "Address must be less than 255 characters";
-        }
-        if (formData.phone && formData.phone.length > 15) {
-            errors.phone = "Phone must be less than 15 characters";
-        }
-
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            setIsSaving(false);
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`/api/insurers/${editingInsurer?.id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.status === 401) {
-                toast({
-                    title: "Authentication Error",
-                    description: "Please log in again to continue.",
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error("Failed to update insurer");
-            }
-
-            const updatedInsurer = await response.json();
-            setInsurers((prev) =>
-                prev.map((insurer) =>
-                    insurer.id === updatedInsurer.id ? updatedInsurer : insurer
-                )
-            );
-            setEditingInsurer(null);
-            toast({
-                title: "Success",
-                description: "Insurer updated successfully",
-            });
-        } catch (error) {
-            console.error("Error updating insurer:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update insurer. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const handleDeleteSubmit = async () => {

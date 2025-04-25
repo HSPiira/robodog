@@ -32,7 +32,13 @@ const formSchema = z.object({
     email: z.string().email({
         message: "Please enter a valid email address.",
     }).optional().or(z.literal("")),
-    phone: z.string().optional().or(z.literal("")),
+    phone: z
+        .string()
+        .regex(/^\+?[0-9]{10,15}$/, {
+            message: "Enter a valid phone number (digits only, 10-15 chars).",
+        })
+        .optional()
+        .or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
 });
 
@@ -63,12 +69,16 @@ export function AddInsurerDialog({
 
     const onSubmit = async (data: FormValues) => {
         setIsLoading(true);
+        const ac = new AbortController();
         try {
+            const token = localStorage.getItem("token");
             const response = await fetch("/api/insurers", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
+                signal: ac.signal,
                 body: JSON.stringify({
                     ...data,
                     email: data.email || null,
@@ -79,7 +89,8 @@ export function AddInsurerDialog({
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create insurer");
+                const { message } = await response.json().catch(() => ({}));
+                throw new Error(message ?? "Failed to create insurer");
             }
 
             toast({
@@ -93,11 +104,12 @@ export function AddInsurerDialog({
         } catch (error) {
             toast({
                 title: "Error",
-                description: "Failed to create insurer",
+                description: error instanceof Error ? error.message : "Failed to create insurer",
                 variant: "destructive",
             });
         } finally {
             setIsLoading(false);
+            ac.abort();
         }
     };
 

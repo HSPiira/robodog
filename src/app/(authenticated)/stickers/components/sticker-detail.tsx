@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
+import { DeleteStickerDialog } from "./delete-sticker-dialog";
 
 interface StickerDetailProps {
     sticker?: {
@@ -215,6 +216,15 @@ export function StickerDetail({ sticker, onRefresh }: StickerDetailProps) {
                     </div>
                 </div>
             </CardContent>
+            <DeleteStickerDialog
+                stickerId={sticker?.id || ""}
+                stickerNo={sticker?.stickerNo || ""}
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                onStickerDeleted={() => {
+                    if (onRefresh) onRefresh();
+                }}
+            />
         </Card>
     );
 } 

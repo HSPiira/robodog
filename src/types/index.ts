@@ -1,7 +1,9 @@
+import { StickerStatus } from "@prisma/client";
+
 export interface Sticker {
     id: string;
     stickerNo: string;
-    status: "AVAILABLE" | "ISSUED" | "VOIDED" | "EXPIRED";
+    status: StickerStatus;
     policy?: {
         id: string;
         policyNo: string;

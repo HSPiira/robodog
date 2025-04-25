@@ -23,14 +23,35 @@ export class InsurerService {
         select?: InsurerSelect;
         include?: InsurerInclude;
     }) {
+        const { skip, take, where = {}, orderBy, select, include } = params;
+        const effectiveWhere = { ...where, deletedAt: null };
+
+        return prisma.insurer.findMany({
+            skip,
+            take,
+            where: effectiveWhere,
+            orderBy,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
+        });
+    }
+
+    static async findManyIncludingDeleted(params: {
+        skip?: number;
+        take?: number;
+        where?: InsurerWhereInput;
+        orderBy?: Prisma.InsurerOrderByWithRelationInput;
+        select?: InsurerSelect;
+        include?: InsurerInclude;
+    }) {
         const { skip, take, where, orderBy, select, include } = params;
         return prisma.insurer.findMany({
             skip,
             take,
             where,
             orderBy,
-            select,
-            include,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
         });
     }
 
@@ -42,8 +63,8 @@ export class InsurerService {
         const { where, select, include } = params;
         return prisma.insurer.findUnique({
             where,
-            select,
-            include,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
         });
     }
 
@@ -57,8 +78,8 @@ export class InsurerService {
         return prisma.insurer.update({
             where,
             data,
-            select,
-            include,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
         });
     }
 
@@ -70,8 +91,8 @@ export class InsurerService {
         const { where, select, include } = params;
         return prisma.insurer.delete({
             where,
-            select,
-            include,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
         });
     }
 
@@ -86,8 +107,8 @@ export class InsurerService {
             data: {
                 deletedAt: new Date(),
             },
-            select,
-            include,
+            ...(select ? { select } : {}),
+            ...(include ? { include } : {}),
         });
     }
 } 

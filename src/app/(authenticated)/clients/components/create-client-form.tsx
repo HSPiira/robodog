@@ -40,7 +40,13 @@ const formSchema = z.object({
             message: "Name must be at least 2 characters after trimming whitespace"
         }),
     email: z.string().email("Invalid email address").optional().or(z.literal("")),
-    phone: z.string().min(10, "Phone number must be at least 10 characters").optional().or(z.literal("")),
+    phone: z
+        .string()
+        .regex(/^\+?[0-9]{10,15}$/, {
+            message: "Enter a valid phone number (digits only, 10-15 chars).",
+        })
+        .optional()
+        .or(z.literal("")),
     address: z.string().min(5, "Address must be at least 5 characters").optional().or(z.literal("")),
     type: z.enum(["INDIVIDUAL", "BUSINESS", "GOVERNMENT", "NON_PROFIT"]).default("INDIVIDUAL"),
 });

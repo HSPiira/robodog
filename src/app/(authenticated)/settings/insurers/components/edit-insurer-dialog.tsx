@@ -34,7 +34,13 @@ const formSchema = z.object({
     email: z.string().email({
         message: "Please enter a valid email address.",
     }).optional().or(z.literal("")),
-    phone: z.string().optional().or(z.literal("")),
+    phone: z
+        .string()
+        .regex(/^\+?[0-9]{10,15}$/, {
+            message: "Enter a valid phone number (digits only, 10-15 chars).",
+        })
+        .optional()
+        .or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
     isActive: z.boolean(),
 });
