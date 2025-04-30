@@ -49,7 +49,7 @@ export async function PUT(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { serialNumber, receivedAt, insurerId, stickerTypeId, stickerStatus, isIssued } = await request.json();
+        const { serialNumber, receivedAt, insurerId, stickerTypeId, stickerStatus } = await request.json();
 
         // Validate required fields
         if (!serialNumber || !receivedAt || !insurerId || !stickerTypeId) {
@@ -68,7 +68,6 @@ export async function PUT(
                 insurerId,
                 stickerTypeId,
                 stickerStatus: stickerStatus as StickerStatus,
-                isIssued,
                 updatedBy: user.id,
             },
             include: {
@@ -122,7 +121,7 @@ export async function DELETE(
             );
         }
 
-        if (stock.isIssued || stock.sticker) {
+        if (stock.stickerStatus === "ISSUED" || stock.sticker) {
             return NextResponse.json(
                 { error: "Cannot delete sticker stock that has been issued" },
                 { status: 400 }

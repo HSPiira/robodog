@@ -18,6 +18,7 @@ import {
   Tag,
   Sticker,
   X,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -30,51 +31,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StickerStatus } from "@prisma/client";
-import type { Insurer, StickerStock, StickerIssuance, StickerType } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
+
+type StickerStockWithRelations = Prisma.StickerStockGetPayload<{
+  include: {
+    insurer: true;
+    sticker: true;
+    stickerType: true;
+  };
+}>;
 
 interface StickerStockDetailProps {
-  stock: {
-    id: string;
-    serialNumber: string;
-    receivedAt: Date;
-    stickerStatus: StickerStatus;
-    stickerType: {
-      id: string;
-      name: string;
-    };
-    insurer: {
-      id: string;
-      name: string;
-    };
-  };
+  stock: StickerStockWithRelations;
   onClose?: () => void;
+  onDelete: () => void;
 }
-
-export type StickerStockWithRelations = StickerStock & {
-  insurer: Insurer;
-  sticker?: StickerIssuance;
-  stickerType: StickerType;
-  stickerStatus: StickerStatus;
-  serialNumber: string;
-  receivedAt: Date;
-  isIssued: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 export function StickerStockDetail({
   stock,
   onClose,
+  onDelete,
 }: StickerStockDetailProps) {
   const { toast } = useToast();
 
-  const handleCopySerial = () => {
-    navigator.clipboard.writeText(stock.serialNumber);
-    toast({
-      title: "Copied",
-      description: "Serial number copied to clipboard",
-    });
+  const handleCopySerial = async () => {
+    try {
+      await navigator.clipboard.writeText(stock.serialNumber);
+      toast({
+        title: "Copied",
+        description: "Serial number copied to clipboard",
+      });
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Could not access clipboard",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -90,7 +83,7 @@ export function StickerStockDetail({
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            {stock.stickerStatus === "AVAILABLE" ? (
+            {stock.stickerStatus === StickerStatus.AVAILABLE ? (
               <div className="flex items-center text-xs text-green-600">
                 <CheckCircle className="h-3.5 w-3.5 mr-1 stroke-2" />
                 Available

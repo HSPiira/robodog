@@ -271,13 +271,16 @@ export default function StickerSettingsPage() {
         (currentPage + 1) * ITEMS_PER_PAGE
     );
 
-    // Update total pages whenever filtered entities change
+    // Update total pages and clamp current page whenever filtered entities change
     useEffect(() => {
-        setTotalPages(Math.ceil(filteredEntities.length / ITEMS_PER_PAGE));
-        if (currentPage >= Math.ceil(filteredEntities.length / ITEMS_PER_PAGE)) {
-            setCurrentPage(0);
+        const newTotalPages = Math.max(1, Math.ceil(filteredEntities.length / ITEMS_PER_PAGE));
+        setTotalPages(newTotalPages);
+
+        // Clamp current page to valid range
+        if (currentPage >= newTotalPages) {
+            setCurrentPage(Math.max(0, newTotalPages - 1));
         }
-    }, [filteredEntities, currentPage]);
+    }, [filteredEntities.length, currentPage]);
 
     return (
         <div className="space-y-6 px-1 sm:px-2 md:px-0">

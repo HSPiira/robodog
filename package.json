@@ -88,7 +88,7 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
-  "resolutions": {
+  "overrides": {
     "are-we-there-yet": "^3.0.1",
     "gauge": "^5.0.1",
     "glob": "^10.3.10",

@@ -63,18 +63,8 @@ import { InsurerDetail } from "./components/insurer-detail";
 import { AddInsurerDialog } from "./components/add-insurer-dialog";
 import { EditInsurerDialog } from "./components/edit-insurer-dialog";
 import { format } from "date-fns";
-
-interface Insurer {
-    id: string;
-    name: string;
-    email?: string;
-    address?: string;
-    phone?: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    description?: string;
-}
+import { ColumnDef } from "@tanstack/react-table";
+import type { Insurer } from "@/types";
 
 // Add constants for pagination
 const ITEMS_PER_PAGE = 10;
@@ -249,8 +239,17 @@ export default function InsurersPage() {
         }
     };
 
-    const formatDate = (date: string) => {
-        return format(new Date(date), "MMM d, yyyy");
+    const formatDate = (date: string | null) => {
+        if (!date) return "—";
+        try {
+            const parsedDate = new Date(date);
+            if (isNaN(parsedDate.getTime())) {
+                return "Invalid date";
+            }
+            return format(parsedDate, "MMM d, yyyy");
+        } catch (error) {
+            return "Invalid date";
+        }
     };
 
     const handleEdit = (insurer: Insurer) => {
@@ -414,7 +413,7 @@ export default function InsurersPage() {
                                                         "py-1 px-2 h-7 text-xs text-muted-foreground",
                                                         selectedInsurer && "hidden md:hidden"
                                                     )}>
-                                                        {format(new Date(insurer.updatedAt), "MMM d, yyyy")}
+                                                        {insurer.updatedAt ? formatDate(insurer.updatedAt) : "—"}
                                                     </TableCell>
                                                     <TableCell className="py-1 px-2 h-7 text-xs text-right">
                                                         <DropdownMenu>

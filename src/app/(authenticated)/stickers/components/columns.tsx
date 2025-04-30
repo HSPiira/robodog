@@ -11,59 +11,18 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Prisma } from "@prisma/client";
 
-// Define StickerIssuance type since it's not yet available in @prisma/client
-type StickerIssuance = {
-    id: string;
-    policyId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy: string | null;
-    updatedBy: string | null;
-    isActive: boolean;
-    deletedAt: Date | null;
-    issuedAt: Date | null;
-    issuedBy: string | null;
-    vehicleId: string | null;
-    stockId: string | null;
-    stickerTypeId: string | null;
-};
-
-export type StickerWithRelations = StickerIssuance & {
-    policy?: {
-        id: string;
-        policyNo: string;
-        vehicle?: {
-            id: string;
-            registrationNo: string;
-            make?: string;
-            model?: string;
-        };
-        client?: {
-            id: string;
-            name: string;
-            email?: string;
-            phone?: string;
+export type StickerWithRelations = Prisma.StickerIssuanceGetPayload<{
+    include: {
+        policy: {
+            include: {
+                vehicle: true;
+                client: true;
+            };
         };
     };
-};
-
-// Update the Sticker interface to match StickerIssuance
-interface Sticker {
-    id: string;
-    policyId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy: string | null;
-    updatedBy: string | null;
-    isActive: boolean;
-    deletedAt: Date | null;
-    issuedAt: Date | null;
-    issuedBy: string | null;
-    vehicleId: string | null;
-    stockId: string | null;
-    stickerTypeId: string | null;
-}
+}>;
 
 export const columns: ColumnDef<StickerWithRelations, any>[] = [
     {

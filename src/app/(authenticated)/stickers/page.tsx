@@ -9,42 +9,18 @@ import { CreateStockForm } from "./components/create-stock-form";
 import { StickerStockDetail } from "./components/stock-detail";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import type { Prisma } from "@prisma/client";
 
-// Define StickerIssuance type since it's not yet available in @prisma/client
-type StickerIssuance = {
-    id: string;
-    policyId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy: string | null;
-    updatedBy: string | null;
-    isActive: boolean;
-    deletedAt: Date | null;
-    issuedAt: Date | null;
-    issuedBy: string | null;
-    vehicleId: string | null;
-    stockId: string | null;
-    stickerTypeId: string | null;
-};
-
-type StickerWithRelations = StickerIssuance & {
-    policy?: {
-        id: string;
-        policyNo: string;
-        vehicle?: {
-            id: string;
-            registrationNo: string;
-            make?: string;
-            model?: string;
-        };
-        client?: {
-            id: string;
-            name: string;
-            email?: string;
-            phone?: string;
+type StickerWithRelations = Prisma.StickerIssuanceGetPayload<{
+    include: {
+        policy: {
+            include: {
+                vehicle: true;
+                client: true;
+            };
         };
     };
-};
+}>;
 
 export default function StickersPage() {
     const [stickers, setStickers] = useState<StickerWithRelations[]>([]);
@@ -53,38 +29,35 @@ export default function StickersPage() {
     const [selectedStock, setSelectedStock] = useState<StickerStockWithRelations | null>(null);
 
     const fetchStickers = async () => {
-        try {
-            const response = await fetch("/api/stickers");
-            if (!response.ok) {
-                throw new Error("Failed to fetch stickers");
-            }
-            const data = await response.json();
-            setStickers(data);
-        } catch (error) {
-            console.error("Error fetching stickers:", error);
-        } finally {
-            setLoading(false);
+        const response = await fetch("/api/stickers");
+        if (!response.ok) {
+            throw new Error("Failed to fetch stickers");
         }
+        const data = await response.json();
+        setStickers(data);
     };
 
     const fetchStock = async () => {
-        try {
-            const response = await fetch("/api/stickers/stock");
-            if (!response.ok) {
-                throw new Error("Failed to fetch sticker stock");
-            }
-            const data = await response.json();
-            setStock(data);
-        } catch (error) {
-            console.error("Error fetching sticker stock:", error);
-        } finally {
-            setLoading(false);
+        const response = await fetch("/api/stickers/stock");
+        if (!response.ok) {
+            throw new Error("Failed to fetch sticker stock");
         }
+        const data = await response.json();
+        setStock(data);
     };
 
     useEffect(() => {
-        fetchStickers();
-        fetchStock();
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                await Promise.all([fetchStickers(), fetchStock()]);
+            } catch (error) {
+                console.error("Error loading data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
     }, []);
 
     const handleStockSelect = (stock: StickerStockWithRelations) => {
@@ -92,7 +65,14 @@ export default function StickersPage() {
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="container mx-auto py-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+                    <p className="text-sm text-muted-foreground">Loading data...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -140,6 +120,10 @@ export default function StickersPage() {
                                 <StickerStockDetail
                                     stock={selectedStock}
                                     onClose={() => setSelectedStock(null)}
+                                    onDelete={() => {
+                                        setSelectedStock(null);
+                                        fetchStock();
+                                    }}
                                 />
                             </div>
                         )}

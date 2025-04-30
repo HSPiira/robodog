@@ -1,4 +1,5 @@
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client';
+import { Role, ClientType, UsageType, PolicyStatus, StickerStatus } from '@prisma/client';
 import * as argon2 from "argon2";
 
 const prisma = new PrismaClient();
@@ -11,7 +12,7 @@ async function main() {
       email: "piira@robodog.com",
       name: "Henry Piira",
       password: hashedPassword,
-      role: "ADMIN",
+      role: Role.ADMIN,
     },
   });
 
@@ -22,7 +23,7 @@ async function main() {
       email: "piira@robodog.com",
       phone: "+1234567890",
       address: "123 Test St",
-      type: "INDIVIDUAL",
+      type: ClientType.INDIVIDUAL,
       isActive: true,
       createdBy: user.id,
       updatedBy: user.id,
@@ -104,8 +105,8 @@ async function main() {
       policyNo: "POL001",
       clientId: client.id,
       vehicleId: vehicle.id,
-      usage: "PRIVATE",
-      status: "ACTIVE",
+      usage: UsageType.PRIVATE,
+      status: PolicyStatus.ACTIVE,
       insurerId: insurer.id,
       issuingOfficerId: user.id,
       issuedAt: new Date(),
@@ -137,10 +138,9 @@ async function main() {
     data: {
       serialNumber: "STICKER001",
       stickerTypeId: stickerType.id,
-      stickerStatus: "AVAILABLE",
+      stickerStatus: StickerStatus.AVAILABLE,
       receivedAt: new Date(),
       insurerId: insurer.id,
-      isIssued: false,
       isActive: true,
       createdBy: user.id,
       updatedBy: user.id,
@@ -165,8 +165,7 @@ async function main() {
   await prisma.stickerStock.update({
     where: { id: stickerStock.id },
     data: {
-      isIssued: true,
-      stickerStatus: "ISSUED",
+      stickerStatus: StickerStatus.ISSUED,
       updatedBy: user.id,
     },
   });

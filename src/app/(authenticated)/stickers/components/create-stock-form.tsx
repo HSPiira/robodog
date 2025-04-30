@@ -124,7 +124,13 @@ export function CreateStockForm({ trigger, onStockCreated }: CreateStockFormProp
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="stickerTypeId">Sticker Type</Label>
-                        <Select name="stickerTypeId" required>
+                        <Select
+                            name="stickerTypeId"
+                            required
+                            onValueChange={(v) => {
+                                (document.getElementById('__stickerTypeId') as HTMLInputElement).value = v;
+                            }}
+                        >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select sticker type" />
                             </SelectTrigger>
@@ -136,6 +142,7 @@ export function CreateStockForm({ trigger, onStockCreated }: CreateStockFormProp
                                 ))}
                             </SelectContent>
                         </Select>
+                        <input type="hidden" id="__stickerTypeId" name="stickerTypeId" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="receivedAt">Received Date</Label>
@@ -148,7 +155,13 @@ export function CreateStockForm({ trigger, onStockCreated }: CreateStockFormProp
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="insurerId">Insurer</Label>
-                        <Select name="insurerId" required>
+                        <Select
+                            name="insurerId"
+                            required
+                            onValueChange={(v) => {
+                                (document.getElementById('__insurerId') as HTMLInputElement).value = v;
+                            }}
+                        >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select insurer" />
                             </SelectTrigger>
@@ -160,6 +173,7 @@ export function CreateStockForm({ trigger, onStockCreated }: CreateStockFormProp
                                 ))}
                             </SelectContent>
                         </Select>
+                        <input type="hidden" id="__insurerId" name="insurerId" />
                     </div>
                     <Button type="submit" disabled={loading} className="w-full">
                         {loading ? (

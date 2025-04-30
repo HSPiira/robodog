@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -58,7 +57,7 @@ export async function POST(req: Request) {
             return new NextResponse(`Validation failed: ${errors}`, { status: 400 });
         }
 
-        const insurer = await db.insurer.create({
+        const insurer = await prisma.insurer.create({
             data: {
                 name: body.name,
                 email: body.email,

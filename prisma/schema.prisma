@@ -258,7 +258,6 @@ model StickerStock {
   stickerStatus StickerStatus    @default(AVAILABLE)
   receivedAt    DateTime         @default(now())
   insurerId     String
-  isIssued      Boolean          @default(false)
   insurer       Insurer          @relation(fields: [insurerId], references: [id])
   sticker       StickerIssuance?
   createdAt     DateTime         @default(now())

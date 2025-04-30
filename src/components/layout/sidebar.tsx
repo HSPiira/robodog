@@ -89,8 +89,8 @@ const navigation = [
   { name: "Dashboard", href: "/home", icon: Home },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Vehicles", href: "/vehicles", icon: Car },
-  { name: "Stickers", href: "/stickers", icon: Sticker },
   { name: "Policies", href: "/policies", icon: FileText },
+  { name: "Stickers", href: "/stickers", icon: Sticker },
   { name: "Analytics", href: "/analytics", icon: BarChart },
 ];
 
