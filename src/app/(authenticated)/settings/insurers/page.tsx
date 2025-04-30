@@ -63,18 +63,8 @@ import { InsurerDetail } from "./components/insurer-detail";
 import { AddInsurerDialog } from "./components/add-insurer-dialog";
 import { EditInsurerDialog } from "./components/edit-insurer-dialog";
 import { format } from "date-fns";
-
-interface Insurer {
-    id: string;
-    name: string;
-    email?: string;
-    address?: string;
-    phone?: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-    description?: string;
-}
+import { ColumnDef } from "@tanstack/react-table";
+import type { Insurer } from "@/types";
 
 // Add constants for pagination
 const ITEMS_PER_PAGE = 10;
@@ -86,6 +76,18 @@ const tabStyles = {
     accentColor: "bg-blue-500",
     hoverColor: "hover:text-blue-600 hover:bg-blue-50",
     activeText: "text-blue-700 dark:text-blue-300",
+};
+
+// Add safe date formatting function
+const safeFormatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Invalid Date";
+        return format(date, "MMM d, yyyy");
+    } catch (error) {
+        return "Invalid Date";
+    }
 };
 
 export default function InsurersPage() {
@@ -249,10 +251,6 @@ export default function InsurersPage() {
         }
     };
 
-    const formatDate = (date: string) => {
-        return format(new Date(date), "MMM d, yyyy");
-    };
-
     const handleEdit = (insurer: Insurer) => {
         setEditingInsurer(insurer);
         setIsEditing(true);
@@ -266,15 +264,6 @@ export default function InsurersPage() {
     return (
         <div className="space-y-6 px-1 sm:px-2 md:px-0">
             <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" />
-                        <h2 className="text-lg font-semibold tracking-tight">Insurers</h2>
-                    </div>
-                    <CardDescription>
-                        Manage insurance companies in the system
-                    </CardDescription>
-                </CardHeader>
                 <CardContent className="p-0">
                     <div className="space-y-4 p-6">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
@@ -423,7 +412,7 @@ export default function InsurersPage() {
                                                         "py-1 px-2 h-7 text-xs text-muted-foreground",
                                                         selectedInsurer && "hidden md:hidden"
                                                     )}>
-                                                        {format(new Date(insurer.updatedAt), "MMM d, yyyy")}
+                                                        {insurer.updatedAt ? safeFormatDate(insurer.updatedAt) : "—"}
                                                     </TableCell>
                                                     <TableCell className="py-1 px-2 h-7 text-xs text-right">
                                                         <DropdownMenu>
@@ -556,11 +545,11 @@ export default function InsurersPage() {
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <h4 className="font-semibold text-muted-foreground">Created</h4>
-                                                        <p className="mt-1">{format(new Date(selectedInsurer.createdAt), "MMM d, yyyy")}</p>
+                                                        <p className="mt-1">{safeFormatDate(selectedInsurer.createdAt)}</p>
                                                     </div>
                                                     <div>
                                                         <h4 className="font-semibold text-muted-foreground">Last Updated</h4>
-                                                        <p className="mt-1">{format(new Date(selectedInsurer.updatedAt), "MMM d, yyyy")}</p>
+                                                        <p className="mt-1">{safeFormatDate(selectedInsurer.updatedAt)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2 pt-2 border-t">

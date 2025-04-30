@@ -7,7 +7,7 @@ export async function GET() {
         // Test database connection first
         await prisma.$connect();
 
-        const stickers = await prisma.sticker.findMany({
+        const stickers = await prisma.stickerIssuance.findMany({
             where: {
                 isActive: true,
             },
@@ -69,24 +69,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { stickerNo, policyId } = body;
+        const { policyId } = body;
 
         // Validate required fields
-        if (!stickerNo || !policyId) {
+        if (!policyId) {
             return NextResponse.json(
-                { error: "Sticker number and policy are required" },
-                { status: 400 }
-            );
-        }
-
-        // Check if sticker number already exists
-        const existingSticker = await prisma.sticker.findUnique({
-            where: { stickerNo },
-        });
-
-        if (existingSticker) {
-            return NextResponse.json(
-                { error: "Sticker number already exists" },
+                { error: "Policy is required" },
                 { status: 400 }
             );
         }
@@ -105,18 +93,17 @@ export async function POST(request: NextRequest) {
         }
 
         // Create the sticker
-        const sticker = await prisma.sticker.create({
+        const sticker = await prisma.stickerIssuance.create({
             data: {
-                stickerNo,
                 policy: {
                     connect: {
                         id: policyId,
                     },
                 },
-                Vehicle: {
+                vehicle: {
                     connect: {
-                        id: policy.vehicleId,
-                    },
+                        id: policy.vehicleId
+                    }
                 },
                 isActive: true,
             },

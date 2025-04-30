@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 import { Building2, Mail, Phone, MapPin, Loader2, Edit2 } from "lucide-react";
+import type { Insurer } from "@/types";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -46,15 +47,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-interface Insurer {
-    id: string;
-    name: string;
-    email?: string;
-    address?: string;
-    phone?: string;
-    isActive: boolean;
-}
 
 interface EditInsurerDialogProps {
     insurer: Insurer | null;

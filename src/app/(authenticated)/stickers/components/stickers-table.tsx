@@ -27,25 +27,27 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CreateStickerForm } from "./create-sticker-form";
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData> {
+    columns: ColumnDef<TData, any>[];
     data: TData[];
     searchKey?: string;
     onRowClick?: (row: TData) => void;
     selectedRow?: TData | null;
     showDetails?: boolean;
     onRefresh?: () => void;
+    customButton?: React.ReactNode;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData>({
     columns,
     data,
-    searchKey = "stickerNo",
+    searchKey = "serialNumber",
     onRowClick,
     selectedRow,
     showDetails = false,
     onRefresh,
-}: DataTableProps<TData, TValue>) {
+    customButton,
+}: DataTableProps<TData>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -58,14 +60,14 @@ export function DataTable<TData, TValue>({
             });
 
             if (!response.ok) {
-                throw new Error("Failed to delete sticker");
+                throw new Error("Failed to delete sticker issuance");
             }
 
-            toast.success("Sticker deleted successfully");
+            toast.success("Sticker issuance deleted successfully");
             onRefresh?.();
         } catch (error) {
-            console.error("Error deleting sticker:", error);
-            toast.error("Failed to delete sticker");
+            console.error("Error deleting sticker issuance:", error);
+            toast.error("Failed to delete sticker issuance");
         }
     };
 
@@ -91,26 +93,32 @@ export function DataTable<TData, TValue>({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
-                <Input
-                    placeholder={`Search by ${searchKey}...`}
-                    value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn(searchKey)?.setFilterValue(event.target.value)
-                    }
-                    className="w-[200px] h-8 rounded-full bg-muted px-4 text-xs"
-                />
-                <CreateStickerForm
-                    trigger={
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-full"
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    }
-                    onStickerCreated={onRefresh}
-                />
+                <div className="relative flex-1 sm:w-[280px] w-full max-w-full sm:max-w-[280px] flex items-center gap-2">
+                    <div className="relative flex-1">
+                        <Input
+                            placeholder={`Search by ${searchKey}...`}
+                            value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
+                            onChange={(event) =>
+                                table.getColumn(searchKey)?.setFilterValue(event.target.value)
+                            }
+                            className="w-full h-8 rounded-full bg-muted px-4 text-xs"
+                        />
+                    </div>
+                    {customButton || (
+                        <CreateStickerForm
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full flex-shrink-0 border-blue-500/20 hover:border-blue-500 hover:bg-blue-500/10 text-blue-500"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            }
+                            onStickerCreated={onRefresh}
+                        />
+                    )}
+                </div>
             </div>
             <div className="rounded-md border overflow-hidden">
                 <div className="min-h-[300px] flex flex-col">
@@ -142,8 +150,8 @@ export function DataTable<TData, TValue>({
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
-                                        className={`border-0 cursor-pointer hover:bg-muted/50 text-xs h-5 ${selectedRow === row.original ? "bg-muted" : ""}`}
-                                        onClick={() => onRowClick?.(row.original as TData)}
+                                        className="border-0 cursor-pointer hover:bg-muted/50 text-xs h-5"
+                                        onClick={() => onRowClick?.(row.original)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
@@ -164,7 +172,7 @@ export function DataTable<TData, TValue>({
                                         colSpan={columns.length}
                                         className="h-24 text-center text-muted-foreground"
                                     >
-                                        No stickers found
+                                        No results found
                                     </TableCell>
                                 </TableRow>
                             )}

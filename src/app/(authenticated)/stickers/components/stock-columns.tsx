@@ -1,52 +1,77 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { StickerStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
-interface StickerStock {
-    id: string;
-    stickerNo: string;
-    receivedAt: string;
-    insurerId: string;
-    isIssued: boolean;
-    insurer: {
-        id: string;
-        name: string;
-        code: string;
+// Define the expanded relation type from Prisma
+export type StickerStockWithRelations = Prisma.StickerStockGetPayload<{
+    include: {
+        insurer: true;
+        sticker: true;
+        stickerType: true;
     };
-    sticker?: {
-        id: string;
-        stickerNo: string;
-        status: string;
-    };
-}
+}>;
 
-export const stockColumns: ColumnDef<StickerStock>[] = [
+// Define the complete type for our table data
+type StickerStockRow = StickerStockWithRelations;
+
+export const stockColumns: ColumnDef<StickerStockWithRelations, any>[] = [
     {
-        accessorKey: "stickerNo",
-        header: "Sticker No",
-    },
-    {
-        accessorKey: "insurer.name",
-        header: "Insurer",
-    },
-    {
-        accessorKey: "receivedAt",
-        header: "Received Date",
+        accessorKey: "serialNumber",
+        header: "Serial No.",
         cell: ({ row }) => {
-            return format(new Date(row.original.receivedAt), "dd MMM yyyy");
+            return (
+                <div className="font-medium">{row.getValue("serialNumber")}</div>
+            );
         },
     },
     {
-        accessorKey: "isIssued",
+        accessorKey: "stickerType",
+        header: "Type",
+        cell: ({ row }) => {
+            const stickerType = row.original.stickerType;
+            return (
+                <div className="text-muted-foreground">
+                    {stickerType?.name || "N/A"}
+                </div>
+            );
+        },
+    },
+    {
+        accessorKey: "receivedAt",
+        header: "Received",
+        cell: ({ row }) => {
+            return (
+                <div className="text-muted-foreground">
+                    {format(row.original.receivedAt, "dd MMM yyyy")}
+                </div>
+            );
+        },
+    },
+    {
+        accessorKey: "stickerStatus",
         header: "Status",
         cell: ({ row }) => {
-            const isIssued = row.original.isIssued;
+            const status = row.original.stickerStatus;
             return (
-                <Badge variant={isIssued ? "default" : "secondary"}>
-                    {isIssued ? "Issued" : "Available"}
+                <Badge variant={status === "AVAILABLE" ? "secondary" : "default"}>
+                    {status.charAt(0) + status.slice(1).toLowerCase()}
                 </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: "insurer",
+        header: "Insurer",
+        cell: ({ row }) => {
+            const insurer = row.original.insurer;
+            return (
+                <div className="text-muted-foreground">
+                    {insurer?.name || "N/A"}
+                </div>
             );
         },
     },

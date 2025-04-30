@@ -32,7 +32,7 @@ type VehicleCreateData = {
 export async function POST(request: Request) {
   try {
     // Authenticate the user
-    const session = await auth();
+    const session = await auth(request);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     /*
      * IMPORTANT: Better approach would be to run:
      * npx prisma generate
-     * 
+     *
      * Then use the proper Prisma types directly instead of casting to 'any'.
      * This would provide full type safety for your database operations.
      */
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       updatedBy: dbUser.id,
     };
 
-    // We're using 'as any' temporarily - run 'npx prisma generate' 
+    // We're using 'as any' temporarily - run 'npx prisma generate'
     // and update your code to use proper typing instead
     const vehicle = await prisma.vehicle.create({
       data: vehicleData as any, // TODO: Replace with proper typing

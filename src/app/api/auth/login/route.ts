@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         console.log('[API] Attempting to verify credentials for:', email);
         const user = await UserService.verifyCredentials(email, password);
 
-        if (!user) {
+        if (!user || !user.email) {
             console.log('[API] Invalid credentials for:', email);
             return NextResponse.json(
                 { error: "Invalid email or password" },

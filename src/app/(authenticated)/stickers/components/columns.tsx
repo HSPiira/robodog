@@ -2,73 +2,70 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Prisma } from "@prisma/client";
 
-interface Sticker {
-    id: string;
-    stickerNo: string;
-    policy?: {
-        id: string;
-        policyNo: string;
-        vehicle?: {
-            id: string;
-            registrationNo: string;
-            make?: string;
-            model?: string;
-        };
-        client?: {
-            id: string;
-            name: string;
-            email?: string;
-            phone?: string;
+export type StickerWithRelations = Prisma.StickerIssuanceGetPayload<{
+    include: {
+        policy: {
+            include: {
+                vehicle: true;
+                client: true;
+            };
         };
     };
-    createdAt: string;
-    updatedAt: string;
-    isActive: boolean;
-}
+}>;
 
-export const columns: ColumnDef<Sticker>[] = [
+export const columns: ColumnDef<StickerWithRelations, any>[] = [
     {
-        accessorKey: "stickerNo",
-        header: "Sticker No.",
+        accessorKey: "id",
+        header: "ID",
         cell: ({ row }) => {
             return (
-                <div className="font-medium">{row.getValue("stickerNo")}</div>
+                <div className="font-medium">{row.getValue("id")}</div>
             );
         },
     },
     {
-        accessorFn: row => row.policy?.policyNo,
-        id: "policyNo",
-        header: "Policy No.",
+        accessorKey: "policy",
+        header: "Policy",
         cell: ({ row }) => {
+            const policy = row.original.policy;
             return (
                 <div className="text-muted-foreground">
-                    {row.original.policy?.policyNo || "—"}
+                    {policy?.policyNo || "N/A"}
                 </div>
             );
         },
     },
     {
-        accessorFn: row => row.policy?.vehicle?.registrationNo,
-        id: "vehicleRegistrationNo",
+        accessorKey: "policy",
         header: "Vehicle",
         cell: ({ row }) => {
+            const policy = row.original.policy;
             return (
                 <div className="text-muted-foreground">
-                    {row.original.policy?.vehicle?.registrationNo || "—"}
+                    {policy?.vehicle?.registrationNo || "N/A"}
                 </div>
             );
         },
     },
     {
-        accessorFn: row => row.policy?.client?.name,
-        id: "clientName",
+        accessorKey: "policy",
         header: "Client",
         cell: ({ row }) => {
+            const policy = row.original.policy;
             return (
                 <div className="text-muted-foreground">
-                    {row.original.policy?.client?.name || "—"}
+                    {policy?.client?.name || "N/A"}
                 </div>
             );
         },
@@ -79,8 +76,36 @@ export const columns: ColumnDef<Sticker>[] = [
         cell: ({ row }) => {
             return (
                 <div className="text-muted-foreground">
-                    {format(new Date(row.original.createdAt), "dd MMM yyyy")}
+                    {format(row.original.createdAt, "dd MMM yyyy")}
                 </div>
+            );
+        },
+    },
+    {
+        id: "actions",
+        cell: ({ row }) => {
+            const sticker = row.original;
+
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                            onClick={() => {
+                                // Handle delete
+                                console.log("Delete", sticker.id);
+                            }}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             );
         },
     },

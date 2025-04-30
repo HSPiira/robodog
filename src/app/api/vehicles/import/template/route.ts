@@ -5,13 +5,42 @@ import * as XLSX from "xlsx";
 export async function GET() {
     try {
         // Fetch reference data to include in separate sheets
-        const [vehicleTypes, bodyTypes, vehicleCategories, customers] = await Promise.all([
-            prisma.vehicleType.findMany({ select: { id: true, name: true } }),
-            prisma.bodyType.findMany({ select: { id: true, name: true } }),
-            prisma.vehicleCategory.findMany({ select: { id: true, name: true } }),
-            prisma.customer.findMany({
-                where: { isActive: true },
-                select: { id: true, name: true, email: true }
+        const [clients, vehicleTypes, bodyTypes, categories] = await Promise.all([
+            prisma.client.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                where: {
+                    isActive: true,
+                },
+            }),
+            prisma.vehicleType.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                where: {
+                    isActive: true,
+                },
+            }),
+            prisma.bodyType.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                where: {
+                    isActive: true,
+                },
+            }),
+            prisma.vehicleCategory.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                where: {
+                    isActive: true,
+                },
             }),
         ]);
 
@@ -91,14 +120,14 @@ export async function GET() {
 
         XLSX.utils.book_append_sheet(
             workbook,
-            XLSX.utils.json_to_sheet(vehicleCategories),
+            XLSX.utils.json_to_sheet(categories),
             "Vehicle Categories"
         );
 
         XLSX.utils.book_append_sheet(
             workbook,
-            XLSX.utils.json_to_sheet(customers),
-            "Customers"
+            XLSX.utils.json_to_sheet(clients),
+            "Clients"
         );
 
         // Create buffer

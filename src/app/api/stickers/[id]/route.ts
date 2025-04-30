@@ -6,7 +6,7 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const sticker = await prisma.sticker.update({
+        const sticker = await prisma.stickerIssuance.update({
             where: { id: params.id },
             data: {
                 isActive: false,

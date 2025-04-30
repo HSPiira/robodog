@@ -1,25 +1,25 @@
 'use client';
 
-import { Settings, Users, Shield, Bell, Database, Car, Building2 } from 'lucide-react';
+import { Settings, Users, Shield, Bell, Database, Car, Building2, Sticker } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export const settingsSections = [
   {
-    title: 'General Settings',
+    title: 'System Settings',
     description: 'Manage your basic preferences and account settings',
     icon: Settings,
     href: '/settings',
   },
   {
-    title: 'Enum Management',
+    title: 'Data Lists',
     description: 'Manage system enums and configurations',
     icon: Database,
     href: '/settings/enums',
   },
   {
-    title: 'Vehicle Settings',
+    title: 'Vehicle Configuration',
     description: 'Manage vehicle types, body types, and categories',
     icon: Car,
     href: '/settings/vehicles',
@@ -31,7 +31,13 @@ export const settingsSections = [
     href: '/settings/insurers',
   },
   {
-    title: 'User Management',
+    title: 'Sticker Types',
+    description: 'Manage sticker types and configurations',
+    icon: Sticker,
+    href: '/settings/stickers',
+  },
+  {
+    title: 'Users',
     description: 'Manage user roles and permissions',
     icon: Users,
     href: '/settings/users',
@@ -58,10 +64,10 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   return (
-    <div className="mx-4">
-      <div className="flex flex-col md:flex-row gap-6">
+    <div>
+      <div className="flex flex-col md:flex-row gap-4">
         {/* Sidebar Navigation */}
-        <div className="w-full md:w-56 space-y-1">
+        <div className="w-full md:w-48 space-y-0.5">
           {settingsSections.map((section) => {
             const Icon = section.icon;
             const isActive = section.href === pathname;
@@ -71,13 +77,13 @@ export default function SettingsLayout({
                 key={section.href}
                 href={section.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
                 <span>{section.title}</span>
               </Link>
             );
