@@ -98,7 +98,7 @@ export default function StickersPage() {
                                 onRefresh={fetchStock}
                                 onRowClick={handleStockSelect}
                                 selectedRow={selectedStock}
-                                searchKey="stickerNo"
+                                searchKey="serialNumber"
                                 customButton={
                                     <CreateStockForm
                                         trigger={

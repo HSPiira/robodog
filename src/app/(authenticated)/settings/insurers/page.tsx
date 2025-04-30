@@ -78,6 +78,18 @@ const tabStyles = {
     activeText: "text-blue-700 dark:text-blue-300",
 };
 
+// Add safe date formatting function
+const safeFormatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "Invalid Date";
+        return format(date, "MMM d, yyyy");
+    } catch (error) {
+        return "Invalid Date";
+    }
+};
+
 export default function InsurersPage() {
     const { toast } = useToast();
     const [insurers, setInsurers] = useState<Insurer[]>([]);
@@ -236,19 +248,6 @@ export default function InsurersPage() {
         } finally {
             setIsDeleting(false);
             setDeletingInsurerId(null);
-        }
-    };
-
-    const formatDate = (date: string | null) => {
-        if (!date) return "—";
-        try {
-            const parsedDate = new Date(date);
-            if (isNaN(parsedDate.getTime())) {
-                return "Invalid date";
-            }
-            return format(parsedDate, "MMM d, yyyy");
-        } catch (error) {
-            return "Invalid date";
         }
     };
 
@@ -413,7 +412,7 @@ export default function InsurersPage() {
                                                         "py-1 px-2 h-7 text-xs text-muted-foreground",
                                                         selectedInsurer && "hidden md:hidden"
                                                     )}>
-                                                        {insurer.updatedAt ? formatDate(insurer.updatedAt) : "—"}
+                                                        {insurer.updatedAt ? safeFormatDate(insurer.updatedAt) : "—"}
                                                     </TableCell>
                                                     <TableCell className="py-1 px-2 h-7 text-xs text-right">
                                                         <DropdownMenu>
@@ -546,11 +545,11 @@ export default function InsurersPage() {
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <h4 className="font-semibold text-muted-foreground">Created</h4>
-                                                        <p className="mt-1">{format(new Date(selectedInsurer.createdAt), "MMM d, yyyy")}</p>
+                                                        <p className="mt-1">{safeFormatDate(selectedInsurer.createdAt)}</p>
                                                     </div>
                                                     <div>
                                                         <h4 className="font-semibold text-muted-foreground">Last Updated</h4>
-                                                        <p className="mt-1">{format(new Date(selectedInsurer.updatedAt), "MMM d, yyyy")}</p>
+                                                        <p className="mt-1">{safeFormatDate(selectedInsurer.updatedAt)}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2 pt-2 border-t">

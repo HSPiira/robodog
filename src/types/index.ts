@@ -1,9 +1,6 @@
-export enum StickerStatus {
-    AVAILABLE = "AVAILABLE",
-    ISSUED = "ISSUED",
-    VOIDED = "VOIDED",
-    EXPIRED = "EXPIRED"
-}
+import { StickerStatus } from "@prisma/client";
+
+export { StickerStatus };
 
 export interface Insurer {
     id: string;
