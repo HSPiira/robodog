@@ -54,14 +54,19 @@ const defaultValues: Partial<FormValues> = {
 interface Policy {
     id: string;
     policyNo: string;
+    client: {
+        id: string;
+        name: string;
+    };
     vehicle: {
+        id: string;
         registrationNo: string;
         make?: string;
         model?: string;
     };
-    client: {
-        name: string;
-    };
+    validFrom: string;
+    validTo: string;
+    status: string;
 }
 
 interface CreateStickerFormProps {

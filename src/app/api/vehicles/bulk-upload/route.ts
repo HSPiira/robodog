@@ -321,7 +321,7 @@ export async function POST(request: Request) {
             // Traditional ID-based validation
             // Validate body type ID exists
             bodyTypeId = record[bodyTypeField];
-            const bodyType = await prisma.bodyType.findUnique({
+            const bodyType = await prisma.vehicleBodyType.findUnique({
               where: { id: bodyTypeId },
             });
 

@@ -24,7 +24,7 @@ export async function GET() {
                     isActive: true,
                 },
             }),
-            prisma.bodyType.findMany({
+            prisma.vehicleBodyType.findMany({
                 select: {
                     id: true,
                     name: true,

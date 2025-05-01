@@ -178,15 +178,13 @@ export async function POST(req: Request) {
         // Handle body type
         if (row.bodyType) {
           const bodyTypeStr = String(row.bodyType).toUpperCase();
-          const bt = await db.bodyType.findFirst({
+          const bt = await db.vehicleBodyType.findFirst({
             where: {
               name: {
                 contains: bodyTypeStr,
-                mode: 'insensitive'
-              }
-            }
+              },
+            },
           });
-
           if (bt) {
             bodyTypeId = bt.id;
           }
@@ -194,16 +192,13 @@ export async function POST(req: Request) {
 
         // If no body type specified, find a default one
         if (!bodyTypeId) {
-          const defaultBodyType = await db.bodyType.findFirst({
-            where: { isActive: true },
+          const defaultBodyType = await db.vehicleBodyType.findFirst({
+            where: {
+              name: 'Sedan',
+            },
           });
           if (defaultBodyType) {
             bodyTypeId = defaultBodyType.id;
-          } else {
-            results.errors.push(
-              `No valid body type found for vehicle ${row.registrationNo}`
-            );
-            continue;
           }
         }
 
