@@ -164,9 +164,10 @@ async function main() {
   });
 
   // Create vehicle body types
-  await prisma.bodyType.createMany({
+  await prisma.vehicleBodyType.createMany({
     data: [
       {
+        id: "1",
         name: "Sedan",
         description: "A classic car shape with a separate trunk and seating for 4–5.",
         isActive: true,
@@ -174,6 +175,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "2",
         name: "Hatchback",
         description: "A compact vehicle with a rear door that opens upwards, combining trunk and cabin.",
         isActive: true,
@@ -181,6 +183,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "3",
         name: "Coupe",
         description: "A 2-door car with a sporty style, typically seats 2–4.",
         isActive: true,
@@ -188,6 +191,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "4",
         name: "Convertible",
         description: "A car with a roof that can be folded or removed for open-air driving.",
         isActive: true,
@@ -195,6 +199,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "5",
         name: "SUV",
         description: "Sports Utility Vehicle — larger and often 4WD, suited for off-road and family use.",
         isActive: true,
@@ -202,6 +207,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "6",
         name: "Crossover",
         description: "A blend of SUV and passenger car, offering comfort and utility.",
         isActive: true,
@@ -209,6 +215,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "7",
         name: "Pickup",
         description: "A vehicle with an open cargo area at the back, often with high load capacity.",
         isActive: true,
@@ -216,6 +223,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "8",
         name: "StationWagon",
         description: "A car with extended rear cargo space and typically a rear hatch door.",
         isActive: true,
@@ -223,6 +231,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "9",
         name: "Minivan",
         description: "A family-focused vehicle with sliding doors and space for 7+ passengers.",
         isActive: true,
@@ -230,6 +239,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "10",
         name: "BoxTruck",
         description: "A truck with an enclosed cargo area shaped like a box — used for moving goods.",
         isActive: true,
@@ -237,6 +247,7 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "11",
         name: "Tanker",
         description: "A truck designed to carry liquid or gas cargo (e.g., fuel, water).",
         isActive: true,
@@ -244,36 +255,9 @@ async function main() {
         updatedBy: user.id,
       },
       {
+        id: "12",
         name: "Flatbed",
         description: "A truck with a flat, open cargo area used for large or heavy items.",
-        isActive: true,
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-      {
-        name: "ChassisCab",
-        description: "A commercial truck with only a cab and chassis, ready for custom body installation.",
-        isActive: true,
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-      {
-        name: "PanelVan",
-        description: "A van with enclosed sides, no rear seats, commonly used for deliveries.",
-        isActive: true,
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-      {
-        name: "Motorcycle",
-        description: "A two-wheeled motor vehicle with a compact frame and high maneuverability.",
-        isActive: true,
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-      {
-        name: "Bicycle",
-        description: "A two-wheeled vehicle powered by pedals — no engine.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
@@ -286,7 +270,7 @@ async function main() {
   const [categories, vehicleTypes, bodyTypes] = await Promise.all([
     prisma.vehicleCategory.findMany(),
     prisma.vehicleType.findMany(),
-    prisma.bodyType.findMany(),
+    prisma.vehicleBodyType.findMany(),
   ]);
 
   // Create a test client

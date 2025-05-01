@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     try {
         const includeStats = request.nextUrl.searchParams.get('include') === 'stats';
 
-        const bodyTypes = await prisma.bodyType.findMany({
+        const bodyTypes = await prisma.vehicleBodyType.findMany({
             where: {
                 isActive: true
             },
@@ -81,10 +81,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new body type
-        const bodyType = await prisma.bodyType.create({
+        const bodyType = await prisma.vehicleBodyType.create({
             data: {
                 name,
-                description: description || null,
+                description,
                 isActive: true,
                 createdBy: userId,
                 updatedBy: userId

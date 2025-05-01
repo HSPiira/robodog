@@ -93,10 +93,13 @@ export const columns: ColumnDef<Policy & { client: { id: string; name: string };
         accessorKey: "validFrom",
         header: () => <div className="whitespace-nowrap">Valid From</div>,
         cell: ({ row }) => {
-            const date = new Date(row.getValue("validFrom"));
+            const rawDate = row.getValue("validFrom");
+            const date = typeof rawDate === 'string' || rawDate instanceof Date ? new Date(rawDate) : null;
             return (
                 <div className="whitespace-nowrap py-1">
-                    {date.toLocaleDateString()}
+                    {date && !isNaN(date.getTime())
+                        ? date.toLocaleDateString()
+                        : "—"}
                 </div>
             );
         },
@@ -105,10 +108,13 @@ export const columns: ColumnDef<Policy & { client: { id: string; name: string };
         accessorKey: "validTo",
         header: () => <div className="whitespace-nowrap">Valid To</div>,
         cell: ({ row }) => {
-            const date = new Date(row.getValue("validTo"));
+            const rawDate = row.getValue("validTo");
+            const date = typeof rawDate === 'string' || rawDate instanceof Date ? new Date(rawDate) : null;
             return (
                 <div className="whitespace-nowrap py-1">
-                    {date.toLocaleDateString()}
+                    {date && !isNaN(date.getTime())
+                        ? date.toLocaleDateString()
+                        : "—"}
                 </div>
             );
         },

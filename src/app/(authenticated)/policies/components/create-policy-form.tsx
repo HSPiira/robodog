@@ -88,8 +88,10 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
     const [vehicles, setVehicles] = useState<Array<{ id: string; registrationNo: string; make: string; model: string }>>([]);
     const [insurers, setInsurers] = useState<Array<{ id: string; name: string }>>([]);
     const [isDataLoading, setIsDataLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [clientSearchTerm, setClientSearchTerm] = useState("");
+    const [insurerSearchTerm, setInsurerSearchTerm] = useState("");
+    const [clientCurrentPage, setClientCurrentPage] = useState(1);
+    const [insurerCurrentPage, setInsurerCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -121,8 +123,14 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                 fetch("/api/insurers?limit=100", { credentials: "include" }),
             ]);
 
-            if (!clientsRes.ok || !insurersRes.ok) {
-                throw new Error("Failed to fetch data");
+            if (!clientsRes.ok) {
+                const errText = await clientsRes.text().catch(() => "Unknown error");
+                throw new Error(`Failed to fetch clients: ${clientsRes.status} ${errText}`);
+            }
+
+            if (!insurersRes.ok) {
+                const errText = await insurersRes.text().catch(() => "Unknown error");
+                throw new Error(`Failed to fetch insurers: ${insurersRes.status} ${errText}`);
             }
 
             const [clientsData, insurersData] = await Promise.all([
@@ -144,7 +152,7 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
             console.error("Error fetching data:", error);
             toast({
                 title: "Error",
-                description: "Failed to load form data",
+                description: error instanceof Error ? error.message : "Failed to load form data",
                 variant: "destructive",
             });
         } finally {
@@ -153,13 +161,13 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
     };
 
     // Filter and paginate data
-    const getFilteredData = (data: any[], searchKey: string) => {
+    const getFilteredData = (data: any[], searchKey: string, searchTerm: string) => {
         return data.filter(item =>
             item[searchKey].toLowerCase().includes(searchTerm.toLowerCase())
         );
     };
 
-    const getPaginatedData = (data: any[]) => {
+    const getPaginatedData = (data: any[], currentPage: number) => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         const end = start + ITEMS_PER_PAGE;
         return data.slice(start, end);
@@ -295,8 +303,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                         <Input
                                                             placeholder="Search clients..."
                                                             className="pl-8 h-8"
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            value={clientSearchTerm}
+                                                            onChange={(e) => setClientSearchTerm(e.target.value)}
                                                         />
                                                     </div>
                                                 </div>
@@ -306,29 +314,29 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        {getPaginatedData(getFilteredData(clients, 'name')).map((client) => (
+                                                        {getPaginatedData(getFilteredData(clients, 'name', clientSearchTerm), clientCurrentPage).map((client) => (
                                                             <SelectItem key={client.id} value={client.id}>
                                                                 {client.name}
                                                             </SelectItem>
                                                         ))}
-                                                        {getFilteredData(clients, 'name').length > ITEMS_PER_PAGE && (
+                                                        {getFilteredData(clients, 'name', clientSearchTerm).length > ITEMS_PER_PAGE && (
                                                             <div className="flex items-center justify-between p-2 border-t">
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                                                    disabled={currentPage === 1}
+                                                                    onClick={() => setClientCurrentPage(p => Math.max(1, p - 1))}
+                                                                    disabled={clientCurrentPage === 1}
                                                                 >
                                                                     Previous
                                                                 </Button>
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    Page {currentPage}
+                                                                    Page {clientCurrentPage}
                                                                 </span>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => setCurrentPage(p => p + 1)}
-                                                                    disabled={getFilteredData(clients, 'name').length <= currentPage * ITEMS_PER_PAGE}
+                                                                    onClick={() => setClientCurrentPage(p => p + 1)}
+                                                                    disabled={getFilteredData(clients, 'name', clientSearchTerm).length <= clientCurrentPage * ITEMS_PER_PAGE}
                                                                 >
                                                                     Next
                                                                 </Button>
@@ -365,8 +373,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                         <Input
                                                             placeholder="Search insurers..."
                                                             className="pl-8 h-8"
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            value={insurerSearchTerm}
+                                                            onChange={(e) => setInsurerSearchTerm(e.target.value)}
                                                         />
                                                     </div>
                                                 </div>
@@ -376,29 +384,29 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        {getPaginatedData(getFilteredData(insurers, 'name')).map((insurer) => (
+                                                        {getPaginatedData(getFilteredData(insurers, 'name', insurerSearchTerm), insurerCurrentPage).map((insurer) => (
                                                             <SelectItem key={insurer.id} value={insurer.id}>
                                                                 {insurer.name}
                                                             </SelectItem>
                                                         ))}
-                                                        {getFilteredData(insurers, 'name').length > ITEMS_PER_PAGE && (
+                                                        {getFilteredData(insurers, 'name', insurerSearchTerm).length > ITEMS_PER_PAGE && (
                                                             <div className="flex items-center justify-between p-2 border-t">
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                                                    disabled={currentPage === 1}
+                                                                    onClick={() => setInsurerCurrentPage(p => Math.max(1, p - 1))}
+                                                                    disabled={insurerCurrentPage === 1}
                                                                 >
                                                                     Previous
                                                                 </Button>
                                                                 <span className="text-xs text-muted-foreground">
-                                                                    Page {currentPage}
+                                                                    Page {insurerCurrentPage}
                                                                 </span>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => setCurrentPage(p => p + 1)}
-                                                                    disabled={getFilteredData(insurers, 'name').length <= currentPage * ITEMS_PER_PAGE}
+                                                                    onClick={() => setInsurerCurrentPage(p => p + 1)}
+                                                                    disabled={getFilteredData(insurers, 'name', insurerSearchTerm).length <= insurerCurrentPage * ITEMS_PER_PAGE}
                                                                 >
                                                                     Next
                                                                 </Button>
