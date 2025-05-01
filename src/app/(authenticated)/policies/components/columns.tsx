@@ -124,38 +124,34 @@ export const columns: ColumnDef<Policy & { client: { id: string; name: string };
         cell: ({ row }) => {
             const policy = row.original;
 
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-7 w-7 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href={`/policies/${policy.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/policies/${policy.id}/edit`}>Edit Policy</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/policies/${policy.id}/renew`}>Renew Policy</Link>
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => {
-                                // TODO: Add cancellation logic or confirmation dialog
-                                console.log("Cancel policy:", policy.id);
+                                const confirmed = window.confirm(
+                                  "Are you sure you want to cancel this policy?"
+                                );
+                                if (confirmed) {
+                                    fetch(`/api/policies/${policy.id}/cancel`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                    })
+                                    .then(response => {
+                                        if (!response.ok) throw new Error("Failed to cancel policy");
+                                        return response.json();
+                                    })
+                                    .then(() => {
+                                        // Refresh the table or show success notification
+                                        // This might require lifting state up or using a context
+                                    })
+                                    .catch(error => {
+                                        console.error("Error cancelling policy:", error);
+                                        // Show error notification
+                                    });
+                                }
                             }}
                         >
                             Cancel Policy
                         </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            );
         },
     },
 ]; 
