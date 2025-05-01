@@ -75,7 +75,7 @@ interface CreatePolicyFormProps {
 const dataCache = {
     clients: [] as Array<{ id: string; name: string }>,
     vehicles: [] as Array<{ id: string; registrationNo: string; make: string; model: string }>,
-    insurers: [] as Array<{ id: string; name: string }>,
+    insurers: [] as Array<{ id: string; name: string; code: string }>,
     lastFetched: 0,
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
 };
@@ -86,7 +86,7 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
     const [isOpen, setIsOpen] = useState(false);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [vehicles, setVehicles] = useState<Array<{ id: string; registrationNo: string; make: string; model: string }>>([]);
-    const [insurers, setInsurers] = useState<Array<{ id: string; name: string }>>([]);
+    const [insurers, setInsurers] = useState<Array<{ id: string; name: string; code: string }>>([]);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState("");
     const [insurerSearchTerm, setInsurerSearchTerm] = useState("");
@@ -515,7 +515,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                 placeholder="Enter premium amount"
                                                 className="h-9"
                                                 {...field}
-                                                value={field.value ?? ''}
+                                                value={field.value === null ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -535,7 +536,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                 placeholder="Enter stamp duty amount"
                                                 className="h-9"
                                                 {...field}
-                                                value={field.value ?? ''}
+                                                value={field.value === null ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                                             />
                                         </FormControl>
                                         <FormMessage />

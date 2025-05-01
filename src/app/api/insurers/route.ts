@@ -7,12 +7,15 @@ import { prisma } from "@/lib/prisma";
 const insurerSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email format").optional().nullable(),
-    address: z.string().optional().nullable(),
     phone: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
+
         const insurers = await prisma.insurer.findMany({
             where: {
                 isActive: true,
@@ -23,10 +26,31 @@ export async function GET() {
                 name: true,
                 email: true,
                 phone: true,
+                address: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
+                createdBy: true,
+                updatedBy: true,
+                createdByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                },
+                updatedByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
             },
             orderBy: {
                 name: 'asc',
             },
+            take: limit,
         });
 
         return NextResponse.json(insurers);
@@ -61,11 +85,28 @@ export async function POST(req: Request) {
             data: {
                 name: body.name,
                 email: body.email,
-                address: body.address,
                 phone: body.phone,
+                address: body.address,
                 isActive: true,
                 createdBy: session.user.id,
+                updatedBy: session.user.id,
             },
+            include: {
+                createdByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                },
+                updatedByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    }
+                }
+            }
         });
 
         return NextResponse.json(insurer);

@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 import { Building2, Mail, Phone, MapPin, Loader2, Edit2 } from "lucide-react";
-import type { Insurer } from "@/types";
+import { Insurer as PrismaInsurer, User as PrismaUser } from "@prisma/client";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -48,8 +48,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type InsurerWithUsers = PrismaInsurer & {
+    createdByUser: PrismaUser | null;
+    updatedByUser: PrismaUser | null;
+};
+
 interface EditInsurerDialogProps {
-    insurer: Insurer | null;
+    insurer: InsurerWithUsers | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
@@ -63,14 +68,13 @@ export function EditInsurerDialog({
 }: EditInsurerDialogProps) {
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<FormValues>({
+    const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
-            email: "",
-            phone: "",
-            address: "",
-            isActive: true,
+            name: insurer?.name || "",
+            email: insurer?.email || "",
+            phone: insurer?.phone || "",
+            address: insurer?.address || "",
         },
     });
 

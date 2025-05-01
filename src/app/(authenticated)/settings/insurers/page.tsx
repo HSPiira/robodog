@@ -64,7 +64,12 @@ import { AddInsurerDialog } from "./components/add-insurer-dialog";
 import { EditInsurerDialog } from "./components/edit-insurer-dialog";
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
-import type { Insurer } from "@/types";
+import { Insurer as PrismaInsurer, User as PrismaUser } from "@prisma/client";
+
+type InsurerWithUsers = PrismaInsurer & {
+    createdByUser: PrismaUser | null;
+    updatedByUser: PrismaUser | null;
+};
 
 // Add constants for pagination
 const ITEMS_PER_PAGE = 10;
@@ -79,26 +84,26 @@ const tabStyles = {
 };
 
 // Add safe date formatting function
-const safeFormatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "N/A";
+const safeFormatDate = (date: Date | string | null | undefined) => {
+    if (!date) return "—";
     try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return "Invalid Date";
-        return format(date, "MMM d, yyyy");
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        if (isNaN(dateObj.getTime())) return "—";
+        return format(dateObj, "PPP");
     } catch (error) {
-        return "Invalid Date";
+        return "—";
     }
 };
 
 export default function InsurersPage() {
     const { toast } = useToast();
-    const [insurers, setInsurers] = useState<Insurer[]>([]);
+    const [insurers, setInsurers] = useState<InsurerWithUsers[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-    const [selectedInsurer, setSelectedInsurer] = useState<Insurer | null>(null);
+    const [selectedInsurer, setSelectedInsurer] = useState<InsurerWithUsers | null>(null);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
@@ -106,7 +111,7 @@ export default function InsurersPage() {
 
     // Edit state
     const [isEditing, setIsEditing] = useState(false);
-    const [editingInsurer, setEditingInsurer] = useState<Insurer | null>(null);
+    const [editingInsurer, setEditingInsurer] = useState<InsurerWithUsers | null>(null);
 
     // Add new state
     const [isAddingNew, setIsAddingNew] = useState(false);
@@ -145,7 +150,7 @@ export default function InsurersPage() {
             // If an insurer is selected, refresh it with the latest data
             if (selectedInsurer) {
                 const updatedSelectedInsurer = data.find(
-                    (insurer: Insurer) => insurer.id === selectedInsurer.id
+                    (insurer: InsurerWithUsers) => insurer.id === selectedInsurer.id
                 );
                 if (updatedSelectedInsurer) {
                     setSelectedInsurer(updatedSelectedInsurer);
@@ -191,7 +196,7 @@ export default function InsurersPage() {
         }
     }, [filteredInsurers, currentPage]);
 
-    const handleRowClick = (insurer: Insurer) => {
+    const handleRowClick = (insurer: InsurerWithUsers) => {
         setSelectedInsurer(insurer.id === selectedInsurer?.id ? null : insurer);
     };
 
@@ -251,7 +256,7 @@ export default function InsurersPage() {
         }
     };
 
-    const handleEdit = (insurer: Insurer) => {
+    const handleEdit = (insurer: InsurerWithUsers) => {
         setEditingInsurer(insurer);
         setIsEditing(true);
     };
@@ -412,7 +417,7 @@ export default function InsurersPage() {
                                                         "py-1 px-2 h-7 text-xs text-muted-foreground",
                                                         selectedInsurer && "hidden md:hidden"
                                                     )}>
-                                                        {insurer.updatedAt ? safeFormatDate(insurer.updatedAt) : "—"}
+                                                        {safeFormatDate(insurer.updatedAt)}
                                                     </TableCell>
                                                     <TableCell className="py-1 px-2 h-7 text-xs text-right">
                                                         <DropdownMenu>

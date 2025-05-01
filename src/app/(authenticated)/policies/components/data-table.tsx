@@ -33,6 +33,7 @@ interface DataTableProps<TData> {
     onRowClick?: (row: TData) => void;
     selectedRow?: TData | null;
     onPolicyUpdate?: () => void;
+    loading?: boolean;
 }
 
 export function DataTable<TData>({
@@ -43,6 +44,7 @@ export function DataTable<TData>({
     onRowClick,
     selectedRow,
     onPolicyUpdate,
+    loading = false,
 }: DataTableProps<TData>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -108,7 +110,19 @@ export function DataTable<TData>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {loading ? (
+                            <TableRow className="h-7">
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-7 text-center text-xs"
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                        <span className="ml-2">Loading...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}

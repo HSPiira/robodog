@@ -1,14 +1,22 @@
-import { PrismaClient } from '@prisma/client';
-import { Role, ClientType, PolicyStatus, StickerStatus } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import { Role, ClientType, PolicyStatus, StickerStatus } from "@prisma/client";
 import * as argon2 from "argon2";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create a test user with hashed password
+  // Create or update a test user with hashed password
   const hashedPassword = await argon2.hash("password123");
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: {
+      email: "piira@robodog.com",
+    },
+    update: {
+      name: "Aegis Piira",
+      password: hashedPassword,
+      role: Role.ADMIN,
+    },
+    create: {
       email: "piira@robodog.com",
       name: "Aegis Piira",
       password: hashedPassword,
@@ -21,49 +29,56 @@ async function main() {
     data: [
       {
         name: "Private",
-        description: "Owned and used by individuals for personal transportation.",
+        description:
+          "Owned and used by individuals for personal transportation.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Commercial",
-        description: "Used for business purposes, such as delivery or service vehicles.",
+        description:
+          "Used for business purposes, such as delivery or service vehicles.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Government",
-        description: "Owned and operated by governmental departments or agencies.",
+        description:
+          "Owned and operated by governmental departments or agencies.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Diplomatic",
-        description: "Assigned to diplomats, often enjoys special privileges and immunity.",
+        description:
+          "Assigned to diplomats, often enjoys special privileges and immunity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Agricultural",
-        description: "Used in farming and agricultural activities (e.g., tractors, harvesters).",
+        description:
+          "Used in farming and agricultural activities (e.g., tractors, harvesters).",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Military",
-        description: "Operated by the armed forces, often for defense or strategic use.",
+        description:
+          "Operated by the armed forces, often for defense or strategic use.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "PublicService",
-        description: "Used for transporting the public — includes buses, taxis, etc.",
+        description:
+          "Used for transporting the public — includes buses, taxis, etc.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
@@ -77,7 +92,8 @@ async function main() {
       },
       {
         name: "Emergency",
-        description: "Designed for urgent response — includes ambulances, fire trucks, etc.",
+        description:
+          "Designed for urgent response — includes ambulances, fire trucks, etc.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
@@ -91,70 +107,80 @@ async function main() {
     data: [
       {
         name: "Car",
-        description: "A standard four-wheeled passenger vehicle, typically seats 4–5 people.",
+        description:
+          "A standard four-wheeled passenger vehicle, typically seats 4–5 people.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Motorcycle",
-        description: "A two-wheeled motorized vehicle designed for individual or dual passengers.",
+        description:
+          "A two-wheeled motorized vehicle designed for individual or dual passengers.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Truck",
-        description: "A larger vehicle used for transporting goods, often with higher load capacity.",
+        description:
+          "A larger vehicle used for transporting goods, often with higher load capacity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Bus",
-        description: "A large road vehicle designed to carry many passengers, typically for public transport.",
+        description:
+          "A large road vehicle designed to carry many passengers, typically for public transport.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Van",
-        description: "A medium-sized vehicle, often used for transporting goods or groups of people.",
+        description:
+          "A medium-sized vehicle, often used for transporting goods or groups of people.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Tractor",
-        description: "A powerful vehicle used mainly in agriculture for pulling trailers or machinery.",
+        description:
+          "A powerful vehicle used mainly in agriculture for pulling trailers or machinery.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Trailer",
-        description: "A non-motorized vehicle towed by another vehicle, used to carry goods or equipment.",
+        description:
+          "A non-motorized vehicle towed by another vehicle, used to carry goods or equipment.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Forklift",
-        description: "An industrial vehicle with a pronged device for lifting and moving materials.",
+        description:
+          "An industrial vehicle with a pronged device for lifting and moving materials.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "Bicycle",
-        description: "A human-powered two-wheeled vehicle, often used for personal transport.",
+        description:
+          "A human-powered two-wheeled vehicle, often used for personal transport.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
         name: "ATV",
-        description: "All-Terrain Vehicle, designed for off-road use on rough terrains.",
+        description:
+          "All-Terrain Vehicle, designed for off-road use on rough terrains.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
@@ -167,23 +193,22 @@ async function main() {
   await prisma.vehicleBodyType.createMany({
     data: [
       {
-        id: "1",
         name: "Sedan",
-        description: "A classic car shape with a separate trunk and seating for 4–5.",
+        description:
+          "A classic car shape with a separate trunk and seating for 4–5.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "2",
         name: "Hatchback",
-        description: "A compact vehicle with a rear door that opens upwards, combining trunk and cabin.",
+        description:
+          "A compact vehicle with a rear door that opens upwards, combining trunk and cabin.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "3",
         name: "Coupe",
         description: "A 2-door car with a sporty style, typically seats 2–4.",
         isActive: true,
@@ -191,73 +216,73 @@ async function main() {
         updatedBy: user.id,
       },
       {
-        id: "4",
         name: "Convertible",
-        description: "A car with a roof that can be folded or removed for open-air driving.",
+        description:
+          "A car with a roof that can be folded or removed for open-air driving.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "5",
         name: "SUV",
-        description: "Sports Utility Vehicle — larger and often 4WD, suited for off-road and family use.",
+        description:
+          "Sports Utility Vehicle — larger and often 4WD, suited for off-road and family use.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "6",
         name: "Crossover",
-        description: "A blend of SUV and passenger car, offering comfort and utility.",
+        description:
+          "A blend of SUV and passenger car, offering comfort and utility.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "7",
         name: "Pickup",
-        description: "A vehicle with an open cargo area at the back, often with high load capacity.",
+        description:
+          "A vehicle with an open cargo area at the back, often with high load capacity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "8",
         name: "StationWagon",
-        description: "A car with extended rear cargo space and typically a rear hatch door.",
+        description:
+          "A car with extended rear cargo space and typically a rear hatch door.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "9",
         name: "Minivan",
-        description: "A family-focused vehicle with sliding doors and space for 7+ passengers.",
+        description:
+          "A family-focused vehicle with sliding doors and space for 7+ passengers.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "10",
         name: "BoxTruck",
-        description: "A truck with an enclosed cargo area shaped like a box — used for moving goods.",
+        description:
+          "A truck with an enclosed cargo area shaped like a box — used for moving goods.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "11",
         name: "Tanker",
-        description: "A truck designed to carry liquid or gas cargo (e.g., fuel, water).",
+        description:
+          "A truck designed to carry liquid or gas cargo (e.g., fuel, water).",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
       {
-        id: "12",
         name: "Flatbed",
-        description: "A truck with a flat, open cargo area used for large or heavy items.",
+        description:
+          "A truck with a flat, open cargo area used for large or heavy items.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
@@ -273,9 +298,30 @@ async function main() {
     prisma.vehicleBodyType.findMany(),
   ]);
 
-  // Create a test client
-  const client = await prisma.client.create({
-    data: {
+  console.log("Categories:", categories);
+  console.log("Vehicle Types:", vehicleTypes);
+  console.log("Body Types:", bodyTypes);
+
+  // Check if we have the required records
+  if (!categories.length || !vehicleTypes.length || !bodyTypes.length) {
+    throw new Error("Required vehicle types, categories, or body types are missing");
+  }
+
+  // Create or update a test client
+  const client = await prisma.client.upsert({
+    where: {
+      email: "piira@robodog.com",
+    },
+    update: {
+      name: "Aegis Piira",
+      phone: "+1234567890",
+      address: "123 Test St",
+      type: ClientType.INDIVIDUAL,
+      isActive: true,
+      createdBy: user.id,
+      updatedBy: user.id,
+    },
+    create: {
       name: "Aegis Piira",
       email: "piira@robodog.com",
       phone: "+1234567890",
@@ -296,10 +342,10 @@ async function main() {
       year: 2020,
       chassisNumber: "CH123456",
       engineNumber: "EN123456",
-      bodyTypeId: bodyTypes[0].id, // Use Sedan body type
-      categoryId: categories[0].id, // Use Private category
+      bodyTypeId: bodyTypes[0].id,
+      categoryId: categories[0].id,
       clientId: client.id,
-      vehicleTypeId: vehicleTypes[0].id, // Use Car type
+      vehicleTypeId: vehicleTypes[0].id,
       createdBy: user.id,
       updatedBy: user.id,
     },
@@ -309,9 +355,9 @@ async function main() {
   const insurer = await prisma.insurer.create({
     data: {
       name: "Sample Insurance Company",
-      address: "123 Insurance Street",
-      email: "contact@sampleinsurance.com",
+      email: "sample@insurer.com",
       phone: "+1234567890",
+      address: "123 Test St",
       isActive: true,
       createdBy: user.id,
       updatedBy: user.id,
@@ -332,7 +378,6 @@ async function main() {
       remarks: "Test policy",
       createdBy: user.id,
       updatedBy: user.id,
-      issuedBy: user.id,
     },
   });
 
@@ -390,10 +435,13 @@ async function main() {
     vehicle: { id: vehicle.id, registrationNo: vehicle.registrationNo },
     policy: { id: policy.id, policyNo: policy.policyNo },
     stickerIssuance: { id: stickerIssuance.id },
-    stickerStock: { id: stickerStock.id, serialNumber: stickerStock.serialNumber },
-    categories: categories.map(c => ({ id: c.id, name: c.name })),
-    vehicleTypes: vehicleTypes.map(vt => ({ id: vt.id, name: vt.name })),
-    bodyTypes: bodyTypes.map(bt => ({ id: bt.id, name: bt.name }))
+    stickerStock: {
+      id: stickerStock.id,
+      serialNumber: stickerStock.serialNumber,
+    },
+    categories: categories.map((c) => ({ id: c.id, name: c.name })),
+    vehicleTypes: vehicleTypes.map((vt) => ({ id: vt.id, name: vt.name })),
+    bodyTypes: bodyTypes.map((bt) => ({ id: bt.id, name: bt.name })),
   });
 }
 
