@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { columns as policyColumns } from "./components/columns";
+import { createColumns } from "./components/columns";
 import { Policy } from "@prisma/client";
 import { DataTable } from "./components/data-table";
 import { PolicyDetail } from "./components/policy-detail";
@@ -54,37 +54,22 @@ export default function PoliciesPage() {
     };
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
-            {loading && policies.length === 0 ? (
-                <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-            ) : (
-                <div className="flex gap-6 h-[calc(100vh-12rem)]">
-                    <div className="flex-1 min-w-0">
-                        <DataTable
-                            columns={policyColumns}
-                            data={policies}
-                            searchKey="policyNo"
-                            actionButton={
-                                <CreatePolicyForm
-                                    onSuccess={fetchPolicies}
-                                    onCancel={() => { }}
-                                />
-                            }
-                            onRowClick={handlePolicySelect}
-                            selectedRow={selectedPolicy}
-                        />
-                    </div>
-                    <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[400px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
-                        {selectedPolicy && (
-                            <PolicyDetail
-                                policy={selectedPolicy}
-                                onClose={() => setShowDetails(false)}
-                            />
-                        )}
-                    </div>
-                </div>
+        <div className="container mx-auto py-10">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Policies</h1>
+                <CreatePolicyForm onSuccess={fetchPolicies} onCancel={() => { }} />
+            </div>
+            <DataTable
+                columns={createColumns({ onPolicyUpdate: fetchPolicies })}
+                data={policies}
+                onRowClick={handlePolicySelect}
+                selectedRow={selectedPolicy}
+            />
+            {showDetails && selectedPolicy && (
+                <PolicyDetail
+                    policy={selectedPolicy}
+                    onClose={() => setShowDetails(false)}
+                />
             )}
         </div>
     );
