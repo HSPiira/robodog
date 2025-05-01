@@ -50,6 +50,14 @@ const formSchema = z.object({
     premium: z.coerce.number().min(0, "Premium must be a positive number"),
     stampDuty: z.coerce.number().min(0, "Stamp duty must be a positive number"),
     remarks: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.validTo <= data.validFrom) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid-to date must be after valid-from date",
+            path: ["validTo"],
+        });
+    }
 });
 
 interface CreatePolicyFormProps {
@@ -68,7 +76,7 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            status: PolicyStatus.ACTIVE,
+            status: PolicyStatus.PENDING,
             premium: 0,
             stampDuty: 0,
         },
@@ -119,20 +127,14 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                 console.error("Error fetching data:", error);
                 toast({
                     title: "Error",
-                    description: "Failed to fetch required data",
+                    description: "Failed to load form data",
                     variant: "destructive",
                 });
-                // Set empty arrays on error
-                setClients([]);
-                setVehicles([]);
-                setInsurers([]);
-            } finally {
-                setIsDataLoading(false);
             }
         };
 
         fetchData();
-    }, [toast]);
+    }, []);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
@@ -209,8 +211,9 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                     </FormControl>
                                     <SelectContent>
                                         <SelectItem value={PolicyStatus.ACTIVE}>Active</SelectItem>
-                                        <SelectItem value={PolicyStatus.INACTIVE}>Inactive</SelectItem>
                                         <SelectItem value={PolicyStatus.PENDING}>Pending</SelectItem>
+                                        <SelectItem value={PolicyStatus.EXPIRED}>Expired</SelectItem>
+                                        <SelectItem value={PolicyStatus.CANCELLED}>Cancelled</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

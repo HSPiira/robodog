@@ -49,6 +49,14 @@ const formSchema = z.object({
     premium: z.number().optional(),
     stampDuty: z.number().optional(),
     remarks: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.validTo <= data.validFrom) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid-to date must be after valid-from date",
+            path: ["validTo"],
+        });
+    }
 });
 
 type Client = {

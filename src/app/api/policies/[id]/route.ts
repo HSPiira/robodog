@@ -42,8 +42,8 @@ export async function GET(
             },
         });
 
-        if (!policy) {
-            return new NextResponse("Policy not found", { status: 404 });
+        if (!policy || !policy.vehicle) {
+            return new NextResponse("Policy not found or not linked to a vehicle", { status: 404 });
         }
 
         return NextResponse.json(policy);
@@ -76,6 +76,23 @@ export async function PATCH(
             stampDuty,
             remarks,
         } = body;
+
+        // Validate required fields
+        if (status && !Object.values(PolicyStatus).includes(status)) {
+            return new NextResponse("Invalid policy status", { status: 400 });
+        }
+
+        if (validFrom && validTo && new Date(validFrom) > new Date(validTo)) {
+            return new NextResponse("Valid from date must be before valid to date", { status: 400 });
+        }
+
+        if (premium !== undefined && isNaN(Number(premium))) {
+            return new NextResponse("Premium must be a number", { status: 400 });
+        }
+
+        if (stampDuty !== undefined && isNaN(Number(stampDuty))) {
+            return new NextResponse("Stamp duty must be a number", { status: 400 });
+        }
 
         const policy = await prisma.policy.update({
             where: {

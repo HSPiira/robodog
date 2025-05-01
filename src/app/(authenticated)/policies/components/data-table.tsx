@@ -32,7 +32,6 @@ interface DataTableProps<TData> {
     actionButton?: React.ReactNode;
     onRowClick?: (row: TData) => void;
     selectedRow?: TData | null;
-    fetchData?: () => void;
 }
 
 export function DataTable<TData>({
@@ -42,7 +41,6 @@ export function DataTable<TData>({
     actionButton,
     onRowClick,
     selectedRow,
-    fetchData,
 }: DataTableProps<TData>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);

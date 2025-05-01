@@ -10,15 +10,15 @@ import { PolicyStatus } from "@prisma/client";
 
 const statusVariants: Record<PolicyStatus, "default" | "secondary" | "destructive" | "outline"> = {
     ACTIVE: "default",
-    INACTIVE: "secondary",
     EXPIRED: "destructive",
-    PENDING: "outline",
     CANCELLED: "destructive",
+    PENDING: "outline",
+    INACTIVE: "secondary",
 };
 
 interface PolicyDetailProps {
     policy: Policy | null;
-    onClose: () => void;
+    onClose?: () => void;
 }
 
 export function PolicyDetail({ policy, onClose }: PolicyDetailProps) {
@@ -28,9 +28,16 @@ export function PolicyDetail({ policy, onClose }: PolicyDetailProps) {
         <Card className="w-full max-w-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-2xl font-bold">Policy Details</CardTitle>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                    <X className="h-4 w-4" />
-                </Button>
+                {onClose && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Close details panel"
+                        onClick={onClose}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                )}
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">

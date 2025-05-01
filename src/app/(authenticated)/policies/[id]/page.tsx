@@ -21,35 +21,7 @@ export default function PolicyDetailPage() {
     const [policy, setPolicy] = useState<Policy | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchPolicy = async () => {
-            try {
-                const response = await fetch(`/api/policies/${params.id}`);
-                if (!response.ok) {
-                    throw new Error("Failed to fetch policy");
-                }
-                const data = await response.json();
-                setPolicy({
-                    ...data,
-                    validFrom: new Date(data.validFrom),
-                    validTo: new Date(data.validTo),
-                });
-            } catch (error) {
-                console.error("Error fetching policy:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to fetch policy",
-                    variant: "destructive",
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPolicy();
-    }, [params.id, toast]);
-
-    const handleRefresh = async () => {
+    const fetchPolicy = async () => {
         setLoading(true);
         try {
             const response = await fetch(`/api/policies/${params.id}`);
@@ -72,6 +44,14 @@ export default function PolicyDetailPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchPolicy();
+    }, [params.id, toast]);
+
+    const handleRefresh = async () => {
+        fetchPolicy();
     };
 
     if (loading) {
@@ -105,7 +85,7 @@ export default function PolicyDetailPage() {
                 </div>
             </div>
 
-            <PolicyDetail policy={policy} onClose={() => { }} />
+            <PolicyDetail policy={policy} onClose={() => router.back()} />
         </div>
     );
 } 

@@ -178,7 +178,7 @@ model Policy {
   id            String       @id @default(uuid())
   policyNo      String       @unique
   clientId      String
-  status        PolicyStatus
+  status        PolicyStatus @default(PENDING)
   insurerId     String
   validFrom     DateTime
   validTo       DateTime
@@ -195,6 +195,9 @@ model Policy {
   createdByUser User?        @relation("PolicyCreatedBy", fields: [createdBy], references: [id])
   insurer       Insurer      @relation(fields: [insurerId], references: [id])
   updatedByUser User?        @relation("PolicyUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([clientId])
+  @@index([insurerId])
 }
 
 model StickerIssuance {
@@ -355,6 +358,7 @@ enum PolicyStatus {
   EXPIRED   @map("Expired")
   CANCELLED @map("Cancelled")
   PENDING   @map("Pending")
+  INACTIVE  @map("Inactive")
 }
 
 enum UsageType {

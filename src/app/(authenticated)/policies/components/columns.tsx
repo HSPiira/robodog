@@ -54,10 +54,10 @@ export interface Policy {
 
 const statusVariants: Record<PolicyStatus, "default" | "secondary" | "destructive" | "outline"> = {
     ACTIVE: "default",
-    INACTIVE: "secondary",
     EXPIRED: "destructive",
-    PENDING: "outline",
     CANCELLED: "destructive",
+    PENDING: "outline",
+    INACTIVE: "secondary",
 };
 
 export const columns: ColumnDef<Policy>[] = [
@@ -88,12 +88,12 @@ export const columns: ColumnDef<Policy>[] = [
         header: "Vehicle",
         cell: ({ row }: { row: Row<Policy> }) => {
             const vehicle = row.original.vehicle;
-            return (
+            return vehicle ? (
                 <div className="truncate whitespace-nowrap max-w-[150px]">
                     <span className="font-medium">{vehicle.registrationNo}</span>
                     <span className="text-muted-foreground"> {vehicle.make} {vehicle.model}</span>
                 </div>
-            );
+            ) : <span className="text-muted-foreground">—</span>;
         },
     },
     {

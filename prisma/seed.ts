@@ -17,330 +17,276 @@ async function main() {
   });
 
   // Create vehicle categories
-  const categories = await Promise.all([
-    prisma.vehicleCategory.create({
-      data: {
+  await prisma.vehicleCategory.createMany({
+    data: [
+      {
         name: "Private",
         description: "Owned and used by individuals for personal transportation.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Commercial",
         description: "Used for business purposes, such as delivery or service vehicles.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Government",
         description: "Owned and operated by governmental departments or agencies.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Diplomatic",
         description: "Assigned to diplomats, often enjoys special privileges and immunity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Agricultural",
         description: "Used in farming and agricultural activities (e.g., tractors, harvesters).",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Military",
         description: "Operated by the armed forces, often for defense or strategic use.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "PublicService",
         description: "Used for transporting the public — includes buses, taxis, etc.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Rental",
         description: "Provided by car hire/rental services for temporary use.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleCategory.create({
-      data: {
+      {
         name: "Emergency",
         description: "Designed for urgent response — includes ambulances, fire trucks, etc.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-  ]);
+    ],
+    skipDuplicates: true,
+  });
 
   // Create vehicle types
-  const vehicleTypes = await Promise.all([
-    prisma.vehicleType.create({
-      data: {
+  await prisma.vehicleType.createMany({
+    data: [
+      {
         name: "Car",
         description: "A standard four-wheeled passenger vehicle, typically seats 4–5 people.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Motorcycle",
         description: "A two-wheeled motorized vehicle designed for individual or dual passengers.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Truck",
         description: "A larger vehicle used for transporting goods, often with higher load capacity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Bus",
         description: "A large road vehicle designed to carry many passengers, typically for public transport.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Van",
         description: "A medium-sized vehicle, often used for transporting goods or groups of people.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Tractor",
         description: "A powerful vehicle used mainly in agriculture for pulling trailers or machinery.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Trailer",
         description: "A non-motorized vehicle towed by another vehicle, used to carry goods or equipment.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Forklift",
         description: "An industrial vehicle with a pronged device for lifting and moving materials.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "Bicycle",
         description: "A human-powered two-wheeled vehicle, often used for personal transport.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.vehicleType.create({
-      data: {
+      {
         name: "ATV",
         description: "All-Terrain Vehicle, designed for off-road use on rough terrains.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-  ]);
+    ],
+    skipDuplicates: true,
+  });
 
   // Create vehicle body types
-  const bodyTypes = await Promise.all([
-    prisma.bodyType.create({
-      data: {
+  await prisma.bodyType.createMany({
+    data: [
+      {
         name: "Sedan",
         description: "A classic car shape with a separate trunk and seating for 4–5.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Hatchback",
         description: "A compact vehicle with a rear door that opens upwards, combining trunk and cabin.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Coupe",
         description: "A 2-door car with a sporty style, typically seats 2–4.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Convertible",
         description: "A car with a roof that can be folded or removed for open-air driving.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "SUV",
         description: "Sports Utility Vehicle — larger and often 4WD, suited for off-road and family use.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Crossover",
         description: "A blend of SUV and passenger car, offering comfort and utility.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Pickup",
         description: "A vehicle with an open cargo area at the back, often with high load capacity.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "StationWagon",
         description: "A car with extended rear cargo space and typically a rear hatch door.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Minivan",
         description: "A family-focused vehicle with sliding doors and space for 7+ passengers.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "BoxTruck",
         description: "A truck with an enclosed cargo area shaped like a box — used for moving goods.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Tanker",
         description: "A truck designed to carry liquid or gas cargo (e.g., fuel, water).",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Flatbed",
         description: "A truck with a flat, open cargo area used for large or heavy items.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "ChassisCab",
         description: "A commercial truck with only a cab and chassis, ready for custom body installation.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "PanelVan",
         description: "A van with enclosed sides, no rear seats, commonly used for deliveries.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Motorcycle",
         description: "A two-wheeled motor vehicle with a compact frame and high maneuverability.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
-    prisma.bodyType.create({
-      data: {
+      {
         name: "Bicycle",
         description: "A two-wheeled vehicle powered by pedals — no engine.",
         isActive: true,
         createdBy: user.id,
         updatedBy: user.id,
       },
-    }),
+    ],
+    skipDuplicates: true,
+  });
+
+  // Fetch all created records
+  const [categories, vehicleTypes, bodyTypes] = await Promise.all([
+    prisma.vehicleCategory.findMany(),
+    prisma.vehicleType.findMany(),
+    prisma.bodyType.findMany(),
   ]);
 
   // Create a test client
