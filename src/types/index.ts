@@ -21,6 +21,9 @@ export interface Sticker {
     policy?: {
         id: string;
         policyNo: string;
+        validFrom: string;
+        validTo: string;
+        status: string;
         vehicle?: {
             id: string;
             registrationNo: string;

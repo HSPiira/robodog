@@ -6,3 +6,4 @@ onlyBuiltDependencies:
   - argon2
   - bcrypt
   - prisma
+  - sharp

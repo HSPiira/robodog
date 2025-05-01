@@ -82,13 +82,26 @@ export async function POST(request: NextRequest) {
         // Get the policy to associate the vehicle
         const policy = await prisma.policy.findUnique({
             where: { id: policyId },
-            select: { vehicleId: true },
+            include: {
+                client: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                vehicle: {
+                    select: {
+                        id: true,
+                        registrationNo: true,
+                    },
+                },
+            },
         });
 
-        if (!policy || !policy.vehicleId) {
+        if (!policy) {
             return NextResponse.json(
-                { error: "Policy not linked to a vehicle" },
-                { status: 400 }
+                { error: "Policy not found" },
+                { status: 404 }
             );
         }
 
@@ -102,7 +115,7 @@ export async function POST(request: NextRequest) {
                 },
                 vehicle: {
                     connect: {
-                        id: policy.vehicleId
+                        id: policy.vehicle.id
                     }
                 },
                 isActive: true,
@@ -112,11 +125,13 @@ export async function POST(request: NextRequest) {
                     include: {
                         client: {
                             select: {
+                                id: true,
                                 name: true,
                             },
                         },
                         vehicle: {
                             select: {
+                                id: true,
                                 registrationNo: true,
                             },
                         },

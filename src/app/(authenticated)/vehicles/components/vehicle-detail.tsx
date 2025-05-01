@@ -1,6 +1,6 @@
 "use client";
 
-import { Car, Calendar, Key, User, Tag, Info, CheckCircle, XCircle, Truck, CircuitBoard, Users, Weight, Gauge, MoreHorizontal, ArchiveX, Edit } from "lucide-react";
+import { Car, Calendar, Key, User, Tag, Info, CheckCircle, XCircle, Truck, CircuitBoard, Users, Weight, Gauge, MoreHorizontal, ArchiveX, Edit, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,12 @@ import {
 import { EditVehicleForm } from "./edit-vehicle-form";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface VehicleDetailProps {
     vehicle?: {
@@ -253,14 +259,23 @@ export function VehicleDetail({ vehicle, onCreatePolicy, onRefresh }: VehicleDet
                     {/* Actions */}
                     {onCreatePolicy && (
                         <div className="pt-3 mt-2 border-t">
-                            <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => onCreatePolicy(vehicle.id)}
-                                className="rounded-full text-xs px-3 h-7 w-full"
-                            >
-                                Create Policy
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            size="icon"
+                                            variant="default"
+                                            onClick={() => onCreatePolicy(vehicle.id)}
+                                            className="h-7 w-7 rounded-full"
+                                        >
+                                            <FileText className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Create new policy</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                     )}
                 </div>
