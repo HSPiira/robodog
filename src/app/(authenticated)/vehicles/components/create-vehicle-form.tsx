@@ -105,7 +105,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface BodyType {
+interface VehicleBodyType {
   id: string;
   name: string;
 }
@@ -139,7 +139,7 @@ export function CreateVehicleForm({
 }: CreateVehicleFormProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [bodyTypes, setBodyTypes] = useState<BodyType[]>([]);
+  const [bodyTypes, setBodyTypes] = useState<VehicleBodyType[]>([]);
   const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>(
     []
   );

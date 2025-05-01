@@ -21,14 +21,6 @@ export async function GET(request: Request) {
                         name: true,
                     },
                 },
-                vehicle: {
-                    select: {
-                        id: true,
-                        registrationNo: true,
-                        make: true,
-                        model: true,
-                    },
-                },
                 insurer: {
                     select: {
                         id: true,
@@ -50,7 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const { user } = await auth();
+        const { user } = await auth(request);
         if (!user) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
@@ -59,8 +51,8 @@ export async function POST(request: Request) {
         const {
             policyNo,
             clientId,
-            vehicleId,
             insurerId,
+            status,
             validFrom,
             validTo,
             premium,
@@ -68,7 +60,7 @@ export async function POST(request: Request) {
             remarks,
         } = body;
 
-        if (!policyNo || !clientId || !vehicleId || !insurerId || !validFrom || !validTo) {
+        if (!policyNo || !clientId || !insurerId || !validFrom || !validTo || !status) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
@@ -76,22 +68,39 @@ export async function POST(request: Request) {
             data: {
                 policyNo,
                 clientId,
-                vehicleId,
                 insurerId,
-                status: PolicyStatus.ACTIVE,
+                status,
                 validFrom: new Date(validFrom),
                 validTo: new Date(validTo),
-                premium,
-                stampDuty,
+                premium: premium ? Number(premium) : null,
+                stampDuty: stampDuty ? Number(stampDuty) : null,
                 remarks,
                 createdBy: user.id,
                 updatedBy: user.id,
+                isActive: true
+            },
+            include: {
+                client: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                insurer: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
             },
         });
 
         return NextResponse.json(policy);
     } catch (error) {
         console.error("Error creating policy:", error);
+        if (error instanceof Error) {
+            return new NextResponse(error.message, { status: 500 });
+        }
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 } 

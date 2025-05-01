@@ -194,7 +194,7 @@ export async function POST(req: Request) {
 
         // If no body type specified, find a default one
         if (!bodyTypeId) {
-          const defaultBodyType = await db.bodyType.findFirst({
+          const defaultBodyType = await db.vehicleBodyType.findFirst({
             where: { isActive: true },
           });
           if (defaultBodyType) {

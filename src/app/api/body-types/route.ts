@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if body type with the same name already exists
-        const existingBodyType = await prisma.bodyType.findFirst({
+        const existingBodyType = await prisma.vehicleBodyType.findFirst({
             where: {
                 name: { equals: name, mode: 'insensitive' },
                 isActive: true

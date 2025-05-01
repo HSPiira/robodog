@@ -5,20 +5,22 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { PolicyStatus } from "@prisma/client";
+import { Policy, PolicyStatus } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { PolicyDetail } from "../components/policy-detail";
-import { Policy as PolicyType } from "../components/columns";
 
-type Policy = PolicyType;
+type PolicyWithRelations = Policy & {
+    client: { id: string; name: string };
+    insurer: { id: string; name: string };
+};
 
 export default function PolicyDetailPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
-    const [policy, setPolicy] = useState<Policy | null>(null);
+    const [policy, setPolicy] = useState<PolicyWithRelations | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchPolicy = async () => {

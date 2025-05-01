@@ -10,7 +10,7 @@ export async function GET(
     try {
         const id = params.id;
 
-        const bodyType = await prisma.bodyType.findUnique({
+        const bodyType = await prisma.vehicleBodyType.findUnique({
             where: { id },
             select: {
                 id: true,
@@ -56,7 +56,7 @@ export async function PATCH(
         const id = params.id;
 
         // Check if body type exists
-        const existingBodyType = await prisma.bodyType.findUnique({
+        const existingBodyType = await prisma.vehicleBodyType.findUnique({
             where: { id }
         });
 
@@ -91,7 +91,7 @@ export async function PATCH(
 
         // Check if the updated name conflicts with another body type
         if (name && name !== existingBodyType.name) {
-            const nameConflict = await prisma.bodyType.findFirst({
+            const nameConflict = await prisma.vehicleBodyType.findFirst({
                 where: {
                     name: { equals: name.trim(), mode: 'insensitive' },
                     id: { not: id },
@@ -108,7 +108,7 @@ export async function PATCH(
         }
 
         // Update body type
-        const updatedBodyType = await prisma.bodyType.update({
+        const updatedBodyType = await prisma.vehicleBodyType.update({
             where: { id },
             data: {
                 name: name ? name.trim() : undefined,
@@ -152,7 +152,7 @@ export async function DELETE(
         const id = params.id;
 
         // Check if body type exists
-        const existingBodyType = await prisma.bodyType.findUnique({
+        const existingBodyType = await prisma.vehicleBodyType.findUnique({
             where: { id },
             include: {
                 _count: {
@@ -182,7 +182,7 @@ export async function DELETE(
         }
 
         // Soft delete the body type
-        await prisma.bodyType.update({
+        await prisma.vehicleBodyType.update({
             where: { id },
             data: {
                 isActive: false,

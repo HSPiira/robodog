@@ -6,6 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
     Form,
     FormControl,
     FormDescription,
@@ -24,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,7 +45,6 @@ import { Client, Vehicle, Insurer, PolicyStatus } from "@prisma/client";
 const formSchema = z.object({
     policyNo: z.string().min(1, "Policy number is required"),
     clientId: z.string().min(1, "Client is required"),
-    vehicleId: z.string().min(1, "Vehicle is required"),
     insurerId: z.string().min(1, "Insurer is required"),
     status: z.nativeEnum(PolicyStatus),
     validFrom: z.date({
@@ -47,8 +53,8 @@ const formSchema = z.object({
     validTo: z.date({
         required_error: "Valid to date is required",
     }),
-    premium: z.coerce.number().min(0, "Premium must be a positive number"),
-    stampDuty: z.coerce.number().min(0, "Stamp duty must be a positive number"),
+    premium: z.coerce.number().nullable().optional(),
+    stampDuty: z.coerce.number().nullable().optional(),
     remarks: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.validTo <= data.validFrom) {
@@ -65,102 +71,144 @@ interface CreatePolicyFormProps {
     onCancel: () => void;
 }
 
+// Cache for fetched data
+const dataCache = {
+    clients: [] as Array<{ id: string; name: string }>,
+    vehicles: [] as Array<{ id: string; registrationNo: string; make: string; model: string }>,
+    insurers: [] as Array<{ id: string; name: string }>,
+    lastFetched: 0,
+    CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+};
+
 export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [vehicles, setVehicles] = useState<Array<{ id: string; registrationNo: string; make: string; model: string }>>([]);
     const [insurers, setInsurers] = useState<Array<{ id: string; name: string }>>([]);
-    const [isDataLoading, setIsDataLoading] = useState(true);
+    const [isDataLoading, setIsDataLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             status: PolicyStatus.PENDING,
-            premium: 0,
-            stampDuty: 0,
+            premium: null,
+            stampDuty: null,
+            validFrom: new Date(),
+            validTo: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
         },
     });
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [clientsRes, vehiclesRes, insurersRes] = await Promise.all([
-                    fetch("/api/clients", { credentials: "include" }),
-                    fetch("/api/vehicles", { credentials: "include" }),
-                    fetch("/api/insurers", { credentials: "include" }),
-                ]);
+    const fetchData = async () => {
+        if (!isOpen) return;
 
-                if (!clientsRes.ok || !vehiclesRes.ok || !insurersRes.ok) {
-                    throw new Error("Failed to fetch data");
-                }
+        // Check cache first
+        const now = Date.now();
+        if (now - dataCache.lastFetched < dataCache.CACHE_DURATION) {
+            setClients(dataCache.clients);
+            setInsurers(dataCache.insurers);
+            return;
+        }
 
-                const [clientsData, vehiclesData, insurersData] = await Promise.all([
-                    clientsRes.json(),
-                    vehiclesRes.json(),
-                    insurersRes.json(),
-                ]);
+        try {
+            setIsDataLoading(true);
+            const [clientsRes, insurersRes] = await Promise.all([
+                fetch("/api/clients?limit=100", { credentials: "include" }),
+                fetch("/api/insurers?limit=100", { credentials: "include" }),
+            ]);
 
-                // Handle both paginated and non-paginated responses
-                const clientsList = Array.isArray(clientsData) ? clientsData : clientsData?.data || [];
-                const vehiclesList = Array.isArray(vehiclesData) ? vehiclesData : vehiclesData?.data || [];
-                const insurersList = Array.isArray(insurersData) ? insurersData : insurersData?.data || [];
-
-                // Validate that we have arrays
-                if (!Array.isArray(clientsList)) {
-                    console.error("Clients data is not an array:", clientsData);
-                    throw new Error("Invalid clients data format");
-                }
-                if (!Array.isArray(vehiclesList)) {
-                    console.error("Vehicles data is not an array:", vehiclesData);
-                    throw new Error("Invalid vehicles data format");
-                }
-                if (!Array.isArray(insurersList)) {
-                    console.error("Insurers data is not an array:", insurersData);
-                    throw new Error("Invalid insurers data format");
-                }
-
-                setClients(clientsList);
-                setVehicles(vehiclesList);
-                setInsurers(insurersList);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                toast({
-                    title: "Error",
-                    description: "Failed to load form data",
-                    variant: "destructive",
-                });
+            if (!clientsRes.ok || !insurersRes.ok) {
+                throw new Error("Failed to fetch data");
             }
-        };
 
+            const [clientsData, insurersData] = await Promise.all([
+                clientsRes.json(),
+                insurersRes.json(),
+            ]);
+
+            const clientsList = Array.isArray(clientsData) ? clientsData : clientsData?.data || [];
+            const insurersList = Array.isArray(insurersData) ? insurersData : insurersData?.data || [];
+
+            // Update cache
+            dataCache.clients = clientsList;
+            dataCache.insurers = insurersList;
+            dataCache.lastFetched = now;
+
+            setClients(clientsList);
+            setInsurers(insurersList);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            toast({
+                title: "Error",
+                description: "Failed to load form data",
+                variant: "destructive",
+            });
+        } finally {
+            setIsDataLoading(false);
+        }
+    };
+
+    // Filter and paginate data
+    const getFilteredData = (data: any[], searchKey: string) => {
+        return data.filter(item =>
+            item[searchKey].toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    };
+
+    const getPaginatedData = (data: any[]) => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        return data.slice(start, end);
+    };
+
+    // Pre-fetch data when component mounts
+    useEffect(() => {
         fetchData();
     }, []);
 
+    // Only re-fetch when dialog opens if data is empty
+    useEffect(() => {
+        if (isOpen && (clients.length === 0 || insurers.length === 0)) {
+            fetchData();
+        }
+    }, [isOpen]);
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsLoading(true);
         try {
+            setIsLoading(true);
             const response = await fetch("/api/policies", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(values),
+                body: JSON.stringify({
+                    ...values,
+                    validFrom: values.validFrom.toISOString(),
+                    validTo: values.validTo.toISOString(),
+                }),
             });
 
             if (!response.ok) {
-                throw new Error("Failed to create policy");
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || "Failed to create policy");
             }
 
             toast({
                 title: "Success",
                 description: "Policy created successfully",
             });
+            setIsOpen(false);
+            form.reset();
             onSuccess();
         } catch (error) {
             console.error("Error creating policy:", error);
             toast({
                 title: "Error",
-                description: "Failed to create policy",
+                description: error instanceof Error ? error.message : "Failed to create policy",
                 variant: "destructive",
             });
         } finally {
@@ -168,306 +216,370 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
         }
     }
 
-    if (isDataLoading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="policyNo"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Policy Number</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter policy number" {...field} className="h-9" />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Status</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger className="h-9">
-                                            <SelectValue placeholder="Select status" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value={PolicyStatus.ACTIVE}>Active</SelectItem>
-                                        <SelectItem value={PolicyStatus.PENDING}>Pending</SelectItem>
-                                        <SelectItem value={PolicyStatus.EXPIRED}>Expired</SelectItem>
-                                        <SelectItem value={PolicyStatus.CANCELLED}>Cancelled</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="clientId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Client</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger className="h-9">
-                                            <SelectValue placeholder="Select client" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {clients?.map((client) => (
-                                            <SelectItem key={client.id} value={client.id}>
-                                                {client.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="vehicleId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Vehicle</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger className="h-9">
-                                            <SelectValue placeholder="Select vehicle" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {vehicles?.map((vehicle) => (
-                                            <SelectItem key={vehicle.id} value={vehicle.id}>
-                                                {vehicle.registrationNo} - {vehicle.make} {vehicle.model}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="validFrom"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Valid From</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button size="icon" className="h-8 w-8 rounded-full" title="Create Policy">
+                    <Plus className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                    <DialogTitle>Create New Policy</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="policyNo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Policy Number</FormLabel>
                                         <FormControl>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-full h-9 px-3 text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
-                                                {field.value ? (
-                                                    format(field.value, "MMM d, yyyy")
-                                                ) : (
-                                                    <span>Pick a date</span>
-                                                )}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
+                                            <Input placeholder="Enter policy number" {...field} className="h-9" />
                                         </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <FormField
-                        control={form.control}
-                        name="validTo"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Valid To</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
+                            <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Status</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="Select status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value={PolicyStatus.ACTIVE}>Active</SelectItem>
+                                                <SelectItem value={PolicyStatus.PENDING}>Pending</SelectItem>
+                                                <SelectItem value={PolicyStatus.EXPIRED}>Expired</SelectItem>
+                                                <SelectItem value={PolicyStatus.CANCELLED}>Cancelled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="clientId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Client</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder={isDataLoading ? "Loading clients..." : "Select client"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <div className="p-2">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                        <Input
+                                                            placeholder="Search clients..."
+                                                            className="pl-8 h-8"
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {isDataLoading ? (
+                                                    <div className="flex items-center justify-center p-4">
+                                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {getPaginatedData(getFilteredData(clients, 'name')).map((client) => (
+                                                            <SelectItem key={client.id} value={client.id}>
+                                                                {client.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                        {getFilteredData(clients, 'name').length > ITEMS_PER_PAGE && (
+                                                            <div className="flex items-center justify-between p-2 border-t">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                    disabled={currentPage === 1}
+                                                                >
+                                                                    Previous
+                                                                </Button>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    Page {currentPage}
+                                                                </span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => setCurrentPage(p => p + 1)}
+                                                                    disabled={getFilteredData(clients, 'name').length <= currentPage * ITEMS_PER_PAGE}
+                                                                >
+                                                                    Next
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="insurerId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Insurer</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder={isDataLoading ? "Loading insurers..." : "Select insurer"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <div className="p-2">
+                                                    <div className="relative">
+                                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                        <Input
+                                                            placeholder="Search insurers..."
+                                                            className="pl-8 h-8"
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {isDataLoading ? (
+                                                    <div className="flex items-center justify-center p-4">
+                                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {getPaginatedData(getFilteredData(insurers, 'name')).map((insurer) => (
+                                                            <SelectItem key={insurer.id} value={insurer.id}>
+                                                                {insurer.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                        {getFilteredData(insurers, 'name').length > ITEMS_PER_PAGE && (
+                                                            <div className="flex items-center justify-between p-2 border-t">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                    disabled={currentPage === 1}
+                                                                >
+                                                                    Previous
+                                                                </Button>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    Page {currentPage}
+                                                                </span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => setCurrentPage(p => p + 1)}
+                                                                    disabled={getFilteredData(insurers, 'name').length <= currentPage * ITEMS_PER_PAGE}
+                                                                >
+                                                                    Next
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="validFrom"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Valid From</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full h-9 px-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "MMM d, yyyy")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="validTo"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Valid To</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full h-9 px-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "MMM d, yyyy")
+                                                        ) : (
+                                                            <span>Pick a date</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="premium"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Premium</FormLabel>
                                         <FormControl>
-                                            <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "w-full h-9 px-3 text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
-                                                {field.value ? (
-                                                    format(field.value, "MMM d, yyyy")
-                                                ) : (
-                                                    <span>Pick a date</span>
-                                                )}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter premium amount"
+                                                className="h-9"
+                                                {...field}
+                                                value={field.value ?? ''}
+                                            />
                                         </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="stampDuty"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Stamp Duty</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter stamp duty amount"
+                                                className="h-9"
+                                                {...field}
+                                                value={field.value ?? ''}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="remarks"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Remarks</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Enter any remarks"
+                                            className="resize-none h-20"
+                                            {...field}
                                         />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="premium"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Premium</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Enter premium amount"
-                                        className="h-9"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="stampDuty"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Stamp Duty</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        placeholder="Enter stamp duty amount"
-                                        className="h-9"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <FormField
-                    control={form.control}
-                    name="insurerId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Insurer</FormLabel>
-                            <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
+                        <div className="flex justify-end space-x-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    onCancel();
+                                }}
+                                disabled={isLoading}
                             >
-                                <FormControl>
-                                    <SelectTrigger className="h-9">
-                                        <SelectValue placeholder="Select insurer" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {insurers?.map((insurer) => (
-                                        <SelectItem key={insurer.id} value={insurer.id}>
-                                            {insurer.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="remarks"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Remarks</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Enter any remarks"
-                                    className="resize-none h-20"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <div className="flex justify-end space-x-4 pt-4">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onCancel}
-                        disabled={isLoading}
-                        className="h-9"
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" disabled={isLoading} className="h-9">
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Creating...
-                            </>
-                        ) : (
-                            "Create Policy"
-                        )}
-                    </Button>
-                </div>
-            </form>
-        </Form>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading || isDataLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    "Create Policy"
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
     );
 } 

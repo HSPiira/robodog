@@ -69,8 +69,8 @@ export function DataTable<TData>({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
-                <div className="relative flex-1 sm:w-[280px] w-full max-w-full sm:max-w-[280px] flex items-center gap-2">
-                    <div className="relative flex-1">
+                <div className="flex items-center gap-4 flex-1">
+                    <div className="relative w-[280px]">
                         <Input
                             placeholder={`Search by ${searchKey}...`}
                             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
@@ -88,10 +88,11 @@ export function DataTable<TData>({
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
+                            <TableRow key={headerGroup.id} className="h-7">
                                 {headerGroup.headers.map((header) => {
+                                    const isHidden = selectedRow && ['premium', 'stampDuty'].includes(header.id);
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead key={header.id} className={`text-xs ${isHidden ? 'hidden' : ''}`}>
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -111,23 +112,26 @@ export function DataTable<TData>({
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
                                     onClick={() => onRowClick?.(row.original)}
-                                    className={`cursor-pointer hover:bg-muted/50 ${selectedRow === row.original ? 'bg-muted' : ''}`}
+                                    className={`cursor-pointer hover:bg-muted/50 h-7 ${selectedRow === row.original ? 'bg-muted' : ''}`}
                                 >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
+                                    {row.getVisibleCells().map((cell) => {
+                                        const isHidden = selectedRow && ['premium', 'stampDuty'].includes(cell.column.id);
+                                        return (
+                                            <TableCell key={cell.id} className={`text-xs whitespace-nowrap ${isHidden ? 'hidden' : ''}`}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        );
+                                    })}
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow>
+                            <TableRow className="h-7">
                                 <TableCell
                                     colSpan={columns.length}
-                                    className="h-24 text-center"
+                                    className="h-7 text-center text-xs"
                                 >
                                     No results.
                                 </TableCell>
@@ -138,7 +142,7 @@ export function DataTable<TData>({
             </div>
 
             <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
+                <div className="flex-1 text-xs text-muted-foreground">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
                     {table.getFilteredRowModel().rows.length} row(s) selected.
                 </div>

@@ -6,11 +6,21 @@ echo "🔍 Testing Next.js 15 compatibility..."
 
 # Check for deprecated synchronous Request APIs
 echo "1. Checking for deprecated Request APIs..."
-grep -r "new Request" --include="*.ts" --include="*.tsx" src/ || echo "✅ No synchronous Request APIs found"
+if grep -rn --include="*.{ts,tsx,js,jsx}" "new Request" src/; then
+  echo "⚠️ Found deprecated synchronous Request APIs"
+  exit 1
+else
+  echo "✅ No synchronous Request APIs found"
+fi
 
 # Check for proper async/await usage in API routes
 echo "2. Checking API route handlers..."
-grep -r "export async function" --include="*.ts" src/app/api/ || echo "✅ All API routes are properly async"
+if grep -rEn --include="*.{ts,tsx,js,jsx}" "export( default)? async function" src/app/api/; then
+  echo "✅ All API routes are properly async"
+else
+  echo "⚠️ Found API routes missing async declaration"
+  exit 1
+fi
 
 # Check for proper error handling in fetch calls
 echo "3. Checking fetch error handling..."

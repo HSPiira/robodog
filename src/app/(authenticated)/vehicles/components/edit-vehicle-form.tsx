@@ -83,7 +83,7 @@ interface VehicleType {
   name: string;
 }
 
-interface BodyType {
+interface VehicleBodyType {
   id: string;
   name: string;
 }
@@ -113,7 +113,7 @@ export function EditVehicleForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingVehicle, setIsFetchingVehicle] = useState(false);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
-  const [bodyTypes, setBodyTypes] = useState<BodyType[]>([]);
+  const [bodyTypes, setBodyTypes] = useState<VehicleBodyType[]>([]);
   const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>(
     []
   );

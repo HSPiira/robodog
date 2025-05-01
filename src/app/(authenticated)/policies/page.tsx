@@ -1,133 +1,91 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { columns as policyColumns } from "./components/columns";
+import { Policy } from "@prisma/client";
 import { DataTable } from "./components/data-table";
-import { columns } from "./components/columns";
 import { PolicyDetail } from "./components/policy-detail";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { CreatePolicyForm } from "./components/create-policy-form";
-import { Policy } from "./components/columns";
-import { useToast } from "@/components/ui/use-toast";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+
+type PolicyWithRelations = Policy & {
+    client: { id: string; name: string };
+    insurer: { id: string; name: string };
+};
 
 export default function PoliciesPage() {
-    const { toast } = useToast();
-    const [policies, setPolicies] = useState<Policy[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
-    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [policies, setPolicies] = useState<PolicyWithRelations[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedPolicy, setSelectedPolicy] = useState<PolicyWithRelations | null>(null);
+    const [showDetails, setShowDetails] = useState(false);
 
-    useEffect(() => {
-        fetchPolicies();
-    }, []);
+    const router = useRouter();
 
-    async function fetchPolicies() {
+    // Fetch policies data
+    const fetchPolicies = useCallback(async () => {
         try {
-            const response = await fetch("/api/policies", {
-                credentials: "include",
-            });
+            setLoading(true);
+            const response = await fetch("/api/policies");
             if (!response.ok) {
                 throw new Error("Failed to fetch policies");
             }
-            const data = await response.json();
+            const data: PolicyWithRelations[] = await response.json();
             setPolicies(data);
         } catch (error) {
             console.error("Error fetching policies:", error);
-            toast({
-                title: "Error",
-                description: "Failed to fetch policies",
-                variant: "destructive",
-            });
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
-    }
+    }, []);
 
-    const handleRowClick = (policy: Policy) => {
-        setSelectedPolicy(policy);
-    };
-
-    const handleCreateSuccess = () => {
-        setShowCreateForm(false);
+    useEffect(() => {
         fetchPolicies();
+    }, [fetchPolicies]);
+
+    // Toggle selected policy when clicking a row
+    const handlePolicySelect = (policy: PolicyWithRelations) => {
+        if (selectedPolicy?.id === policy.id) {
+            setShowDetails(prev => !prev);
+        } else {
+            setSelectedPolicy(policy);
+            setShowDetails(true);
+        }
     };
 
     return (
-        <div className="space-y-6">
-            {isLoading && policies.length === 0 ? (
+        <div className="container mx-auto py-6 space-y-6">
+            {loading && policies.length === 0 ? (
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             ) : (
-                <div className="flex gap-6">
-                    <div className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${selectedPolicy ? '' : 'w-full'}`}>
+                <div className="flex gap-6 h-[calc(100vh-12rem)]">
+                    <div className="flex-1 min-w-0">
                         <DataTable
-                            columns={columns}
+                            columns={policyColumns}
                             data={policies}
                             searchKey="policyNo"
                             actionButton={
-                                <div className="flex items-center gap-2">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    onClick={() => setShowCreateForm(true)}
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-full"
-                                                >
-                                                    <Plus className="h-4 w-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Create new policy</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
+                                <CreatePolicyForm
+                                    onSuccess={fetchPolicies}
+                                    onCancel={() => { }}
+                                />
                             }
-                            onRowClick={handleRowClick}
-                            fetchData={fetchPolicies}
+                            onRowClick={handlePolicySelect}
                             selectedRow={selectedPolicy}
                         />
                     </div>
-                    <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${selectedPolicy ? 'w-[320px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
+                    <div className={`flex-shrink-0 transition-all duration-300 ease-in-out ${showDetails ? 'w-[400px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
                         {selectedPolicy && (
                             <PolicyDetail
                                 policy={selectedPolicy}
-                                onClose={() => setSelectedPolicy(null)}
+                                onClose={() => setShowDetails(false)}
                             />
                         )}
                     </div>
                 </div>
             )}
-
-            {showCreateForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 overflow-auto">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-3xl mx-4 my-4">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">Create New Policy</h2>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-full"
-                                onClick={() => setShowCreateForm(false)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <CreatePolicyForm
-                            onSuccess={handleCreateSuccess}
-                            onCancel={() => setShowCreateForm(false)}
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
-} 
+}

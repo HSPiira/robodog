@@ -339,7 +339,6 @@ async function main() {
     data: {
       policyNo: "POL001",
       clientId: client.id,
-      vehicleId: vehicle.id,
       status: PolicyStatus.ACTIVE,
       insurerId: insurer.id,
       validFrom: new Date(),

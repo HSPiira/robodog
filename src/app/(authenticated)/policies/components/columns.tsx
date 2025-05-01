@@ -3,6 +3,7 @@
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
     FileText,
     Calendar,
@@ -23,34 +24,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PolicyStatus } from "@prisma/client";
+import { Policy, PolicyStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
-
-export interface Policy {
-    id: string;
-    policyNo: string;
-    status: PolicyStatus;
-    validFrom: Date;
-    validTo: Date;
-    premium: number;
-    stampDuty: number;
-    remarks?: string;
-    client: {
-        id: string;
-        name: string;
-    };
-    vehicle: {
-        id: string;
-        registrationNo: string;
-        make: string;
-        model: string;
-    };
-    insurer: {
-        id: string;
-        name: string;
-    };
-    isActive: boolean;
-}
 
 const statusVariants: Record<PolicyStatus, "default" | "secondary" | "destructive" | "outline"> = {
     ACTIVE: "default",
@@ -60,13 +35,21 @@ const statusVariants: Record<PolicyStatus, "default" | "secondary" | "destructiv
     INACTIVE: "secondary",
 };
 
-export const columns: ColumnDef<Policy>[] = [
+const statusIcons: Record<PolicyStatus, React.ReactNode> = {
+    ACTIVE: <CheckCircle className="h-4 w-4 text-green-500" />,
+    EXPIRED: <XCircle className="h-4 w-4 text-red-500" />,
+    CANCELLED: <XCircle className="h-4 w-4 text-red-500" />,
+    PENDING: <Clock className="h-4 w-4 text-yellow-500" />,
+    INACTIVE: <AlertCircle className="h-4 w-4 text-gray-500" />,
+};
+
+export const columns: ColumnDef<Policy & { client: { id: string; name: string }; insurer: { id: string; name: string } }>[] = [
     {
         accessorKey: "policyNo",
-        header: "Policy No",
+        header: () => <div className="whitespace-nowrap">Policy No</div>,
         cell: ({ row }) => {
             return (
-                <div className="font-medium uppercase whitespace-nowrap">
+                <div className="font-medium uppercase whitespace-nowrap py-1">
                     {row.getValue("policyNo")}
                 </div>
             );
@@ -74,34 +57,21 @@ export const columns: ColumnDef<Policy>[] = [
     },
     {
         accessorKey: "client.name",
-        header: "Client",
-        cell: ({ row }: { row: Row<Policy> }) => {
+        header: () => <div className="whitespace-nowrap">Client</div>,
+        cell: ({ row }: { row: Row<Policy & { client: { id: string; name: string }; insurer: { id: string; name: string } }> }) => {
             return (
-                <div className="truncate whitespace-nowrap max-w-[150px]">
+                <div className="truncate whitespace-nowrap max-w-[150px] py-1">
                     {row.original.client?.name || "—"}
                 </div>
             );
         },
     },
     {
-        accessorKey: "vehicle.registrationNo",
-        header: "Vehicle",
-        cell: ({ row }: { row: Row<Policy> }) => {
-            const vehicle = row.original.vehicle;
-            return vehicle ? (
-                <div className="truncate whitespace-nowrap max-w-[150px]">
-                    <span className="font-medium">{vehicle.registrationNo}</span>
-                    <span className="text-muted-foreground"> {vehicle.make} {vehicle.model}</span>
-                </div>
-            ) : <span className="text-muted-foreground">—</span>;
-        },
-    },
-    {
         accessorKey: "insurer.name",
-        header: "Insurer",
-        cell: ({ row }: { row: Row<Policy> }) => {
+        header: () => <div className="whitespace-nowrap">Insurer</div>,
+        cell: ({ row }: { row: Row<Policy & { client: { id: string; name: string }; insurer: { id: string; name: string } }> }) => {
             return (
-                <div className="truncate whitespace-nowrap max-w-[120px]">
+                <div className="truncate whitespace-nowrap max-w-[120px] py-1">
                     {row.original.insurer?.name || "—"}
                 </div>
             );
@@ -109,23 +79,23 @@ export const columns: ColumnDef<Policy>[] = [
     },
     {
         accessorKey: "status",
-        header: "Status",
+        header: () => <div className="whitespace-nowrap">Status</div>,
         cell: ({ row }) => {
             const status = row.getValue("status") as PolicyStatus;
             return (
-                <Badge variant={statusVariants[status]} className="capitalize">
-                    {status.toLowerCase()}
-                </Badge>
+                <div className="flex items-center justify-center py-1" title={status.toLowerCase()}>
+                    {statusIcons[status]}
+                </div>
             );
         },
     },
     {
         accessorKey: "validFrom",
-        header: "Valid From",
+        header: () => <div className="whitespace-nowrap">Valid From</div>,
         cell: ({ row }) => {
             const date = new Date(row.getValue("validFrom"));
             return (
-                <div className="whitespace-nowrap">
+                <div className="whitespace-nowrap py-1">
                     {date.toLocaleDateString()}
                 </div>
             );
@@ -133,11 +103,11 @@ export const columns: ColumnDef<Policy>[] = [
     },
     {
         accessorKey: "validTo",
-        header: "Valid To",
+        header: () => <div className="whitespace-nowrap">Valid To</div>,
         cell: ({ row }) => {
             const date = new Date(row.getValue("validTo"));
             return (
-                <div className="whitespace-nowrap">
+                <div className="whitespace-nowrap py-1">
                     {date.toLocaleDateString()}
                 </div>
             );
@@ -151,18 +121,32 @@ export const columns: ColumnDef<Policy>[] = [
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-7 w-7 p-0">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal className="h-3.5 w-3.5" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Policy</DropdownMenuItem>
-                        <DropdownMenuItem>Renew Policy</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Cancel Policy</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/policies/${policy.id}`}>View Details</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/policies/${policy.id}/edit`}>Edit Policy</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/policies/${policy.id}/renew`}>Renew Policy</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                                // TODO: Add cancellation logic or confirmation dialog
+                                console.log("Cancel policy:", policy.id);
+                            }}
+                        >
+                            Cancel Policy
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             );
