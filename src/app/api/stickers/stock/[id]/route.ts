@@ -96,48 +96,166 @@ export async function PUT(
     }
 }
 
+interface SessionUser {
+    id: string;
+    email: string;
+    name: string;
+}
+
 export async function DELETE(
-    request: NextRequest,
+    request: Request,
     { params }: { params: { id: string } }
 ) {
     try {
-        const { user } = await auth(request);
-        if (!user) {
+        // Authenticate the user
+        const session = await auth(request);
+        if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Check if the stock has been issued
+        const user = session.user as SessionUser;
+
+        // Verify user exists in the database
+        const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true },
+        });
+
+        if (!dbUser) {
+            return NextResponse.json(
+                { error: "Authenticated user not found in database" },
+                { status: 401 }
+            );
+        }
+
+        // Check if stock exists
         const stock = await prisma.stickerStock.findUnique({
             where: { id: params.id },
-            include: {
-                sticker: true,
-            },
         });
 
         if (!stock) {
             return NextResponse.json(
-                { error: "Sticker stock not found" },
+                { error: "Stock not found" },
                 { status: 404 }
             );
         }
 
-        if (stock.stickerStatus === "ISSUED" || stock.sticker) {
-            return NextResponse.json(
-                { error: "Cannot delete sticker stock that has been issued" },
-                { status: 400 }
-            );
-        }
-
-        // Delete stock
+        // Delete the stock
         await prisma.stickerStock.delete({
             where: { id: params.id },
         });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ message: "Stock deleted successfully" });
     } catch (error) {
-        console.error("Error deleting sticker stock:", error);
+        console.error("Error deleting stock:", error);
         return NextResponse.json(
-            { error: "Failed to delete sticker stock" },
+            { error: "Failed to delete stock" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        // Authenticate the user
+        const session = await auth(request);
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = session.user as SessionUser;
+
+        // Verify user exists in the database
+        const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true },
+        });
+
+        if (!dbUser) {
+            return NextResponse.json(
+                { error: "Authenticated user not found in database" },
+                { status: 401 }
+            );
+        }
+
+        // Get request body
+        const body = await request.json();
+        const { serialNumber, receivedAt, insurerId, stickerTypeId } = body;
+
+        // Validate required fields
+        if (!serialNumber || !receivedAt || !insurerId || !stickerTypeId) {
+            return NextResponse.json(
+                { error: "All fields are required" },
+                { status: 400 }
+            );
+        }
+
+        // Check if stock exists
+        const stock = await prisma.stickerStock.findUnique({
+            where: { id: params.id },
+        });
+
+        if (!stock) {
+            return NextResponse.json(
+                { error: "Stock not found" },
+                { status: 404 }
+            );
+        }
+
+        // Check if serial number is already in use
+        const existingStock = await prisma.stickerStock.findUnique({
+            where: { serialNumber },
+        });
+
+        if (existingStock && existingStock.id !== params.id) {
+            return NextResponse.json(
+                { error: "Serial number is already in use" },
+                { status: 409 }
+            );
+        }
+
+        // Update the stock
+        const updatedStock = await prisma.stickerStock.update({
+            where: { id: params.id },
+            data: {
+                serialNumber,
+                receivedAt: new Date(receivedAt),
+                insurerId,
+                stickerTypeId,
+                updatedBy: dbUser.id,
+            },
+            include: {
+                insurer: true,
+                sticker: {
+                    include: {
+                        policy: {
+                            include: {
+                                client: {
+                                    select: {
+                                        name: true,
+                                    },
+                                },
+                            },
+                        },
+                        vehicle: {
+                            select: {
+                                registrationNo: true,
+                            },
+                        },
+                    },
+                },
+                stickerType: true,
+            },
+        });
+
+        return NextResponse.json(updatedStock);
+    } catch (error) {
+        console.error("Error updating stock:", error);
+        return NextResponse.json(
+            { error: "Failed to update stock" },
             { status: 500 }
         );
     }

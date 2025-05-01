@@ -20,6 +20,7 @@ import {
   X,
   Trash2,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -32,35 +33,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StickerStatus } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-type StickerStockWithRelations = Prisma.StickerStockGetPayload<{
-  include: {
-    insurer: true;
-    sticker: true;
-    stickerType: true;
-  };
-}>;
+import { type StickerStockWithRelations } from "./stock-columns";
+import { EditStockForm } from "./edit-stock-form";
 
 interface StickerStockDetailProps {
   stock: StickerStockWithRelations;
   onClose?: () => void;
   onDelete: () => void;
+  onUpdate?: () => void;
 }
 
 export function StickerStockDetail({
   stock,
   onClose,
   onDelete,
+  onUpdate,
 }: StickerStockDetailProps) {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -110,6 +99,22 @@ export function StickerStockDetail({
       setShowDeleteDialog(false);
     }
   };
+
+  const details = [
+    { label: "Serial Number", value: stock.serialNumber },
+    { label: "Sticker Type", value: stock.stickerType.name },
+    { label: "Insurer", value: stock.insurer.name },
+    { label: "Status", value: stock.stickerStatus },
+    { label: "Received At", value: format(new Date(stock.receivedAt), "PPP") },
+  ];
+
+  if (stock.sticker?.policy) {
+    details.push(
+      { label: "Issued To", value: stock.sticker.vehicle?.registrationNo || "N/A" },
+      { label: "Policy Number", value: stock.sticker.policy.policyNo || "N/A" },
+      { label: "Client", value: stock.sticker.policy.client?.name || "N/A" }
+    );
+  }
 
   return (
     <>
@@ -163,6 +168,19 @@ export function StickerStockDetail({
                   {stock.stickerStatus === StickerStatus.AVAILABLE && (
                     <>
                       <DropdownMenuSeparator />
+                      <EditStockForm
+                        stock={stock}
+                        onStockUpdated={onUpdate || onDelete}
+                        trigger={
+                          <DropdownMenuItem
+                            className="gap-2 text-xs cursor-pointer"
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit stock
+                          </DropdownMenuItem>
+                        }
+                      />
                       <DropdownMenuItem
                         className="gap-2 text-xs text-destructive cursor-pointer"
                         onClick={() => setShowDeleteDialog(true)}
@@ -194,16 +212,19 @@ export function StickerStockDetail({
             <div className="pb-2.5 border-b">
               <div className="flex items-center mb-1.5">
                 <Tag className="h-3.5 w-3.5 text-purple-500 mr-1.5 flex-shrink-0" />
-                <h3 className="font-medium text-sm truncate">
+                <h3 className="font-medium text-sm">
                   {stock.stickerType.name}
                 </h3>
               </div>
-              <div className="flex items-center text-xs text-muted-foreground pl-5">
-                <Calendar className="h-3 w-3 inline mr-1 text-orange-500 flex-shrink-0" />
-                {format(stock.receivedAt, "dd MMM yyyy")}
-                <span className="mx-1.5">•</span>
-                <Building2 className="h-3 w-3 inline mr-1 text-emerald-500 flex-shrink-0" />
-                <span className="truncate">{stock.insurer.name}</span>
+              <div className="space-y-1 pl-5">
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3 mr-1 text-orange-500 flex-shrink-0" />
+                  {format(stock.receivedAt, "dd MMM yyyy")}
+                </div>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3 mr-1 text-emerald-500 flex-shrink-0" />
+                  {stock.insurer.name}
+                </div>
               </div>
             </div>
           </div>

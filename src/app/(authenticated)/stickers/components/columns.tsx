@@ -13,29 +13,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Prisma } from "@prisma/client";
 
-export type StickerWithRelations = Prisma.StickerIssuanceGetPayload<{
-    include: {
-        policy: {
-            include: {
-                vehicle: true;
-                client: true;
-            };
-        };
-    };
-}>;
+type PolicyWithRelations = {
+    policyNo: string | null;
+    vehicle: {
+        registrationNo: string | null;
+    } | null;
+    client: {
+        name: string | null;
+    } | null;
+};
 
-export const columns: ColumnDef<StickerWithRelations, any>[] = [
+export type StickerWithRelations = {
+    id: string;
+    serialNumber: string;
+    createdAt: Date;
+    policy: PolicyWithRelations | null;
+};
+
+export const columns: ColumnDef<StickerWithRelations>[] = [
     {
-        accessorKey: "id",
-        header: "ID",
+        accessorKey: "serialNumber",
+        header: "Serial No.",
         cell: ({ row }) => {
             return (
-                <div className="font-medium">{row.getValue("id")}</div>
+                <div className="font-medium">{row.getValue("serialNumber")}</div>
             );
         },
     },
     {
-        accessorKey: "policy",
+        id: "policyNo",
         header: "Policy",
         cell: ({ row }) => {
             const policy = row.original.policy;
@@ -47,7 +53,7 @@ export const columns: ColumnDef<StickerWithRelations, any>[] = [
         },
     },
     {
-        accessorKey: "policy",
+        id: "vehicle",
         header: "Vehicle",
         cell: ({ row }) => {
             const policy = row.original.policy;
@@ -59,7 +65,7 @@ export const columns: ColumnDef<StickerWithRelations, any>[] = [
         },
     },
     {
-        accessorKey: "policy",
+        id: "client",
         header: "Client",
         cell: ({ row }) => {
             const policy = row.original.policy;
