@@ -85,9 +85,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check if vehicle already has an active sticker
+        const existingSticker = await prisma.stickerIssuance.findFirst({
+            where: {
+                vehicleId,
+                isActive: true,
+            },
+        });
+
+        if (existingSticker) {
+            return NextResponse.json(
+                { error: "This vehicle already has an active sticker" },
+                { status: 400 }
+            );
+        }
+
         // Check if stock exists and is available
         const stock = await prisma.stickerStock.findUnique({
             where: { id: stockId },
+            include: {
+                sticker: true,
+            },
         });
 
         if (!stock) {
@@ -104,13 +122,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (stock.sticker) {
+            return NextResponse.json(
+                { error: "This stock has already been issued" },
+                { status: 400 }
+            );
+        }
+
         // Create sticker issuance and update stock status in a transaction
         const result = await prisma.$transaction(async (tx) => {
             // Create sticker issuance
             const issuance = await tx.stickerIssuance.create({
                 data: {
                     vehicleId,
-                    ...(policyId && { policyId }), // Only include policyId if it exists
+                    ...(policyId && { policyId }),
                     stockId,
                     stickerTypeId,
                     issuedAt: new Date(),
@@ -143,7 +168,7 @@ export async function POST(request: NextRequest) {
                 },
             });
 
-            // Update stock status
+            // Update stock status to ISSUED
             await tx.stickerStock.update({
                 where: { id: stockId },
                 data: {
@@ -159,11 +184,10 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Error creating sticker issuance:", error);
 
-        // Check for specific error types and return appropriate messages
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2003') {
+            if (error.code === 'P2002') {
                 return NextResponse.json(
-                    { error: "Invalid policy or vehicle reference" },
+                    { error: "This stock has already been issued" },
                     { status: 400 }
                 );
             }

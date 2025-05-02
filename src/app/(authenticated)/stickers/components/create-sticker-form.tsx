@@ -155,6 +155,12 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
     const onSubmit = async (values: FormValues) => {
         try {
             setIsLoading(true);
+
+            // Remove empty policyId if it's not provided
+            if (!values.policyId) {
+                delete values.policyId;
+            }
+
             const response = await fetch("/api/sticker-issuance", {
                 method: "POST",
                 headers: {
@@ -163,8 +169,10 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
                 body: JSON.stringify(values),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error("Failed to create sticker issuance");
+                throw new Error(data.error || "Failed to create sticker issuance");
             }
 
             toast.success("Sticker issued successfully");
@@ -172,7 +180,16 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
             onStickerCreated?.();
         } catch (error) {
             console.error("Error creating sticker issuance:", error);
-            toast.error("Failed to issue sticker");
+            toast.error(error instanceof Error ? error.message : "Failed to issue sticker");
+
+            // Reset form if there was an error with the stock
+            if (error instanceof Error && error.message.includes("stock")) {
+                form.setValue("stockId", "");
+                const stickerTypeId = form.getValues("stickerTypeId");
+                if (stickerTypeId) {
+                    fetchAvailableStock(stickerTypeId);
+                }
+            }
         } finally {
             setIsLoading(false);
         }

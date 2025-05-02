@@ -18,6 +18,24 @@ import {
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { DeleteStickerDialog } from "./delete-sticker-dialog";
+import {
+    Copy as CopyIcon,
+    ExternalLink as ExternalLinkIcon,
+    Building2,
+    FileText,
+    Sticker,
+    X,
+    Loader2,
+} from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 interface StickerDetailProps {
     sticker?: {
@@ -38,13 +56,27 @@ interface StickerDetailProps {
         };
         createdAt: string;
         updatedAt: string;
+        issuedAt: string;
+        stock: {
+            serialNumber: string;
+            stickerType: {
+                name: string;
+            };
+            insurer: {
+                name: string;
+            };
+        };
     };
     onRefresh?: () => void;
+    onClose?: () => void;
+    onDelete: () => void;
 }
 
-export function StickerDetail({ sticker, onRefresh }: StickerDetailProps) {
+export function StickerDetail({ sticker, onRefresh, onClose, onDelete }: StickerDetailProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Get color based on bureau
     const getBureauColor = (bureau: string) => {
@@ -100,6 +132,44 @@ export function StickerDetail({ sticker, onRefresh }: StickerDetailProps) {
         }
     };
 
+    const handleCopySerial = async () => {
+        try {
+            await navigator.clipboard.writeText(sticker?.stock.serialNumber || "");
+            toast({
+                title: "Copied",
+                description: "Serial number copied to clipboard",
+            });
+        } catch {
+            toast({
+                title: "Copy failed",
+                description: "Could not access clipboard",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/sticker-issuance/${sticker?.id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete sticker");
+            }
+
+            toast.success("Sticker deleted successfully");
+            onDelete();
+        } catch (error) {
+            console.error("Error deleting sticker:", error);
+            toast.error("Failed to delete sticker");
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteDialog(false);
+        }
+    };
+
     if (!sticker) {
         return (
             <Card className="h-full flex items-center justify-center">
@@ -112,119 +182,163 @@ export function StickerDetail({ sticker, onRefresh }: StickerDetailProps) {
     }
 
     return (
-        <Card className="h-full shadow-sm">
-            <CardHeader className="border-b pb-2.5">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-1.5">
-                        <CardTitle className="text-sm font-medium">Sticker {sticker.stickerNo}</CardTitle>
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className={cn(
-                                "text-[10px] px-1 py-0 h-4 rounded-sm",
-                                getStatusColor(sticker.status)
-                            )}>
-                                {sticker.status}
-                            </Badge>
-                            <Badge variant="secondary" className={cn(
-                                "text-[10px] px-1 py-0 h-4 rounded-sm",
-                                getBureauColor(sticker.bureau)
-                            )}>
-                                {sticker.bureau}
-                            </Badge>
+        <>
+            <Card className="h-full shadow-sm">
+                <CardHeader className="border-b pb-2.5">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                            <div className="w-7 h-7 rounded-full bg-blue-500/15 flex items-center justify-center mr-2">
+                                <Sticker className="h-3.5 w-3.5 text-blue-500" />
+                            </div>
+                            <CardTitle className="text-base whitespace-nowrap">
+                                {sticker.stock.serialNumber}
+                            </CardTitle>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={handleViewDetails}
-                            title="View Details"
-                        >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuLabel className="text-xs">Sticker Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        className="gap-2 text-xs cursor-pointer"
+                                        onClick={copyStickerNo}
+                                    >
+                                        <CopyIcon className="h-3.5 w-3.5" />
+                                        Copy sticker number
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="gap-2 text-xs cursor-pointer"
+                                        onClick={handleViewDetails}
+                                    >
+                                        <ExternalLinkIcon className="h-3.5 w-3.5" />
+                                        View details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="gap-2 text-xs cursor-pointer"
+                                        onClick={handleViewClient}
+                                    >
+                                        <User className="h-3.5 w-3.5" />
+                                        View client
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="gap-2 text-xs cursor-pointer"
+                                        onClick={handleViewVehicle}
+                                    >
+                                        <Car className="h-3.5 w-3.5" />
+                                        View vehicle
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="gap-2 text-xs text-destructive cursor-pointer"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        onSelect={(e) => e.preventDefault()}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        Delete sticker
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel className="text-xs">Sticker Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    className="gap-2 text-xs cursor-pointer"
-                                    onClick={copyStickerNo}
-                                >
-                                    <Copy className="h-3.5 w-3.5" />
-                                    Copy sticker number
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="gap-2 text-xs cursor-pointer"
-                                    onClick={handleViewClient}
-                                >
-                                    <User className="h-3.5 w-3.5" />
-                                    View client
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="gap-2 text-xs cursor-pointer"
-                                    onClick={handleViewVehicle}
-                                >
-                                    <Car className="h-3.5 w-3.5" />
-                                    View vehicle
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="gap-2 text-xs text-destructive cursor-pointer"
-                                    onClick={() => setShowDeleteDialog(true)}
-                                    onSelect={(e) => e.preventDefault()}
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    Delete sticker
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-                <div className="space-y-3">
-                    <div className="space-y-1">
-                        <h4 className="text-[10px] font-medium text-muted-foreground">Policy Details</h4>
-                        <p className="text-xs">{sticker.policyNo}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <h4 className="text-[10px] font-medium text-muted-foreground">Vehicle Details</h4>
-                        <div className="flex items-center gap-2">
-                            <p className="text-xs">{sticker.vehicle.registrationNo}</p>
-                            <span className="text-[10px] text-muted-foreground">•</span>
-                            <p className="text-xs text-muted-foreground">{sticker.vehicle.type}</p>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={onClose}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-                    <div className="space-y-1">
-                        <h4 className="text-[10px] font-medium text-muted-foreground">Client Details</h4>
-                        <p className="text-xs">{sticker.client.name}</p>
+                </CardHeader>
+
+                <CardContent className="p-3">
+                    <div className="space-y-4">
+                        {/* Vehicle and Policy Details */}
+                        <div className="pb-2.5 border-b">
+                            <div className="flex items-center mb-1.5">
+                                <Car className="h-3.5 w-3.5 text-blue-500 mr-1.5 flex-shrink-0" />
+                                <h3 className="font-medium text-sm">
+                                    {sticker.vehicle.registrationNo}
+                                </h3>
+                            </div>
+                            <div className="space-y-1 pl-5">
+                                {sticker.policy && (
+                                    <>
+                                        <div className="flex items-center text-xs text-muted-foreground">
+                                            <FileText className="h-3 w-3 mr-1 text-purple-500 flex-shrink-0" />
+                                            {sticker.policy.policyNo}
+                                        </div>
+                                        {sticker.policy.client && (
+                                            <div className="flex items-center text-xs text-muted-foreground">
+                                                <User className="h-3 w-3 mr-1 text-indigo-500 flex-shrink-0" />
+                                                {sticker.policy.client.name}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sticker Details */}
+                        <div className="pb-2.5 border-b">
+                            <div className="flex items-center mb-1.5">
+                                <Sticker className="h-3.5 w-3.5 text-emerald-500 mr-1.5 flex-shrink-0" />
+                                <h3 className="font-medium text-sm">
+                                    {sticker.stock.stickerType.name}
+                                </h3>
+                            </div>
+                            <div className="space-y-1 pl-5">
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Building2 className="h-3 w-3 mr-1 text-orange-500 flex-shrink-0" />
+                                    {sticker.stock.insurer.name}
+                                </div>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Calendar className="h-3 w-3 mr-1 text-blue-500 flex-shrink-0" />
+                                    Issued on {format(new Date(sticker.issuedAt), "dd MMM yyyy")}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="pt-2 border-t space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>Created {format(new Date(sticker.createdAt), "MMM d, yyyy")}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>Last updated {format(new Date(sticker.updatedAt), "MMM d, yyyy")}</span>
-                    </div>
-                </div>
-            </CardContent>
-            <DeleteStickerDialog
-                stickerId={sticker?.id || ""}
-                stickerNo={sticker?.stickerNo || ""}
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-                onStickerDeleted={() => {
-                    if (onRefresh) onRefresh();
-                }}
-            />
-        </Card>
+                </CardContent>
+            </Card>
+
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Sticker</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this sticker? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowDeleteDialog(false)}
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                "Delete"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 } 
