@@ -191,6 +191,8 @@ model StickerIssuance {
   stock         StickerStock? @relation(fields: [stockId], references: [id])
   updatedByUser User?         @relation("StickerUpdatedBy", fields: [updatedBy], references: [id])
   vehicle       Vehicle       @relation(fields: [vehicleId], references: [id])
+  validFrom     DateTime      @default(now())
+  validTo       DateTime      @default(dbgenerated("(now() + interval '1 year')"))
 }
 
 model StickerType {
@@ -261,15 +263,15 @@ model PolicyCountry {
 model Insurer {
   id            String         @id @default(cuid())
   name          String         @unique
-  email         String?
-  phone         String?
-  address       String?
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   createdBy     String?
   updatedBy     String?
   deletedAt     DateTime?
+  address       String?
+  email         String?
+  phone         String?
   createdByUser User?          @relation("InsurerCreatedBy", fields: [createdBy], references: [id])
   updatedByUser User?          @relation("InsurerUpdatedBy", fields: [updatedBy], references: [id])
   policies      Policy[]

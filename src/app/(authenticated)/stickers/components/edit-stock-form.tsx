@@ -25,7 +25,6 @@ import { Loader2, Pencil, Calendar, Building2, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { type StickerStockWithRelations } from "./stock-columns";
 import { format } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
@@ -39,6 +38,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface EditStockFormProps {
     stock: StickerStockWithRelations;
@@ -179,37 +179,14 @@ export function EditStockForm({
                                         <Calendar className="h-3.5 w-3.5 text-orange-500" />
                                         Received Date
                                     </FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full h-8 px-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(field.value, "PPP")
-                                                    ) : (
-                                                        <span>Pick a date</span>
-                                                    )}
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start" side="bottom">
-                                            <CalendarComponent
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                                className="rounded-md border shadow"
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                    <DatePicker
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Pick a date"
+                                        disabled={(date: Date) =>
+                                            date > new Date() || date < new Date("1900-01-01")
+                                        }
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )}

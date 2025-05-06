@@ -36,12 +36,15 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formSchema = z.object({
     vehicleId: z.string().min(1, "Vehicle is required"),
     policyId: z.string().optional(),
     stickerTypeId: z.string().min(1, "Sticker type is required"),
     stockId: z.string().min(1, "Sticker stock is required"),
+    validFrom: z.date().min(new Date(), "Valid from date must be in the future"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -75,6 +78,7 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
             policyId: "",
             stickerTypeId: "",
             stockId: "",
+            validFrom: new Date(),
         },
     });
 
@@ -166,7 +170,10 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(values),
+                body: JSON.stringify({
+                    ...values,
+                    validFrom: values.validFrom.toISOString().split('T')[0], // send as YYYY-MM-DD
+                }),
             });
 
             const data = await response.json();
@@ -371,6 +378,22 @@ export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFo
                                                 </Command>
                                             </PopoverContent>
                                         </Popover>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="validFrom"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">Valid From</FormLabel>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Pick a date"
+                                            disabled={isLoading}
+                                        />
                                         <FormMessage className="text-xs" />
                                     </FormItem>
                                 )}

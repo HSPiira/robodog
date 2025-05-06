@@ -7,6 +7,7 @@ import { stockColumns, StickerStockWithRelations } from "./components/stock-colu
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateStockForm } from "./components/create-stock-form";
 import { StickerStockDetail } from "./components/stock-detail";
+import { StickerDetail } from "./components/sticker-detail";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import type { Prisma } from "@prisma/client";
@@ -19,15 +20,28 @@ type StickerWithRelations = {
     id: string;
     serialNumber: string;
     createdAt: Date;
-    policy: {
-        policyNo: string | null;
-        vehicle: {
-            registrationNo: string | null;
-        } | null;
-        client: {
-            name: string | null;
-        } | null;
+    issuedAt: Date;
+    validFrom: Date;
+    validTo: Date;
+    vehicle: {
+        registrationNo: string;
+    };
+    policy?: {
+        policyNo: string;
+        client?: {
+            name: string;
+        };
     } | null;
+    stock: {
+        serialNumber: string;
+        stickerType: {
+            name: string;
+        };
+        insurer: {
+            name: string;
+        };
+    };
+    isActive: boolean;
 };
 
 const DEFAULT_TAB = "stickers";
@@ -35,12 +49,14 @@ const DEFAULT_TAB = "stickers";
 export default function StickersPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [activeTab, setActiveTab] = useState(searchParams.get("tab") || DEFAULT_TAB);
+    const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || DEFAULT_TAB);
 
     const [stickers, setStickers] = useState<StickerWithRelations[]>([]);
     const [stock, setStock] = useState<StickerStockWithRelations[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedStock, setSelectedStock] = useState<StickerStockWithRelations | null>(null);
+    const [selectedSticker, setSelectedSticker] = useState<StickerWithRelations | null>(null);
+    const [statusFilter, setStatusFilter] = useState<"all" | "active" | "expired">("all");
 
     // Set initial tab on mount
     useEffect(() => {
@@ -48,7 +64,8 @@ export default function StickersPage() {
         if (!tab) {
             const params = new URLSearchParams(searchParams);
             params.set("tab", DEFAULT_TAB);
-            router.push(`/stickers?${params.toString()}`);
+            router.replace(`/stickers?${params.toString()}`);
+            setActiveTab(DEFAULT_TAB);
         }
     }, []);
 
@@ -98,6 +115,16 @@ export default function StickersPage() {
         setSelectedStock(current => current?.id === stock.id ? null : stock);
     };
 
+    const handleStickerSelect = (sticker: StickerWithRelations) => {
+        console.log('Sticker selected:', sticker);
+        setSelectedSticker(current => {
+            console.log('Current selected sticker:', current);
+            const newSelected = current?.id === sticker.id ? null : sticker;
+            console.log('New selected sticker:', newSelected);
+            return newSelected;
+        });
+    };
+
     const handleTabChange = (value: string) => {
         setActiveTab(value);
         // Update URL with the new tab value
@@ -105,6 +132,12 @@ export default function StickersPage() {
         params.set("tab", value);
         router.push(`/stickers?${params.toString()}`);
     };
+
+    const filteredStickers = stickers.filter((sticker) => {
+        if (statusFilter === "all") return true;
+        if (statusFilter === "active") return sticker.isActive;
+        return !sticker.isActive;
+    });
 
     if (loading) {
         return (
@@ -125,15 +158,36 @@ export default function StickersPage() {
                     <TabsTrigger value="stock">Stock</TabsTrigger>
                 </TabsList>
                 <TabsContent value="stickers">
-                    <DataTable
-                        columns={columns}
-                        data={stickers}
-                        onRefresh={fetchStickers}
-                        searchKey="serialNumber"
-                        customButton={
-                            <CreateStickerForm onStickerCreated={fetchStickers} />
-                        }
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className={selectedSticker ? "md:col-span-2" : "md:col-span-3"}>
+                            <DataTable
+                                columns={columns}
+                                data={filteredStickers}
+                                onRefresh={fetchStickers}
+                                searchKey="serialNumber"
+                                onRowClick={handleStickerSelect}
+                                selectedRow={selectedSticker}
+                                showDetails={!!selectedSticker}
+                                customButton={
+                                    <CreateStickerForm onStickerCreated={fetchStickers} />
+                                }
+                                statusFilter={statusFilter}
+                                onStatusFilterChange={setStatusFilter}
+                            />
+                        </div>
+                        {selectedSticker && (
+                            <div className="md:col-span-1">
+                                <StickerDetail
+                                    sticker={selectedSticker}
+                                    onClose={() => setSelectedSticker(null)}
+                                    onDelete={() => {
+                                        setSelectedSticker(null);
+                                        fetchStickers();
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
                 <TabsContent value="stock">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

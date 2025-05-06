@@ -1,18 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import {
   Copy,
   ExternalLink,
-  Ticket,
   Building2,
   Calendar,
   CheckCircle,
-  XCircle,
-  CircuitBoard,
   MoreHorizontal,
   CircleSlash,
   Tag,
@@ -23,7 +19,6 @@ import {
   Pencil,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,

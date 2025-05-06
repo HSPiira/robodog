@@ -12,15 +12,27 @@ export async function GET(request: Request) {
         }
 
         const stickers = await prisma.stickerIssuance.findMany({
-            where: {
-                isActive: true,
-            },
+            where: {},
             select: {
                 id: true,
                 createdAt: true,
+                issuedAt: true,
+                validFrom: true,
+                validTo: true,
+                isActive: true,
                 stock: {
                     select: {
                         serialNumber: true,
+                        stickerType: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                        insurer: {
+                            select: {
+                                name: true,
+                            },
+                        },
                     },
                 },
                 policy: {
@@ -36,6 +48,17 @@ export async function GET(request: Request) {
                 vehicle: {
                     select: {
                         registrationNo: true,
+                        client: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+                issuedByUser: {
+                    select: {
+                        name: true,
                     },
                 },
             },
@@ -43,19 +66,35 @@ export async function GET(request: Request) {
                 createdAt: "desc",
             },
         });
+        console.log('Raw stickers from Prisma:', JSON.stringify(stickers, null, 2));
 
         // Transform the data to match the expected format
         const formattedStickers = stickers.map(sticker => ({
             id: sticker.id,
             serialNumber: sticker.stock?.serialNumber || "N/A",
             createdAt: sticker.createdAt,
+            issuedAt: sticker.issuedAt || sticker.createdAt,
+            validFrom: sticker.validFrom,
+            validTo: sticker.validTo,
+            isActive: sticker.isActive,
+            vehicle: {
+                registrationNo: sticker.vehicle?.registrationNo || "N/A",
+                client: sticker.vehicle?.client || null,
+            },
             policy: sticker.policy ? {
                 policyNo: sticker.policy.policyNo,
-                vehicle: {
-                    registrationNo: sticker.vehicle?.registrationNo || null,
-                },
                 client: sticker.policy.client,
             } : null,
+            stock: {
+                serialNumber: sticker.stock?.serialNumber || "N/A",
+                stickerType: {
+                    name: sticker.stock?.stickerType?.name || "N/A",
+                },
+                insurer: {
+                    name: sticker.stock?.insurer?.name || "N/A",
+                },
+            },
+            issuedByUser: sticker.issuedByUser ? { name: sticker.issuedByUser.name } : null,
         }));
 
         return NextResponse.json(formattedStickers);
@@ -75,12 +114,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { vehicleId, policyId, stockId, stickerTypeId } = await request.json();
+        const body = await request.json();
+        const { vehicleId, policyId, stockId, stickerTypeId, validFrom: validFromInput, validTo: validToInput } = body;
 
         // Validate required fields
-        if (!vehicleId || !stockId || !stickerTypeId) {
+        if (!vehicleId || !stockId || !stickerTypeId || !validFromInput || !validToInput) {
             return NextResponse.json(
-                { error: "Vehicle, stock, and sticker type are required" },
+                { error: "Vehicle, stock, sticker type, and validity dates are required" },
                 { status: 400 }
             );
         }
@@ -131,6 +171,12 @@ export async function POST(request: NextRequest) {
 
         // Create sticker issuance and update stock status in a transaction
         const result = await prisma.$transaction(async (tx) => {
+            const issuedAt = new Date();
+            // validFrom can be provided, otherwise use issuedAt
+            const validFrom = new Date(validFromInput);
+            // validTo is always 1 year after validFrom
+            const validTo = new Date(validToInput);
+            validTo.setFullYear(validTo.getFullYear() + 1);
             // Create sticker issuance
             const issuance = await tx.stickerIssuance.create({
                 data: {
@@ -138,7 +184,9 @@ export async function POST(request: NextRequest) {
                     ...(policyId && { policyId }),
                     stockId,
                     stickerTypeId,
-                    issuedAt: new Date(),
+                    issuedAt,
+                    validFrom,
+                    validTo,
                     issuedBy: session.user.id,
                     createdBy: session.user.id,
                     updatedBy: session.user.id,
