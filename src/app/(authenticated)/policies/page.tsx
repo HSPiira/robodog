@@ -54,23 +54,29 @@ export default function PoliciesPage() {
     };
 
     return (
-        <div className="container mx-auto py-10">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Policies</h1>
-                <CreatePolicyForm onSuccess={fetchPolicies} onCancel={() => { }} />
+        <div className="p-6">
+            <div className="flex gap-6">
+                <div className="flex-1">
+                    <DataTable
+                        columns={createColumns()}
+                        data={policies}
+                        searchKey="policyNo"
+                        actionButton={<CreatePolicyForm onSuccess={fetchPolicies} onCancel={() => { }} />}
+                        onRowClick={handlePolicySelect}
+                        selectedRow={selectedPolicy || undefined}
+                        loading={loading}
+                    />
+                </div>
+                {showDetails && selectedPolicy && (
+                    <div className="w-[400px]">
+                        <PolicyDetail
+                            policy={selectedPolicy}
+                            onClose={() => setShowDetails(false)}
+                            onPolicyUpdate={fetchPolicies}
+                        />
+                    </div>
+                )}
             </div>
-            <DataTable
-                columns={createColumns({ onPolicyUpdate: fetchPolicies })}
-                data={policies}
-                onRowClick={handlePolicySelect}
-                selectedRow={selectedPolicy}
-            />
-            {showDetails && selectedPolicy && (
-                <PolicyDetail
-                    policy={selectedPolicy}
-                    onClose={() => setShowDetails(false)}
-                />
-            )}
         </div>
     );
 }

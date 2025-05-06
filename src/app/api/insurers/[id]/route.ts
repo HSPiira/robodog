@@ -14,8 +14,8 @@ interface RouteContext {
 const insurerUpdateSchema = z.object({
     name: z.string().min(1, "Name is required").optional(),
     email: z.string().email("Invalid email format").optional().nullable(),
-    address: z.string().optional().nullable(),
     phone: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
     isActive: z.boolean().optional(),
 });
 

@@ -34,13 +34,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { CalendarIcon, Loader2, Plus, Search } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Client, Vehicle, Insurer, PolicyStatus } from "@prisma/client";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formSchema = z.object({
     policyNo: z.string().min(1, "Policy number is required"),
@@ -75,7 +75,7 @@ interface CreatePolicyFormProps {
 const dataCache = {
     clients: [] as Array<{ id: string; name: string }>,
     vehicles: [] as Array<{ id: string; registrationNo: string; make: string; model: string }>,
-    insurers: [] as Array<{ id: string; name: string }>,
+    insurers: [] as Array<{ id: string; name: string; code: string }>,
     lastFetched: 0,
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
 };
@@ -86,7 +86,7 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
     const [isOpen, setIsOpen] = useState(false);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [vehicles, setVehicles] = useState<Array<{ id: string; registrationNo: string; make: string; model: string }>>([]);
-    const [insurers, setInsurers] = useState<Array<{ id: string; name: string }>>([]);
+    const [insurers, setInsurers] = useState<Array<{ id: string; name: string; code: string }>>([]);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState("");
     const [insurerSearchTerm, setInsurerSearchTerm] = useState("");
@@ -429,34 +429,12 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Valid From</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full h-9 px-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "MMM d, yyyy")
-                                                        ) : (
-                                                            <span>Pick a date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Pick a date"
+                                            disabled={isLoading}
+                                        />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -468,34 +446,12 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Valid To</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full h-9 px-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? (
-                                                            format(field.value, "MMM d, yyyy")
-                                                        ) : (
-                                                            <span>Pick a date</span>
-                                                        )}
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Pick a date"
+                                            disabled={isLoading}
+                                        />
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -515,7 +471,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                 placeholder="Enter premium amount"
                                                 className="h-9"
                                                 {...field}
-                                                value={field.value ?? ''}
+                                                value={field.value === null ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -535,7 +492,8 @@ export function CreatePolicyForm({ onSuccess, onCancel }: CreatePolicyFormProps)
                                                 placeholder="Enter stamp duty amount"
                                                 className="h-9"
                                                 {...field}
-                                                value={field.value ?? ''}
+                                                value={field.value === null ? '' : field.value}
+                                                onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                                             />
                                         </FormControl>
                                         <FormMessage />

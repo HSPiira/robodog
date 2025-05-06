@@ -26,8 +26,10 @@ import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CreateStickerForm } from "./create-sticker-form";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface DataTableProps<TData> {
+interface DataTableProps<TData extends { id: string }> {
     columns: ColumnDef<TData, any>[];
     data: TData[];
     searchKey?: string;
@@ -36,9 +38,11 @@ interface DataTableProps<TData> {
     showDetails?: boolean;
     onRefresh?: () => void;
     customButton?: React.ReactNode;
+    statusFilter?: "all" | "active" | "expired";
+    onStatusFilterChange?: (status: "all" | "active" | "expired") => void;
 }
 
-export function DataTable<TData>({
+export function DataTable<TData extends { id: string }>({
     columns,
     data,
     searchKey = "serialNumber",
@@ -47,11 +51,19 @@ export function DataTable<TData>({
     showDetails = false,
     onRefresh,
     customButton,
+    statusFilter = "all",
+    onStatusFilterChange,
 }: DataTableProps<TData>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
+
+    React.useEffect(() => {
+        setColumnVisibility({
+            'insurer': !showDetails
+        });
+    }, [showDetails]);
 
     const handleDelete = async (id: string) => {
         try {
@@ -88,12 +100,17 @@ export function DataTable<TData>({
             columnVisibility,
             rowSelection,
         },
+        initialState: {
+            columnVisibility: {
+                'insurer': !showDetails
+            }
+        }
     });
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
-                <div className="relative flex-1 sm:w-[280px] w-full max-w-full sm:max-w-[280px] flex items-center gap-2">
+                <div className="relative flex-1 sm:w-[420px] w-full max-w-full sm:max-w-[420px] flex items-center gap-2">
                     <div className="relative flex-1">
                         <Input
                             placeholder={`Search by ${searchKey}...`}
@@ -104,25 +121,21 @@ export function DataTable<TData>({
                             className="w-full h-8 rounded-full bg-muted px-4 text-xs"
                         />
                     </div>
-                    {customButton || (
-                        <CreateStickerForm
-                            trigger={
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full flex-shrink-0 border-blue-500/20 hover:border-blue-500 hover:bg-blue-500/10 text-blue-500"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            }
-                            onStickerCreated={onRefresh}
-                        />
+                    {customButton}
+                    {onStatusFilterChange && (
+                        <Tabs value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as "all" | "active" | "expired")} className="ml-2">
+                            <TabsList className="h-8 rounded-full bg-muted p-1">
+                                <TabsTrigger value="all" className="text-xs px-3 rounded-full data-[state=active]:bg-background">All</TabsTrigger>
+                                <TabsTrigger value="active" className="text-xs px-3 rounded-full data-[state=active]:bg-background">Active</TabsTrigger>
+                                <TabsTrigger value="expired" className="text-xs px-3 rounded-full data-[state=active]:bg-background">Expired</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
                     )}
                 </div>
             </div>
             <div className="rounded-md border overflow-hidden">
                 <div className="min-h-[300px] flex flex-col">
-                    <Table>
+                    <Table className="table-auto w-full">
                         <TableHeader className="bg-primary/5">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
@@ -150,13 +163,19 @@ export function DataTable<TData>({
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
-                                        className="border-0 cursor-pointer hover:bg-muted/50 text-xs h-5"
-                                        onClick={() => onRowClick?.(row.original)}
+                                        className={cn(
+                                            "border-0 cursor-pointer hover:bg-muted/50 text-xs h-5",
+                                            selectedRow?.id === row.original.id && "bg-muted/50"
+                                        )}
+                                        onClick={() => {
+                                            console.log('Row clicked:', row.original);
+                                            onRowClick?.(row.original);
+                                        }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
                                                 key={cell.id}
-                                                className="py-1.5 px-4 border-b border-border/40"
+                                                className="py-1.5 px-4 border-b border-border/40 whitespace-nowrap"
                                             >
                                                 {flexRender(
                                                     cell.column.columnDef.cell,

@@ -9,6 +9,34 @@ interface SessionUser {
   name: string;
 }
 
+interface VehicleResponse {
+  id: string;
+  registrationNo: string;
+  make: string;
+  model: string;
+  year: number;
+  chassisNumber: string;
+  engineNumber: string;
+  bodyType: {
+    name: string;
+  };
+  vehicleCategory: {
+    name: string;
+  };
+  vehicleType: {
+    name: string;
+  };
+  client: {
+    id: string;
+    name: string;
+  };
+  isActive: boolean;
+  policies: number;
+  seatingCapacity: number | null;
+  grossWeight: number | null;
+  cubicCapacity: number | null;
+}
+
 // Define the type for vehicle creation input
 type VehicleCreateData = {
   registrationNo: string;
@@ -108,13 +136,6 @@ export async function POST(request: Request) {
     }
 
     // Create the vehicle data
-    /*
-     * IMPORTANT: Better approach would be to run:
-     * npx prisma generate
-     *
-     * Then use the proper Prisma types directly instead of casting to 'any'.
-     * This would provide full type safety for your database operations.
-     */
     const vehicleData = {
       registrationNo: registrationNo.toUpperCase(),
       make,
@@ -134,15 +155,35 @@ export async function POST(request: Request) {
       updatedBy: dbUser.id,
     };
 
-    // We're using 'as any' temporarily - run 'npx prisma generate'
-    // and update your code to use proper typing instead
     const vehicle = await prisma.vehicle.create({
-      data: vehicleData as any, // TODO: Replace with proper typing
+      data: vehicleData,
       include: {
-        bodyType: true,
-        vehicleCategory: true,
-        vehicleType: true,
-        client: true,
+        bodyType: {
+          select: {
+            name: true,
+          },
+        },
+        vehicleCategory: {
+          select: {
+            name: true,
+          },
+        },
+        vehicleType: {
+          select: {
+            name: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            stickers: true,
+          },
+        },
       },
     });
 
@@ -194,14 +235,14 @@ export async function GET(request: Request) {
         },
         _count: {
           select: {
-            policies: true,
+            stickers: true,
           },
         },
       },
     });
 
     // Transform the data to match the expected format
-    const formattedVehicles = vehicles.map((vehicle) => ({
+    const formattedVehicles: VehicleResponse[] = vehicles.map((vehicle) => ({
       id: vehicle.id,
       registrationNo: vehicle.registrationNo,
       make: vehicle.make,
@@ -214,7 +255,7 @@ export async function GET(request: Request) {
       vehicleType: vehicle.vehicleType,
       client: vehicle.client,
       isActive: vehicle.isActive,
-      policies: vehicle._count.policies,
+      policies: vehicle._count.stickers,
       seatingCapacity: vehicle.seatingCapacity,
       grossWeight: vehicle.grossWeight,
       cubicCapacity: vehicle.cubicCapacity,

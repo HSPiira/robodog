@@ -1,15 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogDescription,
-} from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -17,9 +12,14 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-    FormDescription,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Command,
     CommandEmpty,
@@ -32,62 +32,73 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Loader2, Check, ChevronsUpDown, Car } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formSchema = z.object({
-    stickerNo: z.string().min(1, "Sticker number is required"),
-    policyId: z.string().min(1, "Policy is required"),
+    vehicleId: z.string().min(1, "Vehicle is required"),
+    policyId: z.string().optional(),
+    stickerTypeId: z.string().min(1, "Sticker type is required"),
+    stockId: z.string().min(1, "Sticker stock is required"),
+    validFrom: z.date().min(new Date(), "Valid from date must be in the future"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const defaultValues: Partial<FormValues> = {
-    stickerNo: "",
-    policyId: "",
-};
+interface CreateStickerFormProps {
+    trigger?: React.ReactNode;
+    onStickerCreated?: () => void;
+}
 
-interface Policy {
+type StockItem = {
     id: string;
-    policyNo: string;
-    client: {
-        id: string;
+    serialNumber: string;
+    insurer: {
         name: string;
     };
-    vehicle: {
-        id: string;
-        registrationNo: string;
-        make?: string;
-        model?: string;
-    };
-    validFrom: string;
-    validTo: string;
-    status: string;
-}
+};
 
-interface CreateStickerFormProps {
-    onStickerCreated?: () => void;
-    trigger?: React.ReactNode;
-}
-
-export function CreateStickerForm({ onStickerCreated, trigger }: CreateStickerFormProps) {
+export function CreateStickerForm({ trigger, onStickerCreated }: CreateStickerFormProps) {
     const [open, setOpen] = useState(false);
+    const [stockOpen, setStockOpen] = useState(false);
+    const [vehicles, setVehicles] = useState<{ id: string; registrationNo: string }[]>([]);
+    const [policies, setPolicies] = useState<{ id: string; policyNo: string }[]>([]);
+    const [stickerTypes, setStickerTypes] = useState<{ id: string; name: string }[]>([]);
+    const [availableStock, setAvailableStock] = useState<StockItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [policies, setPolicies] = useState<Policy[]>([]);
-    const [policyOpen, setPolicyOpen] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues,
+        defaultValues: {
+            vehicleId: "",
+            policyId: "",
+            stickerTypeId: "",
+            stockId: "",
+            validFrom: new Date(),
+        },
     });
+
+    const fetchVehicles = async () => {
+        try {
+            const response = await fetch("/api/vehicles");
+            if (!response.ok) {
+                throw new Error("Failed to fetch vehicles");
+            }
+            const data = await response.json();
+            setVehicles(data);
+        } catch (error) {
+            console.error("Error fetching vehicles:", error);
+            toast.error("Failed to fetch vehicles");
+        }
+    };
 
     const fetchPolicies = async () => {
         try {
-            const response = await fetch("/api/policies?active=true");
+            const response = await fetch("/api/policies");
             if (!response.ok) {
                 throw new Error("Failed to fetch policies");
             }
@@ -99,170 +110,314 @@ export function CreateStickerForm({ onStickerCreated, trigger }: CreateStickerFo
         }
     };
 
+    const fetchStickerTypes = async () => {
+        try {
+            const response = await fetch("/api/sticker-types");
+            if (!response.ok) {
+                throw new Error("Failed to fetch sticker types");
+            }
+            const data = await response.json();
+            setStickerTypes(data);
+        } catch (error) {
+            console.error("Error fetching sticker types:", error);
+            toast.error("Failed to fetch sticker types");
+        }
+    };
+
+    const fetchAvailableStock = async (stickerTypeId: string) => {
+        try {
+            const response = await fetch(`/api/stickers/stock?stickerTypeId=${stickerTypeId}&status=AVAILABLE&unissued=true`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch available stock");
+            }
+            const data = await response.json();
+            setAvailableStock(data);
+        } catch (error) {
+            console.error("Error fetching available stock:", error);
+            toast.error("Failed to fetch available stock");
+        }
+    };
+
     useEffect(() => {
         if (open) {
+            fetchVehicles();
             fetchPolicies();
+            fetchStickerTypes();
         }
     }, [open]);
 
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    useEffect(() => {
+        const stickerTypeId = form.watch("stickerTypeId");
+        if (stickerTypeId) {
+            form.setValue("stockId", "");
+            fetchAvailableStock(stickerTypeId);
+        } else {
+            setAvailableStock([]);
+        }
+    }, [form.watch("stickerTypeId")]);
+
+    const onSubmit = async (values: FormValues) => {
         try {
             setIsLoading(true);
-            const response = await fetch("/api/stickers", {
+
+            // Remove empty policyId if it's not provided
+            if (!values.policyId) {
+                delete values.policyId;
+            }
+
+            const response = await fetch("/api/sticker-issuance", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(values),
+                body: JSON.stringify({
+                    ...values,
+                    validFrom: values.validFrom.toISOString().split('T')[0], // send as YYYY-MM-DD
+                }),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to create sticker");
+                throw new Error(data.error || "Failed to create sticker issuance");
             }
 
-            toast.success("Sticker created successfully");
-            form.reset();
+            toast.success("Sticker issued successfully");
             setOpen(false);
             onStickerCreated?.();
         } catch (error) {
-            console.error("Error creating sticker:", error);
-            toast.error(error instanceof Error ? error.message : "Failed to create sticker");
+            console.error("Error creating sticker issuance:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to issue sticker");
+
+            // Reset form if there was an error with the stock
+            if (error instanceof Error && error.message.includes("stock")) {
+                form.setValue("stockId", "");
+                const stickerTypeId = form.getValues("stickerTypeId");
+                if (stickerTypeId) {
+                    fetchAvailableStock(stickerTypeId);
+                }
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const selectedPolicy = policies.find(
-        (policy) => policy.id === form.watch("policyId")
-    );
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild onClick={() => setOpen(true)}>
+            <DialogTrigger asChild>
                 {trigger || (
-                    <Button size="sm">
-                        New Sticker
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full flex-shrink-0 border-blue-500/20 hover:border-blue-500 hover:bg-blue-500/10 text-blue-500"
+                    >
+                        <Plus className="h-4 w-4" />
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Create New Sticker</DialogTitle>
-                    <DialogDescription className="text-xs text-muted-foreground">
-                        Create a new sticker and assign it to an active policy.
-                    </DialogDescription>
+                    <DialogTitle className="text-lg">Issue Sticker</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="stickerNo"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Sticker Number</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            {...field}
-                                            placeholder="Enter sticker number"
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                        <div className="grid gap-4">
+                            <FormField
+                                control={form.control}
+                                name="vehicleId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">Vehicle</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
                                             disabled={isLoading}
-                                            className="h-9"
-                                        />
-                                    </FormControl>
-                                    <FormDescription className="text-xs">
-                                        Enter a unique sticker number
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="policyId"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Policy</FormLabel>
-                                    <Popover open={policyOpen} onOpenChange={setPolicyOpen}>
-                                        <PopoverTrigger asChild>
+                                        >
                                             <FormControl>
-                                                <Button
-                                                    variant="outline"
-                                                    role="combobox"
-                                                    className={cn(
-                                                        "h-9 w-full justify-between",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                    disabled={isLoading}
-                                                >
-                                                    {selectedPolicy ? (
-                                                        <div className="flex items-center gap-2 text-xs">
-                                                            <Car className="h-3.5 w-3.5 text-muted-foreground" />
-                                                            <span>{selectedPolicy.policyNo}</span>
-                                                            <span className="text-muted-foreground">•</span>
-                                                            <span>{selectedPolicy.vehicle.registrationNo}</span>
-                                                        </div>
-                                                    ) : (
-                                                        "Select a policy"
-                                                    )}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                </Button>
+                                                <SelectTrigger className="text-sm">
+                                                    <SelectValue placeholder="Select vehicle" />
+                                                </SelectTrigger>
                                             </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-full p-0">
-                                            <Command>
-                                                <CommandInput
-                                                    placeholder="Search policies..."
-                                                    className="h-9"
-                                                />
-                                                <CommandEmpty>No policies found.</CommandEmpty>
-                                                <CommandGroup className="max-h-[200px] overflow-auto">
-                                                    {policies.map((policy) => (
-                                                        <CommandItem
-                                                            value={policy.policyNo}
-                                                            key={policy.id}
-                                                            onSelect={() => {
-                                                                form.setValue("policyId", policy.id);
-                                                                setPolicyOpen(false);
-                                                            }}
-                                                            className="text-xs"
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-3.5 w-3.5",
-                                                                    policy.id === field.value
-                                                                        ? "opacity-100"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            <div className="flex flex-col">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span>{policy.policyNo}</span>
-                                                                    <span className="text-muted-foreground">•</span>
-                                                                    <span>{policy.vehicle.registrationNo}</span>
-                                                                </div>
-                                                                <span className="text-muted-foreground text-[10px]">
-                                                                    {policy.client.name}
+                                            <SelectContent>
+                                                {vehicles.map((vehicle) => (
+                                                    <SelectItem key={vehicle.id} value={vehicle.id} className="text-sm">
+                                                        {vehicle.registrationNo}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="policyId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">Policy (Optional)</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            disabled={isLoading}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="text-sm">
+                                                    <SelectValue placeholder="Select policy" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {policies.map((policy) => (
+                                                    <SelectItem key={policy.id} value={policy.id} className="text-sm">
+                                                        {policy.policyNo}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="stickerTypeId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">Sticker Type</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            disabled={isLoading}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="text-sm">
+                                                    <SelectValue placeholder="Select sticker type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {stickerTypes.map((type) => (
+                                                    <SelectItem key={type.id} value={type.id} className="text-sm">
+                                                        {type.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="stockId"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel className="text-sm">Sticker Stock</FormLabel>
+                                        <Popover open={stockOpen} onOpenChange={setStockOpen}>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        aria-expanded={stockOpen}
+                                                        className={cn(
+                                                            "w-full justify-between text-sm",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                        disabled={isLoading || !form.watch("stickerTypeId")}
+                                                    >
+                                                        {field.value ? (
+                                                            <div className="flex items-center w-full overflow-hidden">
+                                                                <span className="font-medium whitespace-nowrap min-w-[120px] mr-1">
+                                                                    {availableStock.find((stock) => stock.id === field.value)?.serialNumber}
+                                                                </span>
+                                                                <span className="text-muted-foreground truncate text-xs">
+                                                                    · {availableStock.find((stock) => stock.id === field.value)?.insurer.name}
                                                                 </span>
                                                             </div>
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormDescription className="text-xs">
-                                        Select an active policy to assign the sticker
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="flex justify-end pt-2">
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Sticker
+                                                        ) : (
+                                                            "Select sticker stock"
+                                                        )}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent align="start" className="p-0 w-[var(--radix-popover-trigger-width)] max-h-[300px]">
+                                                <Command className="text-sm">
+                                                    <CommandInput placeholder="Search sticker stock..." className="text-sm" />
+                                                    <CommandEmpty className="text-sm">No stock found.</CommandEmpty>
+                                                    <CommandGroup className="max-h-[200px] overflow-auto">
+                                                        {availableStock.map((stock) => (
+                                                            <CommandItem
+                                                                key={stock.id}
+                                                                value={`${stock.serialNumber} ${stock.insurer.name}`}
+                                                                onSelect={() => {
+                                                                    form.setValue("stockId", stock.id);
+                                                                    setStockOpen(false);
+                                                                }}
+                                                                className="text-xs py-1"
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-3.5 w-3.5",
+                                                                        stock.id === field.value
+                                                                            ? "opacity-100"
+                                                                            : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <div className="flex items-center w-full">
+                                                                    <span className="font-medium whitespace-nowrap min-w-[120px] mr-1">
+                                                                        {stock.serialNumber}
+                                                                    </span>
+                                                                    <span className="text-muted-foreground truncate">
+                                                                        · {stock.insurer.name}
+                                                                    </span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="validFrom"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs">Valid From</FormLabel>
+                                        <DatePicker
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Pick a date"
+                                            disabled={isLoading}
+                                        />
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setOpen(false)}
+                                disabled={isLoading}
+                                className="text-sm"
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading} className="text-sm">
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    'Issue Sticker'
+                                )}
                             </Button>
                         </div>
                     </form>

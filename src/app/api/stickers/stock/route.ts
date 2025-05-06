@@ -10,7 +10,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const searchParams = request.nextUrl.searchParams;
+        const stickerTypeId = searchParams.get('stickerTypeId');
+        const status = searchParams.get('status') as StickerStatus | null;
+        const unissued = searchParams.get('unissued') === 'true';
+
         const stocks = await prisma.stickerStock.findMany({
+            where: {
+                ...(stickerTypeId && { stickerTypeId }),
+                ...(status && { stickerStatus: status }),
+                ...(unissued && { sticker: null }),
+                isActive: true,
+            },
             include: {
                 insurer: true,
                 sticker: true,

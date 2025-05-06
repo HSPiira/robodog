@@ -1,9 +1,7 @@
 "use client";
 
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import {
     FileText,
     Calendar,
@@ -14,19 +12,9 @@ import {
     AlertCircle,
     XCircle,
     Clock,
-    MoreHorizontal,
 } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Policy, PolicyStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const statusVariants: Record<PolicyStatus, "default" | "secondary" | "destructive" | "outline"> = {
     ACTIVE: "default",
@@ -122,81 +110,6 @@ export const createColumns = ({ onPolicyUpdate }: ColumnsProps = {}) => {
                             ? date.toLocaleDateString()
                             : "—"}
                     </div>
-                );
-            },
-        },
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const policy = row.original;
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    (window.location.href = `/policies/${policy.id}`)
-                                }
-                            >
-                                View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    (window.location.href = `/policies/${policy.id}/edit`)
-                                }
-                            >
-                                Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() =>
-                                    (window.location.href = `/policies/${policy.id}/renew`)
-                                }
-                            >
-                                Renew
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => {
-                                    const confirmed = window.confirm(
-                                        "Are you sure you want to cancel this policy?"
-                                    );
-                                    if (confirmed) {
-                                        fetch(`/api/policies/${policy.id}/cancel`, {
-                                            method: "POST",
-                                            headers: { "Content-Type": "application/json" },
-                                        })
-                                            .then(response => {
-                                                if (!response.ok) throw new Error("Failed to cancel policy");
-                                                return response.json();
-                                            })
-                                            .then(() => {
-                                                if (typeof onPolicyUpdate === 'function') {
-                                                    onPolicyUpdate();
-                                                }
-                                                toast.success("Policy cancelled", {
-                                                    description: "The policy has been successfully cancelled.",
-                                                });
-                                            })
-                                            .catch(error => {
-                                                console.error("Error cancelling policy:", error);
-                                                toast.error("Error", {
-                                                    description: "Failed to cancel the policy. Please try again.",
-                                                });
-                                            });
-                                    }
-                                }}
-                            >
-                                Cancel Policy
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 );
             },
         },
